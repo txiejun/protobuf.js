@@ -1,0 +1,165 @@
+--- codegen ---
+> function _Test$encode($t,m,w) {
+>   "use strict"
+>   if(m.string!="")
+>     w.tag(1,2).string(m.string)
+>   if(m.uint32!=0)
+>     w.tag(2,0).uint32(m.uint32)
+>   if(m.inner!==null)
+>     $t[2].encodeDelimited_(m.inner,w.tag(3,2))
+>   return w
+> }
+--- codegen ---
+> function _Test_Inner$encode($t,m,w) {
+>   "use strict"
+>   if(m.int32!=0)
+>     w.tag(1,0).int32(m.int32)
+>   if(m.innerInner!==null)
+>     $t[1].encodeDelimited_(m.innerInner,w.tag(2,2))
+>   if(m.outer!==null)
+>     $t[2].encodeDelimited_(m.outer,w.tag(3,2))
+>   return w
+> }
+--- codegen ---
+> function _Test_Inner_InnerInner$encode($t,m,w) {
+>   "use strict"
+>   if(m.long!==0)
+>     w.tag(1,0).int64(m.long)
+>   if(m.enum!=0)
+>     w.tag(2,0).uint32(m.enum)
+>   if(m.sint32!=0)
+>     w.tag(3,0).sint32(m.sint32)
+>   return w
+> }
+--- codegen ---
+> function _Outer$encode($t,m,w) {
+>   "use strict"
+>   var vs=m.bool,i=0,k=vs.length
+>   w.fork()
+>   while(i<k)
+>     w.bool(vs[i++])
+>   var b=w.finish()
+>   if(b.length)
+>     w.tag(1,2).bytes(b)
+>   return w
+> }
+--- codegen ---
+> function _Test$decode($t,$h,r,m,l) {
+>   "use strict"
+>   while(r.pos<l){
+>     var t=r.tag()
+>     switch(t.id){
+>       case 1:
+>         m.string=r.string()
+>         break
+>       case 2:
+>         m.uint32=r.uint32()
+>         break
+>       case 3:
+>         m.inner=$t[2].decodeDelimited_(r,$t[2].create_())
+>         break
+>       default:
+>         r.skipType(t.wireType)
+>         break
+>     }
+>   }
+>   return m
+> }
+--- codegen ---
+> function _Test_Inner$decode($t,$h,r,m,l) {
+>   "use strict"
+>   while(r.pos<l){
+>     var t=r.tag()
+>     switch(t.id){
+>       case 1:
+>         m.int32=r.int32()
+>         break
+>       case 2:
+>         m.innerInner=$t[1].decodeDelimited_(r,$t[1].create_())
+>         break
+>       case 3:
+>         m.outer=$t[2].decodeDelimited_(r,$t[2].create_())
+>         break
+>       default:
+>         r.skipType(t.wireType)
+>         break
+>     }
+>   }
+>   return m
+> }
+--- codegen ---
+> function _Test_Inner_InnerInner$decode($t,$h,r,m,l) {
+>   "use strict"
+>   while(r.pos<l){
+>     var t=r.tag()
+>     switch(t.id){
+>       case 1:
+>         m.long=r.int64()
+>         break
+>       case 2:
+>         m.enum=r.uint32()
+>         break
+>       case 3:
+>         m.sint32=r.sint32()
+>         break
+>       default:
+>         r.skipType(t.wireType)
+>         break
+>     }
+>   }
+>   return m
+> }
+--- codegen ---
+> function _Outer$decode($t,$h,r,m,l) {
+>   "use strict"
+>   while(r.pos<l){
+>     var t=r.tag()
+>     switch(t.id){
+>       case 1:
+>         var vs=m.bool||(m.bool=[]),n=vs.length
+>         if(t.wireType===2){
+>           var e=r.uint32()+r.pos
+>           while(r.pos<e)
+>             vs[n++]=r.bool()
+>         }else
+>           vs[n++]=r.bool()
+>         break
+>       default:
+>         r.skipType(t.wireType)
+>         break
+>     }
+>   }
+>   return m
+> }
+
+This benchmark measures message to buffer respectively buffer to message performance.
+usage: bench.js [iterations=100000] [protobufOnly]
+
+encoding/decoding 100000 iterations ...
+
+encode protobuf.js       :      550ms    19400000 bytes
+decode protobuf.js       :      153ms    19400000 bytes
+
+encode protobuf.js r/w   :      497ms    19400000 bytes
+decode protobuf.js r/w   :      109ms    19400000 bytes
+
+encode JSON native       :      571ms    35500000 bytes
+decode JSON native       :      339ms    35500000 bytes
+
+encode JSON polyfill     :     1671ms    38200000 bytes
+decode JSON polyfill     :      251ms    38200000 bytes
+
+--- warmed up ---
+
+encode protobuf.js       :      484ms    19400000 bytes
+decode protobuf.js       :      137ms    19400000 bytes
+
+encode protobuf.js r/w   :      477ms    19400000 bytes
+decode protobuf.js r/w   :      108ms    19400000 bytes
+
+encode JSON native       :      542ms    35500000 bytes
+decode JSON native       :      347ms    35500000 bytes
+
+encode JSON polyfill     :     1597ms    38200000 bytes
+decode JSON polyfill     :      244ms    38200000 bytes
+

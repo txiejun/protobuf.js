@@ -1,6 +1,6 @@
 /*!
  * protobuf.js v6.0.0-dev (c) 2016 Daniel Wirtz
- * Compiled Fri, 11 Nov 2016 06:13:56 UTC
+ * Compiled Fri, 11 Nov 2016 15:52:52 UTC
  * Licensed under the Apache License, Version 2.0
  * see: https://github.com/dcodeIO/protobuf.js for details
  */
@@ -143,8 +143,8 @@ try { codegen.supported = codegen("a","b")("return a-b").eof()(2,1) === 1; } cat
 codegen.verbose = false;
 
 /**
- * Programmatically generates a function. When done appending code, call `eof()` on the Appender
- * to generate the actual function.
+ * Programmatically generates a function.
+ * When done appending code, call `eof([name])` on the Appender to generate the actual function.
  * @memberof util
  * @param {...string} params Function parameter names
  * @returns {function} Appender function similar to `util.format` known from node
@@ -411,7 +411,7 @@ var EncoderPrototype = Encoder.prototype;
  * @returns {Writer} writer
  */
 EncoderPrototype.encode = function encode(message, writer) { // codegen reference and fallback
-    /* eslint-disable no-invalid-this, block-scoped-var, no-redeclare */
+    /* eslint-disable block-scoped-var, no-redeclare */
     var fieldsArray = this.type.fieldsArray,
         fieldsCount = fieldsArray.length;
 
@@ -459,7 +459,7 @@ EncoderPrototype.encode = function encode(message, writer) { // codegen referenc
         // Non-repeated
         } else {
             var value = message[field.name],
-                strict = field.long;
+                strict = typeof field.defaultValue === 'object' || field.long;
             if (field.required || strict && value !== field.defaultValue || !strict && value != field.defaultValue) { // eslint-disable-line eqeqeq
                 if (wireType !== undefined)
                     writer.tag(field.id, wireType)[type](value);
@@ -469,7 +469,7 @@ EncoderPrototype.encode = function encode(message, writer) { // codegen referenc
         }
     }
     return writer;
-    /* eslint-enable no-invalid-this, block-scoped-var, no-redeclare */
+    /* eslint-enable block-scoped-var, no-redeclare */
 };
 
 /**
@@ -676,6 +676,7 @@ var FieldPrototype = ReflectionObject.extend(Field, [ "rule", "type", "id", "ext
 
 var Type      = require("./type"),
     Enum      = require("./enum"),
+    MapField  = require("./mapfield"),
     types     = require("./types"),
     util      = require("./util");
 
@@ -852,6 +853,8 @@ Field.testJSON = function testJSON(json) {
  * @throws {TypeError} If arguments are invalid
  */
 Field.fromJSON = function fromJSON(name, json) {
+    if (json.keyType !== undefined)
+        return MapField.fromJSON(name, json);
     return new Field(name, json.id, json.type, json.role, json.extend, json.options);
 };
 
@@ -915,7 +918,7 @@ FieldPrototype.jsonConvert = function(value, options) {
     return value;
 };
 
-},{"./enum":5,"./object":12,"./type":20,"./types":21,"./util":22}],7:[function(require,module,exports){
+},{"./enum":5,"./mapfield":9,"./object":12,"./type":20,"./types":21,"./util":22}],7:[function(require,module,exports){
 module.exports = inherits;
 
 var Prototype = require("./prototype"),
@@ -4666,6 +4669,7 @@ function fetch(path, callback) {
         return callback(Error("request failed"));
     };
     xhr.open("GET", path, true);
+    xhr.send();
     return undefined;
 }
 

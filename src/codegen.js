@@ -16,8 +16,8 @@ try { codegen.supported = codegen("a","b")("return a-b").eof()(2,1) === 1; } cat
 codegen.verbose = false;
 
 /**
- * Programmatically generates a function. When done appending code, call `eof()` on the Appender
- * to generate the actual function.
+ * Programmatically generates a function.
+ * When done appending code, call `eof([name])` on the Appender to generate the actual function.
  * @memberof util
  * @param {...string} params Function parameter names
  * @returns {function} Appender function similar to `util.format` known from node

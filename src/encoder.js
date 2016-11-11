@@ -23,7 +23,7 @@ var EncoderPrototype = Encoder.prototype;
  * @returns {Writer} writer
  */
 EncoderPrototype.encode = function encode(message, writer) { // codegen reference and fallback
-    /* eslint-disable no-invalid-this, block-scoped-var, no-redeclare */
+    /* eslint-disable block-scoped-var, no-redeclare */
     var fieldsArray = this.type.fieldsArray,
         fieldsCount = fieldsArray.length;
 
@@ -71,7 +71,7 @@ EncoderPrototype.encode = function encode(message, writer) { // codegen referenc
         // Non-repeated
         } else {
             var value = message[field.name],
-                strict = field.long;
+                strict = typeof field.defaultValue === 'object' || field.long;
             if (field.required || strict && value !== field.defaultValue || !strict && value != field.defaultValue) { // eslint-disable-line eqeqeq
                 if (wireType !== undefined)
                     writer.tag(field.id, wireType)[type](value);
@@ -81,7 +81,7 @@ EncoderPrototype.encode = function encode(message, writer) { // codegen referenc
         }
     }
     return writer;
-    /* eslint-enable no-invalid-this, block-scoped-var, no-redeclare */
+    /* eslint-enable block-scoped-var, no-redeclare */
 };
 
 /**

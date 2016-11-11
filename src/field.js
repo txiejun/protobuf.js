@@ -6,6 +6,7 @@ var FieldPrototype = ReflectionObject.extend(Field, [ "rule", "type", "id", "ext
 
 var Type      = require("./type"),
     Enum      = require("./enum"),
+    MapField  = require("./mapfield"),
     types     = require("./types"),
     util      = require("./util");
 
@@ -182,6 +183,8 @@ Field.testJSON = function testJSON(json) {
  * @throws {TypeError} If arguments are invalid
  */
 Field.fromJSON = function fromJSON(name, json) {
+    if (json.keyType !== undefined)
+        return MapField.fromJSON(name, json);
     return new Field(name, json.id, json.type, json.role, json.extend, json.options);
 };
 
