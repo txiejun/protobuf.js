@@ -95,10 +95,18 @@
             
                 <li data-name="util.Buffer"><a href="util.html#.Buffer">Buffer</a></li>
             
+                <li data-name="util.codegen.supported"><a href="util.html#.codegen.supported">codegen.supported</a></li>
+            
+                <li data-name="util.codegen.verbose"><a href="util.html#.codegen.verbose">codegen.verbose</a></li>
+            
                 <li data-name="util.Long"><a href="util.html#.Long">Long</a></li>
             
             </ul>
             <ul class="typedefs itemMembers">
+            
+            <span class="subtitle">Typedefs</span>
+            
+                <li data-name="util.CodegenAppender"><a href="util.html#.CodegenAppender">CodegenAppender</a></li>
             
             </ul>
             <ul class="methods itemMembers">
@@ -126,6 +134,8 @@
                 <li data-name="util.normalizePath"><a href="util.html#.normalizePath">normalizePath</a></li>
             
                 <li data-name="util.resolvePath"><a href="util.html#.resolvePath">resolvePath</a></li>
+            
+                <li data-name="util.safeProp"><a href="util.html#.safeProp">safeProp</a></li>
             
                 <li data-name="util.toArray"><a href="util.html#.toArray">toArray</a></li>
             
@@ -882,6 +892,10 @@
             </ul>
             <ul class="typedefs itemMembers">
             
+            <span class="subtitle">Typedefs</span>
+            
+                <li data-name="Prototype.Options"><a href="Prototype.html#.Options">Options</a></li>
+            
             </ul>
             <ul class="methods itemMembers">
             
@@ -1065,6 +1079,10 @@
             </ul>
             <ul class="typedefs itemMembers">
             
+            <span class="subtitle">Typedefs</span>
+            
+                <li data-name="Root.Options"><a href="Root.html#.Options">Options</a></li>
+            
             </ul>
             <ul class="methods itemMembers">
             
@@ -1211,8 +1229,6 @@
             <ul class="members itemMembers">
             
             <span class="subtitle">Members</span>
-            
-                <li data-name="Type.useCodegen"><a href="Type.html#.useCodegen">useCodegen</a></li>
             
                 <li data-name="Type#empty"><a href="Type.html#empty">empty</a></li>
             
@@ -1526,7 +1542,7 @@
     
         
         <div class="tag-source">
-            <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/inherits.js">inherits.js</a>, <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/inherits.js#L20">line 20</a>
+            <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/inherits.js">inherits.js</a>, <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/inherits.js#L26">line 26</a>
         </div>
         
     </div>
@@ -1630,7 +1646,7 @@
             <td class="type">
             
                 
-<span class="param-type">Object.&lt;string, *></span>
+<span class="param-type"><a href="global.html#InheritanceOptions">InheritanceOptions</a></span>
 
 
             
@@ -1647,103 +1663,7 @@
                         
                     
                 
-                <p>Extension options</p>
-                
-
-<table class="params">
-    <thead>
-	<tr>
-		
-		<th>Name</th>
-		
-		
-		<th>Type</th>
-		
-		
-		<th>Default</th>
-		
-		
-		<th class="last">Description</th>
-	</tr>
-	</thead>
-	
-	<tbody>
-	
-	
-        <tr>
-            
-                <td class="name"><code>noStatics</code></td>
-            
-            
-            <td class="type">
-            
-                
-<span class="param-type">boolean</span>
-
-
-            
-            </td>
-            
-            
-                <td class="default">
-                
-                    false
-                
-                </td>
-            
-            
-            <td class="description last">
-                
-                    
-                        <span class="optional">optional</span>
-                    
-                    
-                        
-                    
-                
-                <p>Skips adding the default static methods on top of the constructor</p></td>
-        </tr>
-	
-	
-	
-        <tr>
-            
-                <td class="name"><code>noRegister</code></td>
-            
-            
-            <td class="type">
-            
-                
-<span class="param-type">boolean</span>
-
-
-            
-            </td>
-            
-            
-                <td class="default">
-                
-                    false
-                
-                </td>
-            
-            
-            <td class="description last">
-                
-                    
-                        <span class="optional">optional</span>
-                    
-                    
-                        
-                    
-                
-                <p>Skips registering the constructor with the reflected type</p></td>
-        </tr>
-	
-	
-	</tbody>
-</table>
-            </td>
+                <p>Inheritance options</p></td>
         </tr>
 	
 	
@@ -2098,12 +2018,12 @@
     <div class="nameContainer">
         <h4 class="name" id="parse">
             
-            parse<span class="signature">(source, <span class="optional">root</span>, <span class="optional">visible</span>)</span><span class="glyphicon glyphicon-circle-arrow-right"></span><span class="type-signature returnType">{Object}</span>
+            parse<span class="signature">(source, <span class="optional">root</span>, <span class="optional">visible</span>)</span><span class="glyphicon glyphicon-circle-arrow-right"></span><span class="type-signature returnType">{<a href="global.html#ParserResult">ParserResult</a>}</span>
         </h4>
     
         
         <div class="tag-source">
-            <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/parse.js">parse.js</a>, <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/parse.js#L36">line 36</a>
+            <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/parse.js">parse.js</a>, <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/parse.js#L48">line 48</a>
         </div>
         
     </div>
@@ -2303,11 +2223,11 @@
             
             <td class="type">
             
-                        Object
+                        <a href="global.html#ParserResult">ParserResult</a>
                         
                     
             </td>
-            <td class="description last">Parsed contents</td>
+            <td class="description last">Parser result</td>
         </tr>
     
     </tbody>
@@ -2324,12 +2244,12 @@
     <div class="nameContainer">
         <h4 class="name" id="tokenize">
             
-            tokenize<span class="signature">(source)</span><span class="glyphicon glyphicon-circle-arrow-right"></span><span class="type-signature returnType">{Object}</span>
+            tokenize<span class="signature">(source)</span><span class="glyphicon glyphicon-circle-arrow-right"></span><span class="type-signature returnType">{<a href="global.html#TokenizerHandle">TokenizerHandle</a>}</span>
         </h4>
     
         
         <div class="tag-source">
-            <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/tokenize.js">tokenize.js</a>, <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/tokenize.js#L14">line 14</a>
+            <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/tokenize.js">tokenize.js</a>, <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/tokenize.js#L24">line 24</a>
         </div>
         
     </div>
@@ -2448,7 +2368,7 @@
             
             <td class="type">
             
-                        Object
+                        <a href="global.html#TokenizerHandle">TokenizerHandle</a>
                         
                     
             </td>
@@ -2466,6 +2386,575 @@
         </dl>
     
     
+    
+        <h3 class="subsection-title">Type Definitions</h3>
+        
+        <dl>
+                
+<dt>
+    <div class="nameContainer">
+        <h4 class="name" id="InheritanceOptions">InheritanceOptions<span class="type-signature type object">Object</span> </h4>
+    </div>
+    
+    
+</dt>
+<dd>
+    
+    <div class="description">
+        <p>Options passed to <a href="global.html#inherits">inherits</a>, modifying its behavior.</p>
+    </div>
+    
+    
+    
+<dl class="details">
+    
+        
+        <h5 class="subsection-title">Properties:</h5>
+        
+        <dl>
+
+<table class="props">
+    <thead>
+	<tr>
+		
+		<th>Name</th>
+		
+		
+		<th>Type</th>
+		
+		
+		<th>Argument</th>
+		
+		
+		
+		<th>Default</th>
+		
+		
+		<th class="last">Description</th>
+	</tr>
+	</thead>
+	
+	<tbody>
+	
+	
+        <tr>
+            
+                <td class="name"><code>noStatics</code></td>
+            
+            
+            <td class="type">
+            
+                
+<span class="param-type">boolean</span>
+
+
+            
+            </td>
+            
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+                    
+                
+                </td>
+            
+            
+            
+                <td class="default">
+                
+                    false
+                
+                </td>
+            
+            
+            <td class="description last"><p>Skips adding the default static methods on top of the constructor</p></td>
+        </tr>
+	
+	
+	
+        <tr>
+            
+                <td class="name"><code>noRegister</code></td>
+            
+            
+            <td class="type">
+            
+                
+<span class="param-type">boolean</span>
+
+
+            
+            </td>
+            
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+                    
+                
+                </td>
+            
+            
+            
+                <td class="default">
+                
+                    false
+                
+                </td>
+            
+            
+            <td class="description last"><p>Skips registering the constructor with the reflected type</p></td>
+        </tr>
+	
+	
+	</tbody>
+</table></dl>
+        
+    
+        
+    
+    
+    
+
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+</dl>
+
+    
+    
+</dd>
+
+            
+                
+<dt>
+    <div class="nameContainer">
+        <h4 class="name" id="ParserResult">ParserResult<span class="type-signature type object">Object</span> </h4>
+    </div>
+    
+    
+</dt>
+<dd>
+    
+    <div class="description">
+        <p>Result object returned from <a href="global.html#parse">parse</a>.</p>
+    </div>
+    
+    
+    
+<dl class="details">
+    
+        
+        <h5 class="subsection-title">Properties:</h5>
+        
+        <dl>
+
+<table class="props">
+    <thead>
+	<tr>
+		
+		<th>Name</th>
+		
+		
+		<th>Type</th>
+		
+		
+		
+		
+		
+		<th class="last">Description</th>
+	</tr>
+	</thead>
+	
+	<tbody>
+	
+	
+        <tr>
+            
+                <td class="name"><code>package</code></td>
+            
+            
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+|
+
+<span class="param-type">undefined</span>
+
+
+            
+            </td>
+            
+            
+            
+            
+            
+            <td class="description last"><p>Package name, if declared</p></td>
+        </tr>
+	
+	
+	
+        <tr>
+            
+                <td class="name"><code>imports</code></td>
+            
+            
+            <td class="type">
+            
+                
+<span class="param-type">Array.&lt;string></span>
+|
+
+<span class="param-type">undefined</span>
+
+
+            
+            </td>
+            
+            
+            
+            
+            
+            <td class="description last"><p>Imports, if any</p></td>
+        </tr>
+	
+	
+	
+        <tr>
+            
+                <td class="name"><code>publicImports</code></td>
+            
+            
+            <td class="type">
+            
+                
+<span class="param-type">Array.&lt;string></span>
+|
+
+<span class="param-type">undefined</span>
+
+
+            
+            </td>
+            
+            
+            
+            
+            
+            <td class="description last"><p>Public imports, if any</p></td>
+        </tr>
+	
+	
+	
+        <tr>
+            
+                <td class="name"><code>weakImports</code></td>
+            
+            
+            <td class="type">
+            
+                
+<span class="param-type">Array.&lt;string></span>
+|
+
+<span class="param-type">undefined</span>
+
+
+            
+            </td>
+            
+            
+            
+            
+            
+            <td class="description last"><p>Weak imports, if any</p></td>
+        </tr>
+	
+	
+	
+        <tr>
+            
+                <td class="name"><code>syntax</code></td>
+            
+            
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+|
+
+<span class="param-type">undefined</span>
+
+
+            
+            </td>
+            
+            
+            
+            
+            
+            <td class="description last"><p>Syntax if specified (either <code>&quot;proto2&quot;</code> or <code>&quot;proto3&quot;</code>)</p></td>
+        </tr>
+	
+	
+	
+        <tr>
+            
+                <td class="name"><code>root</code></td>
+            
+            
+            <td class="type">
+            
+                
+<span class="param-type"><a href="Root.html">Root</a></span>
+
+
+            
+            </td>
+            
+            
+            
+            
+            
+            <td class="description last"><p>Populated root instance</p></td>
+        </tr>
+	
+	
+	</tbody>
+</table></dl>
+        
+    
+        
+    
+    
+    
+
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+</dl>
+
+    
+    
+</dd>
+
+            
+                
+<dt>
+    <div class="nameContainer">
+        <h4 class="name" id="TokenizerHandle">TokenizerHandle<span class="type-signature type object">Object</span> </h4>
+    </div>
+    
+    
+</dt>
+<dd>
+    
+    <div class="description">
+        <p>Handle object returned from <a href="global.html#tokenize">tokenize</a>.</p>
+    </div>
+    
+    
+    
+<dl class="details">
+    
+        
+        <h5 class="subsection-title">Properties:</h5>
+        
+        <dl>
+
+<table class="props">
+    <thead>
+	<tr>
+		
+		<th>Name</th>
+		
+		
+		<th>Type</th>
+		
+		
+		
+		
+		
+		<th class="last">Description</th>
+	</tr>
+	</thead>
+	
+	<tbody>
+	
+	
+        <tr>
+            
+                <td class="name"><code>line</code></td>
+            
+            
+            <td class="type">
+            
+                
+<span class="param-type">function</span>
+
+
+            
+            </td>
+            
+            
+            
+            
+            
+            <td class="description last"><p>Gets the current line number</p></td>
+        </tr>
+	
+	
+	
+        <tr>
+            
+                <td class="name"><code>next</code></td>
+            
+            
+            <td class="type">
+            
+                
+<span class="param-type">function</span>
+
+
+            
+            </td>
+            
+            
+            
+            
+            
+            <td class="description last"><p>Gets the next token and advances (<code>null</code> on eof)</p></td>
+        </tr>
+	
+	
+	
+        <tr>
+            
+                <td class="name"><code>peek</code></td>
+            
+            
+            <td class="type">
+            
+                
+<span class="param-type">function</span>
+
+
+            
+            </td>
+            
+            
+            
+            
+            
+            <td class="description last"><p>Peeks for the next token (<code>null</code> on eof)</p></td>
+        </tr>
+	
+	
+	
+        <tr>
+            
+                <td class="name"><code>push</code></td>
+            
+            
+            <td class="type">
+            
+                
+<span class="param-type">function</span>
+
+
+            
+            </td>
+            
+            
+            
+            
+            
+            <td class="description last"><p>Pushes a token back to the stack</p></td>
+        </tr>
+	
+	
+	
+        <tr>
+            
+                <td class="name"><code>skip</code></td>
+            
+            
+            <td class="type">
+            
+                
+<span class="param-type">function</span>
+
+
+            
+            </td>
+            
+            
+            
+            
+            
+            <td class="description last"><p>Skips a token, returns its presence and advances or, if non-optional and not present, throws</p></td>
+        </tr>
+	
+	
+	</tbody>
+</table></dl>
+        
+    
+        
+    
+    
+    
+
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+</dl>
+
+    
+    
+</dd>
+
+            </dl>
     
     
     

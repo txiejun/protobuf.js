@@ -13,7 +13,9 @@ var LongBits = require("./longbits"),
 Writer.BUFFER_SIZE = 256; // For some reason this is considerably faster on node than 128 or 512.
 
 /**
- * Wire format writer using `Uint8Array` if available, otherwise `Array`.
+ * Constructs a new writer.
+ * When called as a function, returns an appropriate writer for the current environment.
+ * @class Wire format writer using `Uint8Array` if available, otherwise `Array`.
  * @exports Writer
  * @constructor
  */
@@ -65,8 +67,8 @@ var ArrayImpl = typeof Uint8Array !== 'undefined'
     : Array;
 
 /**
- * Sets up the Writer class before first use. This is done automatically when the first buffer is
- * allocated.
+ * Sets up the Writer class before first use.
+ * Done automatically when the first buffer is allocated.
  * @returns {Function} `Writer`
  */
 Writer.setup = function setup() {
@@ -172,9 +174,11 @@ WriterPrototype.sint32 = function write_sint32(value) {
  * @param {number} lo Low bits
  * @param {number} hi High bits
  * @returns {Writer} `this`
- * @private
+ * @this {Writer}
+ * @inner
+ * @ignore
  */
-WriterPrototype._writeLongVarint = function writeLongVarint(lo, hi) {
+function writeLongVarint(lo, hi) {
     if (this.pos + 9 < this.len) { // fast route
         while (hi > 0 || lo > 127) {
             this.buf[this.pos++] = lo & 127 | 128;
@@ -194,7 +198,7 @@ WriterPrototype._writeLongVarint = function writeLongVarint(lo, hi) {
     }
     this.buf[this.pos++] = lo;
     return this;
-};
+}
 
 /**
  * Writes an unsigned 64 bit value as a varint.
@@ -204,9 +208,9 @@ WriterPrototype._writeLongVarint = function writeLongVarint(lo, hi) {
 WriterPrototype.uint64 = function write_uint64(value) {
     if (typeof value === 'number') {
         var bits = value ? LongBits.fromNumber(value) : LongBits.zero;
-        return this._writeLongVarint(bits.lo, bits.hi);
+        return writeLongVarint.call(this, bits.lo, bits.hi);
     } 
-    return this._writeLongVarint(value.low >>> 0, value.high >>> 0);
+    return writeLongVarint.call(this, value.low >>> 0, value.high >>> 0);
 };
 
 /**
@@ -224,7 +228,7 @@ WriterPrototype.int64 = WriterPrototype.uint64;
  */
 WriterPrototype.sint64 = function sint64(value) {
     var bits = LongBits.fromValue(value).zzEncode();
-    return this._writeLongVarint(bits.lo, bits.hi);
+    return writeLongVarint.call(this, bits.lo, bits.hi);
 };
 
 /**
@@ -268,9 +272,11 @@ WriterPrototype.sfixed32 = function write_sfixed32(value) {
  * @param {number} lo Low bits
  * @param {number} hi High bits
  * @returns {Writer} `this`
- * @private
+ * @this {Writer}
+ * @inner
+ * @ignore
  */
-WriterPrototype._writeLongFixed = function writeLongFixed(lo, hi) {
+function writeLongFixed(lo, hi) {
     if (this.pos + 8 > this.len)
         this.expand(8);
     this.buf[this.pos++] = lo        & 255;
@@ -282,7 +288,7 @@ WriterPrototype._writeLongFixed = function writeLongFixed(lo, hi) {
     this.buf[this.pos++] = hi >>> 16 & 255;
     this.buf[this.pos++] = hi >>> 24      ;
     return this;
-};
+}
 
 /**
  * Writes a 64 bit value as fixed 64 bits.
@@ -292,9 +298,9 @@ WriterPrototype._writeLongFixed = function writeLongFixed(lo, hi) {
 WriterPrototype.fixed64 = function write_fixed64(value) {
     if (typeof value === 'number') {
         var bits = value ? LongBits.fromNumber(value) : LongBits.zero;
-        return this._writeLongFixed(bits.lo, bits.hi);
+        return writeLongFixed.call(this, bits.lo, bits.hi);
     }
-    return this._writeLongFixed(value.low >>> 0, value.high >>> 0);
+    return writeLongFixed.call(this, value.low >>> 0, value.high >>> 0);
 };
 
 /**
@@ -304,7 +310,7 @@ WriterPrototype.fixed64 = function write_fixed64(value) {
  */
 WriterPrototype.sfixed64 = function write_sfixed64(value) {
     var bits = LongBits.from(value).zzEncode();
-    return this._writeLongFixed(bits.lo, bits.hi);
+    return writeLongFixed.call(this, bits.lo, bits.hi);
 };
 
 /**
@@ -500,7 +506,8 @@ WriterPrototype.finish = function finish() {
 };
 
 /**
- * Wire format writer using node buffers.
+ * Constructs a new buffer writer.
+ * @class Wire format writer using node buffers.
  * @exports BufferWriter
  * @extends Writer
  * @constructor

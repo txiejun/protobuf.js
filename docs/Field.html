@@ -95,10 +95,18 @@
             
                 <li data-name="util.Buffer"><a href="util.html#.Buffer">Buffer</a></li>
             
+                <li data-name="util.codegen.supported"><a href="util.html#.codegen.supported">codegen.supported</a></li>
+            
+                <li data-name="util.codegen.verbose"><a href="util.html#.codegen.verbose">codegen.verbose</a></li>
+            
                 <li data-name="util.Long"><a href="util.html#.Long">Long</a></li>
             
             </ul>
             <ul class="typedefs itemMembers">
+            
+            <span class="subtitle">Typedefs</span>
+            
+                <li data-name="util.CodegenAppender"><a href="util.html#.CodegenAppender">CodegenAppender</a></li>
             
             </ul>
             <ul class="methods itemMembers">
@@ -126,6 +134,8 @@
                 <li data-name="util.normalizePath"><a href="util.html#.normalizePath">normalizePath</a></li>
             
                 <li data-name="util.resolvePath"><a href="util.html#.resolvePath">resolvePath</a></li>
+            
+                <li data-name="util.safeProp"><a href="util.html#.safeProp">safeProp</a></li>
             
                 <li data-name="util.toArray"><a href="util.html#.toArray">toArray</a></li>
             
@@ -882,6 +892,10 @@
             </ul>
             <ul class="typedefs itemMembers">
             
+            <span class="subtitle">Typedefs</span>
+            
+                <li data-name="Prototype.Options"><a href="Prototype.html#.Options">Options</a></li>
+            
             </ul>
             <ul class="methods itemMembers">
             
@@ -1065,6 +1079,10 @@
             </ul>
             <ul class="typedefs itemMembers">
             
+            <span class="subtitle">Typedefs</span>
+            
+                <li data-name="Root.Options"><a href="Root.html#.Options">Options</a></li>
+            
             </ul>
             <ul class="methods itemMembers">
             
@@ -1211,8 +1229,6 @@
             <ul class="members itemMembers">
             
             <span class="subtitle">Members</span>
-            
-                <li data-name="Type.useCodegen"><a href="Type.html#.useCodegen">useCodegen</a></li>
             
                 <li data-name="Type#empty"><a href="Type.html#empty">empty</a></li>
             
@@ -1461,6 +1477,8 @@
     Field
     </h2>
     
+        <div class="class-description"><p>Reflected message field.</p></div>
+    
 </header>  
 
 <article>
@@ -1478,7 +1496,7 @@
     
         
         <div class="tag-source">
-            <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/field.js">field.js</a>, <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/field.js#L25">line 25</a>
+            <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/field.js">field.js</a>, <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/field.js#L27">line 27</a>
         </div>
         
     </div>
@@ -1489,7 +1507,7 @@
     
     
     <div class="description">
-        <p>Reflected message field.</p>
+        <p>Constructs a new message field. Note that <a href="MapField.html">map fields</a> have their own class.</p>
     </div>
     
 
@@ -1611,7 +1629,7 @@
                         
                     
                 
-                <p>Type of the underlying value</p></td>
+                <p>Value type</p></td>
         </tr>
 	
 	
@@ -1694,7 +1712,7 @@
             <td class="type">
             
                 
-<span class="param-type">Object.&lt;string, *></span>
+<span class="param-type">Object</span>
 
 
             
@@ -1715,7 +1733,7 @@
                         
                     
                 
-                <p>Field options</p></td>
+                <p>Declared options</p></td>
         </tr>
 	
 	
@@ -2876,7 +2894,7 @@
 <dd>
     
     <div class="description">
-        <p>Whether this object is visible when exporting definitions. Possible values are <code>true</code> to<br>be visible, <code>false</code> to be not and <code>null</code> (setter only) to inherit from parent.</p>
+        <p>Whether this object is visible when exporting definitions. Possible values are <code>true</code> to be visible, <code>false</code> to be not and <code>null</code> (setter only) to inherit from parent.</p>
     </div>
     
     
@@ -2926,7 +2944,7 @@
     
         
         <div class="tag-source">
-            <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/field.js">field.js</a>, <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/field.js#L184">line 184</a>
+            <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/field.js">field.js</a>, <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/field.js#L186">line 186</a>
         </div>
         
     </div>
@@ -3121,7 +3139,7 @@
     
         
         <div class="tag-source">
-            <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/field.js">field.js</a>, <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/field.js#L173">line 173</a>
+            <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/field.js">field.js</a>, <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/field.js#L175">line 175</a>
         </div>
         
     </div>
@@ -3413,7 +3431,7 @@
     
         
         <div class="tag-source">
-            <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/field.js">field.js</a>, <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/field.js#L234">line 234</a>
+            <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/field.js">field.js</a>, <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/field.js#L237">line 237</a>
         </div>
         
     </div>
@@ -3424,7 +3442,7 @@
     
     
     <div class="description">
-        <p>Converts a field value to JSON using the specified options. Note that this method does not<br>account for repeated fields and must be called once for each repeated element instead.</p>
+        <p>Converts a field value to JSON using the specified options. Note that this method does not account for repeated fields and must be called once for each repeated element instead.</p>
     </div>
     
 
@@ -3894,7 +3912,7 @@
     
         
         <div class="tag-source">
-            <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/field.js">field.js</a>, <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/field.js#L193">line 193</a>
+            <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/field.js">field.js</a>, <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/field.js#L197">line 197</a>
         </div>
         
     </div>

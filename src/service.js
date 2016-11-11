@@ -9,7 +9,8 @@ var ServicePrototype = Namespace.extend(Service, [ "methods" ]);
 var Method    = require("./method");
 
 /**
- * Reflected service.
+ * Constructs a new service.
+ * @class Reflected service.
  * @extends Namespace
  * @constructor
  * @param {string} name Service name

@@ -9,12 +9,18 @@ var Prototype = require("./prototype"),
 var _TypeError = util._TypeError;
 
 /**
+ * Options passed to {@link inherits}, modifying its behavior.
+ * @typedef InheritanceOptions
+ * @type {Object}
+ * @property {boolean} [noStatics=false] Skips adding the default static methods on top of the constructor
+ * @property {boolean} [noRegister=false] Skips registering the constructor with the reflected type
+ */
+
+/**
  * Inherits a custom class from the message prototype of the specified message type.
  * @param {Function} clazz Inheriting class
  * @param {Type} type Inherited message type
- * @param {Object.<string,*>} [options] Extension options
- * @param {boolean} [options.noStatics=false] Skips adding the default static methods on top of the constructor
- * @param {boolean} [options.noRegister=false] Skips registering the constructor with the reflected type
+ * @param {InheritanceOptions} [options] Inheritance options
  * @returns {Prototype} Created prototype
  */
 function inherits(clazz, type, options) {
@@ -26,8 +32,7 @@ function inherits(clazz, type, options) {
         options = {};
 
     /**
-     * This is not an actual type but stands as a reference for any constructor of a custom message class
-     * that you pass to the library.
+     * This is not an actual type but stands as a reference for any constructor of a custom message class that you pass to the library.
      * @name Class
      * @extends Prototype
      * @constructor
@@ -119,8 +124,7 @@ function inherits(clazz, type, options) {
 }
 
 /**
- * Defines the reflected type's default values and virtual oneof properties on the specified
- * prototype.
+ * Defines the reflected type's default values and virtual oneof properties on the specified prototype.
  * @memberof inherits
  * @param {Prototype} prototype Prototype to define properties upon
  * @param {Type} type Reflected message type

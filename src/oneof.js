@@ -10,12 +10,13 @@ var Field = require("./field"),
 var _TypeError = util._TypeError;
 
 /**
- * Reflected OneOf.
+ * Constructs a new oneof.
+ * @class Reflected oneof.
  * @extends ReflectionObject
  * @constructor
  * @param {string} name Oneof name
  * @param {string[]} [fieldNames] Field names
- * @param {Object} [options] Oneof options
+ * @param {Object} [options] Declared options
  */
 function OneOf(name, fieldNames, options) {
     if (!Array.isArray(fieldNames)) {

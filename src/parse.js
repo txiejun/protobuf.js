@@ -27,11 +27,23 @@ var s_required = "required",
     s_type     = "type";
 
 /**
+ * Result object returned from {@link parse}.
+ * @typedef ParserResult
+ * @type {Object}
+ * @property {string|undefined} package Package name, if declared
+ * @property {string[]|undefined} imports Imports, if any
+ * @property {string[]|undefined} publicImports Public imports, if any
+ * @property {string[]|undefined} weakImports Weak imports, if any
+ * @property {string|undefined} syntax Syntax if specified (either `"proto2"` or `"proto3"`)
+ * @property {Root} root Populated root instance
+ */
+
+/**
  * Parses the given .proto source and returns an object with the parsed contents.
  * @param {string} source Source contents
  * @param {Root} [root] Root to populate
  * @param {boolean} [visible=true] Whether types from this file are visible when exporting definitions
- * @returns {Object} Parsed contents
+ * @returns {ParserResult} Parser result
  */
 function parse(source, root, visible) {
     /* eslint-disable default-case, callback-return */
@@ -50,8 +62,7 @@ function parse(source, root, visible) {
         next = tn.next,
         push = tn.push,
         peek = tn.peek,
-        skip = tn.skip,
-        omit = tn.omit;
+        skip = tn.skip;
 
     var head = true,
         pkg,
@@ -107,7 +118,7 @@ function parse(source, root, visible) {
     function readRange() {
         var start = parseId(next());
         var end = start;
-        if (omit("to"))
+        if (skip("to", true))
             end = parseId(next());
         skip(";");
         return [ start, end ];
@@ -223,7 +234,7 @@ function parse(source, root, visible) {
         if (!nameRe.test(name))
             throw illegal(name, "type name");
         var type = new Type(name);
-        if (omit("{")) {
+        if (skip("{", true)) {
             while ((token = next()) !== '}') {
                 var tokenLower = lower(token);
                 if (parseCommon(type, token))
@@ -254,7 +265,7 @@ function parse(source, root, visible) {
                         break;
                 }
             }
-            omit(";");
+            skip(";", true);
         } else
             skip(";");
         if (!isProto3)
@@ -290,7 +301,7 @@ function parse(source, root, visible) {
         var name = next();
         skip("=");
         var id = parseId(next());
-        parent.add(parseInlineOptions(new MapField(name, id, valueType, keyType)));
+        parent.add(parseInlineOptions(new MapField(name, id, keyType, valueType)));
     }
 
     function parseOneOf(parent, token) {
@@ -298,7 +309,7 @@ function parse(source, root, visible) {
         if (!nameRe.test(name))
             throw illegal(name, s_name);
         var oneof = new OneOf(name);
-        if (omit("{")) {
+        if (skip("{", true)) {
             while ((token = next()) !== '}') {
                 if (token === s_option) {
                     parseOption(oneof, token);
@@ -306,7 +317,7 @@ function parse(source, root, visible) {
                 } else
                     parseField(oneof, s_optional);
             }
-            omit(";");
+            skip(";", true);
         } else
             skip(";");
         parent.add(oneof);
@@ -318,14 +329,14 @@ function parse(source, root, visible) {
             throw illegal(name, s_name);
         var values = {};
         var enm = new Enum(name, values);
-        if (omit("{")) {
+        if (skip("{", true)) {
             while ((token = next()) !== "}") {
                 if (lower(token) === s_option)
                     parseOption(enm);
                 else
                     parseEnumField(enm, token);
             }
-            omit(";");
+            skip(";", true);
         } else
             skip(";");
         parent.add(enm);
@@ -341,7 +352,7 @@ function parse(source, root, visible) {
     }
 
     function parseOption(parent, token) {
-        var custom = omit('(');
+        var custom = skip('(', true);
         var name = next();
         if (!typeRefRe.test(name))
             throw illegal(name, s_name);
@@ -359,17 +370,17 @@ function parse(source, root, visible) {
     }
 
     function parseOptionValue(parent, name) {
-        if (omit('{')) {
+        if (skip('{', true)) {
             while ((token = next()) !== '}') {
                 if (!nameRe.test(token))
                     throw illegal(token, s_name);
                 name = name + "." + token;
-                if (omit(":"))
+                if (skip(":", true))
                     setOption(parent, name, readValue(true));
                 else
                     parseOptionValue(parent, name);
             }
-            omit(";");
+            skip(";", true);
         } else
             setOption(parent, name, readValue(true));
         // Does not enforce a delimiter to be universal
@@ -383,10 +394,10 @@ function parse(source, root, visible) {
     }
 
     function parseInlineOptions(parent) {
-        if (omit("[")) {
+        if (skip("[", true)) {
             do {
                 parseOption(parent, s_option);
-            } while (omit(","));
+            } while (skip(",", true));
             skip("]");
         }
         skip(";");
@@ -399,7 +410,7 @@ function parse(source, root, visible) {
             throw illegal(token, "service name");
         var name = token;
         var service = new Service(name);
-        if (omit("{")) {
+        if (skip("{", true)) {
             while ((token = next()) !== '}') {
                 var tokenLower = lower(token);
                 switch (tokenLower) {
@@ -414,7 +425,7 @@ function parse(source, root, visible) {
                         throw illegal(token);
                 }
             }
-            omit(";");
+            skip(";", true);
         } else
             skip(";");
         parent.add(service);
@@ -428,20 +439,20 @@ function parse(source, root, visible) {
         var requestType, requestStream,
             responseType, responseStream;
         skip("(");
-        if (omit("stream"))
+        if (skip("stream", true))
             requestStream = true;
         if (!typeRefRe.test(token = next()))
             throw illegal(token);
         requestType = token;
         skip(")"); skip("returns"); skip("(");
-        if (omit("stream"))
+        if (skip("stream", true))
             responseStream = true;
         if (!typeRefRe.test(token = next()))
             throw illegal(token);
         responseType = token;
         skip(")");
         var method = new Method(name, type, requestType, responseType, requestStream, responseStream);
-        if (omit("{")) {
+        if (skip("{", true)) {
             while ((token = next()) !== '}') {
                 var tokenLower = lower(token);
                 switch (tokenLower) {
@@ -453,7 +464,7 @@ function parse(source, root, visible) {
                         throw illegal(token);
                 }
             }
-            omit(";");
+            skip(";", true);
         } else
             skip(";");
         parent.add(method);
@@ -463,7 +474,7 @@ function parse(source, root, visible) {
         var reference = next();
         if (!typeRefRe.test(reference))
             throw illegal(reference, "reference");
-        if (omit("{")) {
+        if (skip("{", true)) {
             while ((token = next()) !== '}') {
                 var tokenLower = lower(token);
                 switch (tokenLower) {
@@ -480,7 +491,7 @@ function parse(source, root, visible) {
                         break;
                 }
             }
-            omit(";");
+            skip(";", true);
         } else
             skip(";");
     }

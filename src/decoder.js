@@ -5,7 +5,8 @@ var Enum    = require("./enum"),
     util    = require("./util");
 
 /**
- * Wire format decoder using code generation on top of reflection.
+ * Constructs a new decoder for the specified message type.
+ * @class Wire format decoder using code generation on top of reflection.
  * @constructor
  * @param {Type} type Message type
  */
@@ -99,7 +100,7 @@ DecoderPrototype.generate = function generate() {
     var fieldsArray = this.type.fieldsArray,
         fieldsCount = fieldsArray.length;
     
-    var gen = util.codegen("$t", "$h", "r", "m", "l")
+    var gen = util.codegen("r", "m", "l")
 
     ('"use strict"')
     ("while(r.pos<l){")
@@ -178,6 +179,9 @@ DecoderPrototype.generate = function generate() {
         ("}")
     ("}")
     ("return m");
-    return gen.eof(this.type.fullName + "$decode").bind(this.type, fieldsArray.map(function(fld) { return fld.resolvedType; }), util.toHash);
+    return gen.eof(this.type.fullName + "$decode", {
+        $t: fieldsArray.map(function(fld) { return fld.resolvedType; }),
+        $h: util.toHash
+    });
     /* eslint-enable no-unexpected-multiline */
 };

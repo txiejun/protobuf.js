@@ -95,10 +95,18 @@
             
                 <li data-name="util.Buffer"><a href="util.html#.Buffer">Buffer</a></li>
             
+                <li data-name="util.codegen.supported"><a href="util.html#.codegen.supported">codegen.supported</a></li>
+            
+                <li data-name="util.codegen.verbose"><a href="util.html#.codegen.verbose">codegen.verbose</a></li>
+            
                 <li data-name="util.Long"><a href="util.html#.Long">Long</a></li>
             
             </ul>
             <ul class="typedefs itemMembers">
+            
+            <span class="subtitle">Typedefs</span>
+            
+                <li data-name="util.CodegenAppender"><a href="util.html#.CodegenAppender">CodegenAppender</a></li>
             
             </ul>
             <ul class="methods itemMembers">
@@ -126,6 +134,8 @@
                 <li data-name="util.normalizePath"><a href="util.html#.normalizePath">normalizePath</a></li>
             
                 <li data-name="util.resolvePath"><a href="util.html#.resolvePath">resolvePath</a></li>
+            
+                <li data-name="util.safeProp"><a href="util.html#.safeProp">safeProp</a></li>
             
                 <li data-name="util.toArray"><a href="util.html#.toArray">toArray</a></li>
             
@@ -882,6 +892,10 @@
             </ul>
             <ul class="typedefs itemMembers">
             
+            <span class="subtitle">Typedefs</span>
+            
+                <li data-name="Prototype.Options"><a href="Prototype.html#.Options">Options</a></li>
+            
             </ul>
             <ul class="methods itemMembers">
             
@@ -1065,6 +1079,10 @@
             </ul>
             <ul class="typedefs itemMembers">
             
+            <span class="subtitle">Typedefs</span>
+            
+                <li data-name="Root.Options"><a href="Root.html#.Options">Options</a></li>
+            
             </ul>
             <ul class="methods itemMembers">
             
@@ -1211,8 +1229,6 @@
             <ul class="members itemMembers">
             
             <span class="subtitle">Members</span>
-            
-                <li data-name="Type.useCodegen"><a href="Type.html#.useCodegen">useCodegen</a></li>
             
                 <li data-name="Type#empty"><a href="Type.html#empty">empty</a></li>
             
@@ -1461,6 +1477,8 @@
     Namespace
     </h2>
     
+        <div class="class-description"><p>Reflected namespace and base class of all reflection objects containing nested objects.</p></div>
+    
 </header>  
 
 <article>
@@ -1478,7 +1496,7 @@
     
         
         <div class="tag-source">
-            <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/namespace.js">namespace.js</a>, <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/namespace.js#L25">line 25</a>
+            <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/namespace.js">namespace.js</a>, <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/namespace.js#L26">line 26</a>
         </div>
         
     </div>
@@ -1489,7 +1507,7 @@
     
     
     <div class="description">
-        <p>Base class of all reflection objects containing nested objects.</p>
+        <p>Constructs a new namespace.</p>
     </div>
     
 
@@ -1554,7 +1572,7 @@
             <td class="type">
             
                 
-<span class="param-type">Object.&lt;string, *></span>
+<span class="param-type">Object</span>
 
 
             
@@ -1571,7 +1589,7 @@
                         
                     
                 
-                <p>Namespace options</p></td>
+                <p>Declared options</p></td>
         </tr>
 	
 	
@@ -2102,7 +2120,7 @@
 <dd>
     
     <div class="description">
-        <p>Whether this object is visible when exporting definitions. Possible values are <code>true</code> to<br>be visible, <code>false</code> to be not and <code>null</code> (setter only) to inherit from parent.</p>
+        <p>Whether this object is visible when exporting definitions. Possible values are <code>true</code> to be visible, <code>false</code> to be not and <code>null</code> (setter only) to inherit from parent.</p>
     </div>
     
     
@@ -2152,7 +2170,7 @@
     
         
         <div class="tag-source">
-            <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/namespace.js">namespace.js</a>, <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/namespace.js#L87">line 87</a>
+            <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/namespace.js">namespace.js</a>, <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/namespace.js#L88">line 88</a>
         </div>
         
     </div>
@@ -2347,7 +2365,7 @@
     
         
         <div class="tag-source">
-            <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/namespace.js">namespace.js</a>, <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/namespace.js#L69">line 69</a>
+            <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/namespace.js">namespace.js</a>, <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/namespace.js#L70">line 70</a>
         </div>
         
     </div>
@@ -2637,7 +2655,7 @@
     
         
         <div class="tag-source">
-            <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/namespace.js">namespace.js</a>, <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/namespace.js#L96">line 96</a>
+            <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/namespace.js">namespace.js</a>, <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/namespace.js#L97">line 97</a>
         </div>
         
     </div>
@@ -3076,7 +3094,7 @@
                         
                     
                 
-                <p>Iterator function called with nested objects<br> and their names. Can return something different than <code>undefined</code> to break the iteration.</p></td>
+                <p>Iterator function called with nested objects and their names. Can return something different than <code>undefined</code> to break the iteration.</p></td>
         </tr>
 	
 	
@@ -3518,7 +3536,7 @@
     
         
         <div class="tag-source">
-            <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/namespace.js">namespace.js</a>, <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/namespace.js#L244">line 244</a>
+            <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/namespace.js">namespace.js</a>, <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/namespace.js#L243">line 243</a>
         </div>
         
     </div>
@@ -4242,7 +4260,7 @@
     
         
         <div class="tag-source">
-            <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/namespace.js">namespace.js</a>, <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/namespace.js#L231">line 231</a>
+            <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/namespace.js">namespace.js</a>, <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/namespace.js#L230">line 230</a>
         </div>
         
     </div>
@@ -4253,7 +4271,7 @@
     
     
     <div class="description">
-        <p>Resolves this namespace's and all its nested objects' type references. Useful to validate a<br>reflection tree.</p>
+        <p>Resolves this namespace's and all its nested objects' type references. Useful to validate a reflection tree.</p>
     </div>
     
 

@@ -10,16 +10,17 @@ var Type = require("./type"),
 var _TypeError = util._TypeError;
 
 /**
- * Reflected service method.
+ * Constructs a new service method.
+ * @class Reflected service method.
  * @extends ReflectionObject
  * @constructor
  * @param {string} name Method name
- * @param {string} type Usually "rpc"
+ * @param {string} type Method type, usually `"rpc"`
  * @param {string} requestType Request message type
  * @param {string} responseType Response message type
  * @param {boolean} [requestStream] Whether the request is streamed
  * @param {boolean} [responseStream] Whether the response is streamed
- * @param {Object.<string,*>} [options] Method options
+ * @param {Object} [options] Declared options
  */
 function Method(name, type, requestType, responseType, requestStream, responseStream, options) {
     if (util.isObject(requestStream)) {
@@ -130,9 +131,7 @@ MethodPrototype.resolve = function resolve() {
 /**
  * Calls this method.
  * @param {Prototype|Object} message Request message
- * @param {function(number[], function(?Error, (number[])=))} performRequest A function performing the
- * request on binary level, taking a buffer and a node-style callback for the response buffer as
- * its parameters.
+ * @param {function(number[], function(?Error, (number[])=))} performRequest A function performing the request on binary level, taking a buffer and a node-style callback for the response buffer as its parameters.
  * @param {function(Error, Prototype=)} [callback] Node-style callback function
  * @param {Object} [ctx] Optional callback context
  * @returns {Promise<Prototype>|undefined} A promise if `callback` has been omitted

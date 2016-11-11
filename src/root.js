@@ -8,18 +8,25 @@ var Namespace = require("./namespace"),
     util      = require("./util");
 
 /**
- * Root namespace.
+ * Options provided to a {@link Root|root namespace}, modifying its behavior.
+ * @typedef Root.Options
+ * @type {Object}
+ * @property {boolean} [noGoogleTypes=false] Skips loading of common Google types like `google.protobuf.Any`.
+ */
+
+/**
+ * Constructs a new root namespace.
+ * @class Root namespace wrapping all types, enums, services, sub-namespaces etc. that belong together.
  * @extends Namespace
  * @constructor
- * @param {Object.<string,*>} [contextOptions] Context options
- * @param {Object.<string,*>} [options] Namespace options
- * @param {boolean} [contextOptions.noGoogleTypes=false] Skips loading of common google types
+ * @param {Root.Options} [rootOptions] Root options
+ * @param {Object} [options] Declared options
  */
-function Root(contextOptions, options) {
+function Root(rootOptions, options) {
     Namespace.call(this, "", options);
 
-    if (!contextOptions)
-        contextOptions = {};
+    if (!rootOptions)
+        rootOptions = {};
 
     /**
      * References to common google types.
@@ -40,7 +47,7 @@ function Root(contextOptions, options) {
      */
     this._loaded = []; // use addLoaded/isLoaded instead
 
-    if (!contextOptions.noGoogleTypes)
+    if (!rootOptions.noGoogleTypes)
         importGoogleTypes(this, false);
 }
 

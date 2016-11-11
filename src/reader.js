@@ -11,7 +11,9 @@ function indexOutOfRange(reader, writeLength) {
 }
 
 /**
- * Wire format reader using `Uint8Array` if available, otherwise `Array`.
+ * Constructs a new reader using the specified buffer.
+ * When called as a function, returns an appropriate reader for the specified buffer.
+ * @class Wire format reader using `Uint8Array` if available, otherwise `Array`.
  * @constructor
  * @param {number[]} buffer Buffer to read from
  */
@@ -110,9 +112,11 @@ ReaderPrototype.sint32 = function read_sint32() {
 /**
  * Reads a possibly 64 bits varint.
  * @returns {LongBits} Long bits
- * @private
+ * @this {Reader}
+ * @inner
+ * @ignore
  */
-ReaderPrototype._readLongVarint = function readLongVarint() {
+function readLongVarint() {
     var lo = 0, hi = 0,
         i  = 0, b  = 0;
     if (this.len - this.pos > 9) { // fast route
@@ -159,14 +163,14 @@ ReaderPrototype._readLongVarint = function readLongVarint() {
         }
     }
     throw Error("invalid varint encoding");
-};
+}
 
 /**
  * Reads a varint as a signed 64 bit value.
  * @returns {Long|number} Value read
  */
 ReaderPrototype.int64 = function read_int64() {
-    var bits = this._readLongVarint();
+    var bits = readLongVarint.call(this);
     if (util.Long)
         return util.Long.fromBits(bits.lo, bits.hi, false);
     return bits.toNumber(false);
@@ -177,7 +181,7 @@ ReaderPrototype.int64 = function read_int64() {
  * @returns {Long|number} Value read
  */
 ReaderPrototype.uint64 = function read_uint64() {
-    var bits = this._readLongVarint();
+    var bits = readLongVarint.call(this);
     if (util.Long)
         return util.Long.fromBits(bits.lo, bits.hi, true);
     return bits.toNumber(true);
@@ -188,7 +192,7 @@ ReaderPrototype.uint64 = function read_uint64() {
  * @returns {Long|number} Value read
  */
 ReaderPrototype.sint64 = function read_sint64() {
-    var bits = this._readLongVarint().zzDecode();
+    var bits = readLongVarint.call(this).zzDecode();
     if (util.Long)
         return util.Long.fromBits(bits.lo, bits.hi, false);
     return bits.toNumber(false);
@@ -228,9 +232,11 @@ ReaderPrototype.sfixed32 = function read_sfixed32() {
 /**
  * Reads a 64 bit value.
  * @returns {LongBits} Long bits
- * @private 
+ * @this {Reader}
+ * @inner 
+ * @ignore
  */
-ReaderPrototype._readLongFixed = function readLongFixed() {
+function readLongFixed() {
     if (this.pos + 8 > this.len)
         throw RangeError(indexOutOfRange(this, 8));
     return new LongBits(
@@ -244,14 +250,14 @@ ReaderPrototype._readLongFixed = function readLongFixed() {
       | this.buf[this.pos++] << 16
       | this.buf[this.pos++] << 24 ) >>> 0
     );
-};
+}
 
 /**
  * Reads fixed 64 bits as a Long.
  * @returns {Long|number} Value read
  */
 ReaderPrototype.fixed64 = function read_fixed64() {
-    var bits = this._readLongFixed();
+    var bits = readLongFixed.call(this);
     if (util.Long)
         return util.Long.fromBits(bits.lo, bits.hi, true);
     return bits.toNumber(true);
@@ -262,7 +268,7 @@ ReaderPrototype.fixed64 = function read_fixed64() {
  * @returns {Long|number} Value read
  */
 ReaderPrototype.sfixed64 = function read_sfixed64() {
-    var bits = this._readLongFixed().zzDecode();
+    var bits = readLongFixed.call(this).zzDecode();
     if (util.Long)
         return util.Long.fromBits(bits.lo, bits.hi, false);
     return bits.toNumber(false);
@@ -390,7 +396,7 @@ ReaderPrototype.skipType = function(wireType) {
 
 /**
  * Resets this instance and frees all resources.
- * @param {number[]} [buffer] Optionally a new buffer for a new sequence of read operations
+ * @param {number[]} [buffer] New buffer for a new sequence of read operations
  * @returns {Reader} `this`
  */
 ReaderPrototype.reset = function reset(buffer) {
@@ -407,8 +413,7 @@ ReaderPrototype.reset = function reset(buffer) {
 
 /**
  * Finishes the current sequence of read operations, frees all resources and returns the remaining buffer.
- * Optionally accepts a new buffer for a new sequence of read operations.
- * @param {number[]} [buffer] Optionally a new buffer for a new sequence of read operations
+ * @param {number[]} [buffer] New buffer for a new sequence of read operations
  * @returns {number[]} Finished buffer
  */
 ReaderPrototype.finish = function finish(buffer) {
@@ -419,8 +424,7 @@ ReaderPrototype.finish = function finish(buffer) {
     return remain;
 };
 
-// One time function to initialize BufferReader with the now-known buffer
-// implementation's slice method
+// One time function to initialize BufferReader with the now-known buffer implementation's slice method
 var initBufferReader = function() {
     if (!util.Buffer)
         throw Error("Buffer is not supported");
@@ -429,7 +433,8 @@ var initBufferReader = function() {
 };
 
 /**
- * Wire format reader using node buffers.
+ * Constructs a new buffer reader.
+ * @class Wire format reader using node buffers.
  * @extends Reader
  * @constructor
  * @param {Buffer} buffer Buffer to read from
@@ -487,8 +492,7 @@ BufferReaderPrototype.string = function read_string_buffer(length) {
 
 /**
  * Finishes the current sequence of read operations using node buffers, frees all resources and returns the remaining buffer.
- * Optionally accepts a new buffer for a new sequence of read operations using node buffers.
- * @param {Buffer} [buffer] Optionally a new buffer for a new sequence of read operations
+ * @param {Buffer} [buffer] New buffer for a new sequence of read operations
  * @returns {Buffer} Finished buffer
  */
 BufferReaderPrototype.finish = function finish_buffer(buffer) {

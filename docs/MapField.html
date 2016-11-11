@@ -95,10 +95,18 @@
             
                 <li data-name="util.Buffer"><a href="util.html#.Buffer">Buffer</a></li>
             
+                <li data-name="util.codegen.supported"><a href="util.html#.codegen.supported">codegen.supported</a></li>
+            
+                <li data-name="util.codegen.verbose"><a href="util.html#.codegen.verbose">codegen.verbose</a></li>
+            
                 <li data-name="util.Long"><a href="util.html#.Long">Long</a></li>
             
             </ul>
             <ul class="typedefs itemMembers">
+            
+            <span class="subtitle">Typedefs</span>
+            
+                <li data-name="util.CodegenAppender"><a href="util.html#.CodegenAppender">CodegenAppender</a></li>
             
             </ul>
             <ul class="methods itemMembers">
@@ -126,6 +134,8 @@
                 <li data-name="util.normalizePath"><a href="util.html#.normalizePath">normalizePath</a></li>
             
                 <li data-name="util.resolvePath"><a href="util.html#.resolvePath">resolvePath</a></li>
+            
+                <li data-name="util.safeProp"><a href="util.html#.safeProp">safeProp</a></li>
             
                 <li data-name="util.toArray"><a href="util.html#.toArray">toArray</a></li>
             
@@ -882,6 +892,10 @@
             </ul>
             <ul class="typedefs itemMembers">
             
+            <span class="subtitle">Typedefs</span>
+            
+                <li data-name="Prototype.Options"><a href="Prototype.html#.Options">Options</a></li>
+            
             </ul>
             <ul class="methods itemMembers">
             
@@ -1065,6 +1079,10 @@
             </ul>
             <ul class="typedefs itemMembers">
             
+            <span class="subtitle">Typedefs</span>
+            
+                <li data-name="Root.Options"><a href="Root.html#.Options">Options</a></li>
+            
             </ul>
             <ul class="methods itemMembers">
             
@@ -1211,8 +1229,6 @@
             <ul class="members itemMembers">
             
             <span class="subtitle">Members</span>
-            
-                <li data-name="Type.useCodegen"><a href="Type.html#.useCodegen">useCodegen</a></li>
             
                 <li data-name="Type#empty"><a href="Type.html#empty">empty</a></li>
             
@@ -1461,6 +1477,8 @@
     MapField
     </h2>
     
+        <div class="class-description"><p>Reflected map field.</p></div>
+    
 </header>  
 
 <article>
@@ -1473,12 +1491,12 @@
     <div class="nameContainer">
         <h4 class="name" id="MapField">
             
-            new MapField<span class="signature">(name, id, type, keyType, <span class="optional">options</span>)</span>
+            new MapField<span class="signature">(name, id, keyType, type, <span class="optional">options</span>)</span>
         </h4>
     
         
         <div class="tag-source">
-            <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/mapfield.js">mapfield.js</a>, <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/mapfield.js#L21">line 21</a>
+            <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/mapfield.js">mapfield.js</a>, <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/mapfield.js#L22">line 22</a>
         </div>
         
     </div>
@@ -1489,7 +1507,7 @@
     
     
     <div class="description">
-        <p>Reflected message map field.</p>
+        <p>Constructs a new map field.</p>
     </div>
     
 
@@ -1576,34 +1594,6 @@
 	
         <tr>
             
-                <td class="name"><code>type</code></td>
-            
-            
-            <td class="type">
-            
-                
-<span class="param-type">string</span>
-
-
-            
-            </td>
-            
-            
-            
-            <td class="description last">
-                
-                    
-                    
-                        
-                    
-                
-                <p>Value type</p></td>
-        </tr>
-	
-	
-	
-        <tr>
-            
                 <td class="name"><code>keyType</code></td>
             
             
@@ -1632,13 +1622,41 @@
 	
         <tr>
             
+                <td class="name"><code>type</code></td>
+            
+            
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+            
+            
+            
+            <td class="description last">
+                
+                    
+                    
+                        
+                    
+                
+                <p>Value type</p></td>
+        </tr>
+	
+	
+	
+        <tr>
+            
                 <td class="name"><code>options</code></td>
             
             
             <td class="type">
             
                 
-<span class="param-type">Object.&lt;string, *></span>
+<span class="param-type">Object</span>
 
 
             
@@ -1655,7 +1673,7 @@
                         
                     
                 
-                <p>Field options</p></td>
+                <p>Declared options</p></td>
         </tr>
 	
 	
@@ -2906,7 +2924,7 @@
 <dd>
     
     <div class="description">
-        <p>Whether this object is visible when exporting definitions. Possible values are <code>true</code> to<br>be visible, <code>false</code> to be not and <code>null</code> (setter only) to inherit from parent.</p>
+        <p>Whether this object is visible when exporting definitions. Possible values are <code>true</code> to be visible, <code>false</code> to be not and <code>null</code> (setter only) to inherit from parent.</p>
     </div>
     
     
@@ -2956,7 +2974,7 @@
     
         
         <div class="tag-source">
-            <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/mapfield.js">mapfield.js</a>, <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/mapfield.js#L60">line 60</a>
+            <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/mapfield.js">mapfield.js</a>, <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/mapfield.js#L59">line 59</a>
         </div>
         
     </div>
@@ -3151,7 +3169,7 @@
     
         
         <div class="tag-source">
-            <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/mapfield.js">mapfield.js</a>, <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/mapfield.js#L49">line 49</a>
+            <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/mapfield.js">mapfield.js</a>, <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/mapfield.js#L48">line 48</a>
         </div>
         
     </div>
@@ -3445,7 +3463,7 @@
     
         
         <div class="tag-source">
-            <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/field.js">field.js</a>, <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/field.js#L234">line 234</a>
+            <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/field.js">field.js</a>, <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/field.js#L237">line 237</a>
         </div>
         
     </div>
@@ -3456,7 +3474,7 @@
     
     
     <div class="description">
-        <p>Converts a field value to JSON using the specified options. Note that this method does not<br>account for repeated fields and must be called once for each repeated element instead.</p>
+        <p>Converts a field value to JSON using the specified options. Note that this method does not account for repeated fields and must be called once for each repeated element instead.</p>
     </div>
     
 
@@ -3928,7 +3946,7 @@
     
         
         <div class="tag-source">
-            <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/field.js">field.js</a>, <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/field.js#L193">line 193</a>
+            <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/field.js">field.js</a>, <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/field.js#L197">line 197</a>
         </div>
         
     </div>

@@ -2,7 +2,7 @@ module.exports = codegen;
 
 /**
  * Whether code generation is supported by the environment.
- * @memberof util.codegen
+ * @memberof util
  * @type {boolean}
  */
 codegen.supported = false;
@@ -10,25 +10,39 @@ try { codegen.supported = codegen("a","b")("return a-b").eof()(2,1) === 1; } cat
 
 /**
  * When set to true, codegen will log generated code to console. Useful for debugging.
- * @memberof util.codegen
+ * @memberof util
  * @type {boolean}
  */
 codegen.verbose = false;
 
 /**
+ * Appends a printf-like formatted line to the generated source. Returned when calling {@link util.codegen}.
+ * @typedef util.CodegenAppender
+ * @type {function}
+ * @param {string} format A printf-like format string
+ * @param {...*} params Format replacements
+ * @returns {util.CodegenAppender} Itself
+ * @see {@link https://nodejs.org/docs/latest/api/util.html#util_util_format_format_args}
+ */
+
+/**
  * Programmatically generates a function.
- * When done appending code, call `eof([name])` on the Appender to generate the actual function.
  * @memberof util
  * @param {...string} params Function parameter names
- * @returns {function} Appender function similar to `util.format` known from node
- * @see {@link https://nodejs.org/docs/latest/api/util.html#util_util_format_format_args}
+ * @returns {util.CodegenAppender} Printf-like appender function
  */
 function codegen(/* varargs */) {
     var args   = Array.prototype.slice.call(arguments),
         src    = [],
         indent = 1;
 
-    // Appends a formatted line to the generated source
+    /**
+     * Appends a printf-like formatted line to the generated source. This function is returned when calling {@link util.codegen}.
+     * @param {string} format A printf-like format string
+     * @param {...*} params Format replacements
+     * @returns {util.CodegenAppender} Itself
+     * @inner
+     */
     function gen(format/*, varargs */) {
         var params = Array.prototype.slice.call(arguments, 1),
             index  = 0;
@@ -57,17 +71,40 @@ function codegen(/* varargs */) {
         return gen;
     }
 
-    // Converts the so far generated source to a string
+    /**
+     * Converts the so far generated source to a string.
+     * @param {string} [name] Function name, defaults to generate an anonymous function
+     * @returns {string} Function source
+     */
     gen.toString = function toString(name) {
         return "function " + (name ? name.replace(/[^\w_$]/g, "_") : "") + "(" + args.join(",") + ") {\n" + src.join("\n") + "\n}";
     };
 
-    // Ends generation
-    gen.eof = function eof(name) {
+    /**
+     * Ends generation and builds the function.
+     * @param {string} [name] Function name, defaults to generate an anonymous function
+     * @param {Object|Array} [scope] Function scope
+     * @returns {function} A function to apply the scope manually when `scope` is an array, otherwise the generated function with scope applied
+     */
+    gen.eof = function eof(name, scope) {
+        if (name && typeof name === 'object') {
+            scope = name;
+            name = undefined;
+        }
         var code = gen.toString(name);
         if (codegen.verbose)
             console.log("--- codegen ---\n" + code.replace(/^/mg, "> ").replace(/\t/g, "  ")); // eslint-disable-line no-console
-        return new Function("return " + code + ";")(); // eslint-disable-line no-new-func
+        code = "return " + code;
+        var params, values = [];
+        if (Array.isArray(scope)) {
+            params = scope.slice();
+        } else if (scope) {
+            params = Object.keys(scope);
+            values = params.map(function(key) { return scope[key]; });
+        } else
+            params = [];
+        var fn = Function.apply(null, params.concat(code)); // eslint-disable-line no-new-func
+        return values ? fn.apply(null, values) : fn();
     };
 
     return gen;

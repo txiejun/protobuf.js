@@ -1,11 +1,19 @@
 module.exports = Prototype;
 
 /**
- * Runtime message prototype ready to be extended by custom classes or generated code.
+ * Options passed to the {@link Prototype|prototype constructor}, modifying its behavior.
+ * @typedef Prototype.Options
+ * @type {Object}
+ * @property {boolean} [fieldsOnly=false] Sets only properties that reference a field
+ */
+
+/**
+ * Constructs a new prototype.
+ * This method should be called from your custom constructors, i.e. `Prototype.call(this, properties)`.
+ * @class Runtime message prototype ready to be extended by custom classes or generated code.
  * @constructor
  * @param {Object.<string,*>} [properties] Properties to set
- * @param {Object.<string,*>} [options] Initialization options
- * @param {boolean} [options.fieldsOnly=false] Sets only properties that reference a field
+ * @param {Prototype.Options} [options] Prototype options
  * @abstract
  * @see {@link inherits}
  * @see {@link Class}
@@ -25,11 +33,11 @@ function Prototype(properties, options) {
  * Converts a runtime message to a JSON object.
  * @param {Object.<string,*>} [options] Conversion options
  * @param {boolean} [options.fieldsOnly=false] Converts only properties that reference a field
- * @param {Function} [options.long] Long conversion type. Only relevant with a long library. Valid
- * values are `String` and `Number` (the global types).
+ * @param {Function} [options.long] Long conversion type. Only relevant with a long library.
+ * Valid values are `String` and `Number` (the global types).
  * Defaults to a possibly unsafe number without, and a `Long` with a long library.
- * @param {Function} [options.enum=Number] Enum value conversion type. Valid values are `String`
- * and `Number` (the global types).
+ * @param {Function} [options.enum=Number] Enum value conversion type.
+ * Valid values are `String` and `Number` (the global types).
  * Defaults to the values' numeric ids.
  * @returns {Object.<string,*>} JSON object
  */

@@ -11,8 +11,8 @@ util.codegen  = codegen;
 util.LongBits = LongBits;
 
 /**
- * Optional buffer class to use. If you assign any compatible buffer implementation to this
- * property, the library will use it.
+ * Optional buffer class to use.
+ * If you assign any compatible buffer implementation to this property, the library will use it.
  * @type {?Function}
  */
 util.Buffer = null;
@@ -20,8 +20,8 @@ util.Buffer = null;
 try { util.Buffer = require("buffer").Buffer; } catch (e) {} // eslint-disable-line no-empty
 
 /**
- * Optional Long class to use. If you assign any compatible long implementation to this property,
- * the library will use it.
+ * Optional Long class to use.
+ * If you assign any compatible long implementation to this property, the library will use it.
  * @type {?Function}
  */
 util.Long = null;

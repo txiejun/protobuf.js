@@ -9,12 +9,13 @@ var util = require("./util");
 var _TypeError = util._TypeError;
 
 /**
- * Reflected enum.
+ * Constructs a new enum.
+ * @class Reflected enum.
  * @extends ReflectionObject
  * @constructor
  * @param {string} name Unique name within its namespace
  * @param {Object.<string,number>} [values] Enum values as an object, by name
- * @param {Object.<string,*>} [options] Enum options
+ * @param {Object} [options] Declared options
  */
 function Enum(name, values, options) {
     ReflectionObject.call(this, name, options);

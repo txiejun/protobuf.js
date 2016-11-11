@@ -95,10 +95,18 @@
             
                 <li data-name="util.Buffer"><a href="util.html#.Buffer">Buffer</a></li>
             
+                <li data-name="util.codegen.supported"><a href="util.html#.codegen.supported">codegen.supported</a></li>
+            
+                <li data-name="util.codegen.verbose"><a href="util.html#.codegen.verbose">codegen.verbose</a></li>
+            
                 <li data-name="util.Long"><a href="util.html#.Long">Long</a></li>
             
             </ul>
             <ul class="typedefs itemMembers">
+            
+            <span class="subtitle">Typedefs</span>
+            
+                <li data-name="util.CodegenAppender"><a href="util.html#.CodegenAppender">CodegenAppender</a></li>
             
             </ul>
             <ul class="methods itemMembers">
@@ -126,6 +134,8 @@
                 <li data-name="util.normalizePath"><a href="util.html#.normalizePath">normalizePath</a></li>
             
                 <li data-name="util.resolvePath"><a href="util.html#.resolvePath">resolvePath</a></li>
+            
+                <li data-name="util.safeProp"><a href="util.html#.safeProp">safeProp</a></li>
             
                 <li data-name="util.toArray"><a href="util.html#.toArray">toArray</a></li>
             
@@ -882,6 +892,10 @@
             </ul>
             <ul class="typedefs itemMembers">
             
+            <span class="subtitle">Typedefs</span>
+            
+                <li data-name="Prototype.Options"><a href="Prototype.html#.Options">Options</a></li>
+            
             </ul>
             <ul class="methods itemMembers">
             
@@ -1065,6 +1079,10 @@
             </ul>
             <ul class="typedefs itemMembers">
             
+            <span class="subtitle">Typedefs</span>
+            
+                <li data-name="Root.Options"><a href="Root.html#.Options">Options</a></li>
+            
             </ul>
             <ul class="methods itemMembers">
             
@@ -1211,8 +1229,6 @@
             <ul class="members itemMembers">
             
             <span class="subtitle">Members</span>
-            
-                <li data-name="Type.useCodegen"><a href="Type.html#.useCodegen">useCodegen</a></li>
             
                 <li data-name="Type#empty"><a href="Type.html#empty">empty</a></li>
             
@@ -1461,6 +1477,8 @@
     Root
     </h2>
     
+        <div class="class-description"><p>Root namespace wrapping all types, enums, services, sub-namespaces etc. that belong together.</p></div>
+    
 </header>  
 
 <article>
@@ -1473,12 +1491,12 @@
     <div class="nameContainer">
         <h4 class="name" id="Root">
             
-            new Root<span class="signature">(<span class="optional">contextOptions</span>, <span class="optional">options</span>)</span>
+            new Root<span class="signature">(<span class="optional">rootOptions</span>, <span class="optional">options</span>)</span>
         </h4>
     
         
         <div class="tag-source">
-            <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/root.js">root.js</a>, <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/root.js#L18">line 18</a>
+            <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/root.js">root.js</a>, <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/root.js#L25">line 25</a>
         </div>
         
     </div>
@@ -1489,7 +1507,7 @@
     
     
     <div class="description">
-        <p>Root namespace.</p>
+        <p>Constructs a new root namespace.</p>
     </div>
     
 
@@ -1510,8 +1528,6 @@
 		<th>Type</th>
 		
 		
-		<th>Default</th>
-		
 		
 		<th class="last">Description</th>
 	</tr>
@@ -1522,22 +1538,18 @@
 	
         <tr>
             
-                <td class="name"><code>contextOptions</code></td>
+                <td class="name"><code>rootOptions</code></td>
             
             
             <td class="type">
             
                 
-<span class="param-type">Object.&lt;string, *></span>
+<span class="param-type"><a href="Root.html#.Options">Root.Options</a></span>
 
 
             
             </td>
             
-            
-                <td class="default">
-                
-                </td>
             
             
             <td class="description last">
@@ -1549,7 +1561,7 @@
                         
                     
                 
-                <p>Context options</p></td>
+                <p>Root options</p></td>
         </tr>
 	
 	
@@ -1562,16 +1574,12 @@
             <td class="type">
             
                 
-<span class="param-type">Object.&lt;string, *></span>
+<span class="param-type">Object</span>
 
 
             
             </td>
             
-            
-                <td class="default">
-                
-                </td>
             
             
             <td class="description last">
@@ -1583,43 +1591,7 @@
                         
                     
                 
-                <p>Namespace options</p></td>
-        </tr>
-	
-	
-	
-        <tr>
-            
-                <td class="name"><code>contextOptions.noGoogleTypes</code></td>
-            
-            
-            <td class="type">
-            
-                
-<span class="param-type">boolean</span>
-
-
-            
-            </td>
-            
-            
-                <td class="default">
-                
-                    false
-                
-                </td>
-            
-            
-            <td class="description last">
-                
-                    
-                        <span class="optional">optional</span>
-                    
-                    
-                        
-                    
-                
-                <p>Skips loading of common google types</p></td>
+                <p>Declared options</p></td>
         </tr>
 	
 	
@@ -2240,7 +2212,7 @@
 <dd>
     
     <div class="description">
-        <p>Whether this object is visible when exporting definitions. Possible values are <code>true</code> to<br>be visible, <code>false</code> to be not and <code>null</code> (setter only) to inherit from parent.</p>
+        <p>Whether this object is visible when exporting definitions. Possible values are <code>true</code> to be visible, <code>false</code> to be not and <code>null</code> (setter only) to inherit from parent.</p>
     </div>
     
     
@@ -2290,7 +2262,7 @@
     
         
         <div class="tag-source">
-            <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/root.js">root.js</a>, <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/root.js#L83">line 83</a>
+            <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/root.js">root.js</a>, <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/root.js#L90">line 90</a>
         </div>
         
     </div>
@@ -2621,7 +2593,7 @@
     
         
         <div class="tag-source">
-            <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/namespace.js">namespace.js</a>, <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/namespace.js#L96">line 96</a>
+            <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/namespace.js">namespace.js</a>, <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/namespace.js#L97">line 97</a>
         </div>
         
     </div>
@@ -2766,7 +2738,7 @@
     
         
         <div class="tag-source">
-            <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/root.js">root.js</a>, <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/root.js#L68">line 68</a>
+            <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/root.js">root.js</a>, <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/root.js#L75">line 75</a>
         </div>
         
     </div>
@@ -3209,7 +3181,7 @@
                         
                     
                 
-                <p>Iterator function called with nested objects<br> and their names. Can return something different than <code>undefined</code> to break the iteration.</p></td>
+                <p>Iterator function called with nested objects and their names. Can return something different than <code>undefined</code> to break the iteration.</p></td>
         </tr>
 	
 	
@@ -3653,7 +3625,7 @@
     
         
         <div class="tag-source">
-            <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/root.js">root.js</a>, <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/root.js#L55">line 55</a>
+            <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/root.js">root.js</a>, <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/root.js#L62">line 62</a>
         </div>
         
     </div>
@@ -3798,7 +3770,7 @@
     
         
         <div class="tag-source">
-            <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/root.js">root.js</a>, <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/root.js#L273">line 273</a>
+            <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/root.js">root.js</a>, <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/root.js#L280">line 280</a>
         </div>
         
     </div>
@@ -4043,7 +4015,7 @@
     
         
         <div class="tag-source">
-            <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/namespace.js">namespace.js</a>, <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/namespace.js#L244">line 244</a>
+            <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/namespace.js">namespace.js</a>, <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/namespace.js#L243">line 243</a>
         </div>
         
     </div>
@@ -4771,7 +4743,7 @@
     
         
         <div class="tag-source">
-            <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/namespace.js">namespace.js</a>, <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/namespace.js#L231">line 231</a>
+            <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/namespace.js">namespace.js</a>, <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/namespace.js#L230">line 230</a>
         </div>
         
     </div>
@@ -4782,7 +4754,7 @@
     
     
     <div class="description">
-        <p>Resolves this namespace's and all its nested objects' type references. Useful to validate a<br>reflection tree.</p>
+        <p>Resolves this namespace's and all its nested objects' type references. Useful to validate a reflection tree.</p>
     </div>
     
 
@@ -5612,6 +5584,124 @@
         </dl>
     
     
+    
+        <h3 class="subsection-title">Type Definitions</h3>
+        
+        <dl>
+                
+<dt>
+    <div class="nameContainer">
+        <h4 class="name" id=".Options">Root.Options<span class="type-signature type object">Object</span> </h4>
+    </div>
+    
+    
+</dt>
+<dd>
+    
+    <div class="description">
+        <p>Options provided to a <a href="Root.html">root namespace</a>, modifying its behavior.</p>
+    </div>
+    
+    
+    
+<dl class="details">
+    
+        
+        <h5 class="subsection-title">Properties:</h5>
+        
+        <dl>
+
+<table class="props">
+    <thead>
+	<tr>
+		
+		<th>Name</th>
+		
+		
+		<th>Type</th>
+		
+		
+		<th>Argument</th>
+		
+		
+		
+		<th>Default</th>
+		
+		
+		<th class="last">Description</th>
+	</tr>
+	</thead>
+	
+	<tbody>
+	
+	
+        <tr>
+            
+                <td class="name"><code>noGoogleTypes</code></td>
+            
+            
+            <td class="type">
+            
+                
+<span class="param-type">boolean</span>
+
+
+            
+            </td>
+            
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+                    
+                
+                </td>
+            
+            
+            
+                <td class="default">
+                
+                    false
+                
+                </td>
+            
+            
+            <td class="description last"><p>Skips loading of common Google types like <code>google.protobuf.Any</code>.</p></td>
+        </tr>
+	
+	
+	</tbody>
+</table></dl>
+        
+    
+        
+    
+    
+    
+
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+</dl>
+
+    
+    
+</dd>
+
+            </dl>
     
     
     

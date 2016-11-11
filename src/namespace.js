@@ -16,11 +16,12 @@ var nestedTypes = [ Enum, Type, Service, Field, Namespace ],
     nestedError = "one of " + nestedTypes.map(function(ctor) { return ctor.name; }).join(', ');
 
 /**
- * Base class of all reflection objects containing nested objects.
+ * Constructs a new namespace.
+ * @class Reflected namespace and base class of all reflection objects containing nested objects.
  * @extends ReflectionObject
  * @constructor
  * @param {string} name Namespace name
- * @param {Object.<string,*>} [options] Namespace options
+ * @param {Object} [options] Declared options
  */
 function Namespace(name, options) {
     ReflectionObject.call(this, name, options);
@@ -111,8 +112,7 @@ NamespacePrototype.addJSON = function addJSON(json) {
 
 /**
  * Iterates over all nested objects.
- * @param {function(this:Namespace, ReflectionObject, string):*} fn Iterator function called with nested objects
- *  and their names. Can return something different than `undefined` to break the iteration.
+ * @param {function(this:Namespace, ReflectionObject, string):*} fn Iterator function called with nested objects and their names. Can return something different than `undefined` to break the iteration.
  * @param {Object} [ctx] Optional iterator function context
  * @param {Object} [object] Alternative object to iterate over
  * @returns {*|Namespace} First value returned, otherwise `this`
@@ -224,8 +224,7 @@ NamespacePrototype.define = function define(path, json, visible) {
 };
 
 /**
- * Resolves this namespace's and all its nested objects' type references. Useful to validate a
- * reflection tree.
+ * Resolves this namespace's and all its nested objects' type references. Useful to validate a reflection tree.
  * @returns {Namespace} `this`
  */
 NamespacePrototype.resolveAll = function resolve() {

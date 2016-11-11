@@ -95,10 +95,18 @@
             
                 <li data-name="util.Buffer"><a href="util.html#.Buffer">Buffer</a></li>
             
+                <li data-name="util.codegen.supported"><a href="util.html#.codegen.supported">codegen.supported</a></li>
+            
+                <li data-name="util.codegen.verbose"><a href="util.html#.codegen.verbose">codegen.verbose</a></li>
+            
                 <li data-name="util.Long"><a href="util.html#.Long">Long</a></li>
             
             </ul>
             <ul class="typedefs itemMembers">
+            
+            <span class="subtitle">Typedefs</span>
+            
+                <li data-name="util.CodegenAppender"><a href="util.html#.CodegenAppender">CodegenAppender</a></li>
             
             </ul>
             <ul class="methods itemMembers">
@@ -126,6 +134,8 @@
                 <li data-name="util.normalizePath"><a href="util.html#.normalizePath">normalizePath</a></li>
             
                 <li data-name="util.resolvePath"><a href="util.html#.resolvePath">resolvePath</a></li>
+            
+                <li data-name="util.safeProp"><a href="util.html#.safeProp">safeProp</a></li>
             
                 <li data-name="util.toArray"><a href="util.html#.toArray">toArray</a></li>
             
@@ -882,6 +892,10 @@
             </ul>
             <ul class="typedefs itemMembers">
             
+            <span class="subtitle">Typedefs</span>
+            
+                <li data-name="Prototype.Options"><a href="Prototype.html#.Options">Options</a></li>
+            
             </ul>
             <ul class="methods itemMembers">
             
@@ -1065,6 +1079,10 @@
             </ul>
             <ul class="typedefs itemMembers">
             
+            <span class="subtitle">Typedefs</span>
+            
+                <li data-name="Root.Options"><a href="Root.html#.Options">Options</a></li>
+            
             </ul>
             <ul class="methods itemMembers">
             
@@ -1211,8 +1229,6 @@
             <ul class="members itemMembers">
             
             <span class="subtitle">Members</span>
-            
-                <li data-name="Type.useCodegen"><a href="Type.html#.useCodegen">useCodegen</a></li>
             
                 <li data-name="Type#empty"><a href="Type.html#empty">empty</a></li>
             
@@ -1461,6 +1477,8 @@
     Prototype
     </h2>
     
+        <div class="class-description"><p>Runtime message prototype ready to be extended by custom classes or generated code.</p></div>
+    
 </header>  
 
 <article>
@@ -1478,7 +1496,7 @@
     
         
         <div class="tag-source">
-            <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/prototype.js">prototype.js</a>, <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/prototype.js#L13">line 13</a>
+            <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/prototype.js">prototype.js</a>, <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/prototype.js#L21">line 21</a>
         </div>
         
     </div>
@@ -1489,7 +1507,7 @@
     
     
     <div class="description">
-        <p>Runtime message prototype ready to be extended by custom classes or generated code.</p>
+        <p>Constructs a new prototype.<br>This method should be called from your custom constructors, i.e. <code>Prototype.call(this, properties)</code>.</p>
     </div>
     
 
@@ -1556,7 +1574,7 @@
             <td class="type">
             
                 
-<span class="param-type">Object.&lt;string, *></span>
+<span class="param-type"><a href="Prototype.html#.Options">Prototype.Options</a></span>
 
 
             
@@ -1573,67 +1591,7 @@
                         
                     
                 
-                <p>Initialization options</p>
-                
-
-<table class="params">
-    <thead>
-	<tr>
-		
-		<th>Name</th>
-		
-		
-		<th>Type</th>
-		
-		
-		<th>Default</th>
-		
-		
-		<th class="last">Description</th>
-	</tr>
-	</thead>
-	
-	<tbody>
-	
-	
-        <tr>
-            
-                <td class="name"><code>fieldsOnly</code></td>
-            
-            
-            <td class="type">
-            
-                
-<span class="param-type">boolean</span>
-
-
-            
-            </td>
-            
-            
-                <td class="default">
-                
-                    false
-                
-                </td>
-            
-            
-            <td class="description last">
-                
-                    
-                        <span class="optional">optional</span>
-                    
-                    
-                        
-                    
-                
-                <p>Sets only properties that reference a field</p></td>
-        </tr>
-	
-	
-	</tbody>
-</table>
-            </td>
+                <p>Prototype options</p></td>
         </tr>
 	
 	
@@ -1767,7 +1725,7 @@
     
         
         <div class="tag-source">
-            <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/prototype.js">prototype.js</a>, <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/prototype.js#L36">line 36</a>
+            <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/prototype.js">prototype.js</a>, <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/prototype.js#L44">line 44</a>
         </div>
         
     </div>
@@ -1920,7 +1878,7 @@
                         
                     
                 
-                <p>Long conversion type. Only relevant with a long library. Valid<br>values are <code>String</code> and <code>Number</code> (the global types).<br>Defaults to a possibly unsafe number without, and a <code>Long</code> with a long library.</p></td>
+                <p>Long conversion type. Only relevant with a long library.<br>Valid values are <code>String</code> and <code>Number</code> (the global types).<br>Defaults to a possibly unsafe number without, and a <code>Long</code> with a long library.</p></td>
         </tr>
 	
 	
@@ -1956,7 +1914,7 @@
                         
                     
                 
-                <p>Enum value conversion type. Valid values are <code>String</code><br>and <code>Number</code> (the global types).<br>Defaults to the values' numeric ids.</p></td>
+                <p>Enum value conversion type.<br>Valid values are <code>String</code> and <code>Number</code> (the global types).<br>Defaults to the values' numeric ids.</p></td>
         </tr>
 	
 	
@@ -2041,6 +1999,124 @@
         </dl>
     
     
+    
+        <h3 class="subsection-title">Type Definitions</h3>
+        
+        <dl>
+                
+<dt>
+    <div class="nameContainer">
+        <h4 class="name" id=".Options">Prototype.Options<span class="type-signature type object">Object</span> </h4>
+    </div>
+    
+    
+</dt>
+<dd>
+    
+    <div class="description">
+        <p>Options passed to the <a href="Prototype.html">prototype constructor</a>, modifying its behavior.</p>
+    </div>
+    
+    
+    
+<dl class="details">
+    
+        
+        <h5 class="subsection-title">Properties:</h5>
+        
+        <dl>
+
+<table class="props">
+    <thead>
+	<tr>
+		
+		<th>Name</th>
+		
+		
+		<th>Type</th>
+		
+		
+		<th>Argument</th>
+		
+		
+		
+		<th>Default</th>
+		
+		
+		<th class="last">Description</th>
+	</tr>
+	</thead>
+	
+	<tbody>
+	
+	
+        <tr>
+            
+                <td class="name"><code>fieldsOnly</code></td>
+            
+            
+            <td class="type">
+            
+                
+<span class="param-type">boolean</span>
+
+
+            
+            </td>
+            
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+                    
+                
+                </td>
+            
+            
+            
+                <td class="default">
+                
+                    false
+                
+                </td>
+            
+            
+            <td class="description last"><p>Sets only properties that reference a field</p></td>
+        </tr>
+	
+	
+	</tbody>
+</table></dl>
+        
+    
+        
+    
+    
+    
+
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+</dl>
+
+    
+    
+</dd>
+
+            </dl>
     
     
     

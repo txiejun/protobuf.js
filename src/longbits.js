@@ -1,7 +1,8 @@
 module.exports = LongBits;
 
 /**
- * A helper class to work with the low and high bits of a long.
+ * Constructs new long bits.
+ * @class Helper class for working with the low and high bits of a 64 bit value.
  * @memberof util
  * @constructor
  * @param {number} lo Low bits

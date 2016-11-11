@@ -13,15 +13,16 @@ var Type      = require("./type"),
 var _TypeError = util._TypeError;
 
 /**
- * Reflected message field.
+ * Constructs a new message field. Note that {@link MapField|map fields} have their own class.
+ * @class Reflected message field.
  * @extends ReflectionObject
  * @constructor
  * @param {string} name Unique name within its namespace
  * @param {number} id Unique id within its namespace
- * @param {string} type Type of the underlying value
+ * @param {string} type Value type
  * @param {string} [rule=optional] Field rule
  * @param {string} [extend] Extended type if different from parent
- * @param {Object.<string,*>} [options] Field options
+ * @param {Object} [options] Declared options
  */
 function Field(name, id, type, rule, extend, options) {
     if (util.isObject(rule)) {
@@ -227,8 +228,7 @@ FieldPrototype.resolve = function resolve() {
 };
 
 /**
- * Converts a field value to JSON using the specified options. Note that this method does not
- * account for repeated fields and must be called once for each repeated element instead.
+ * Converts a field value to JSON using the specified options. Note that this method does not account for repeated fields and must be called once for each repeated element instead.
  * @param {*} value Field value
  * @param {Object.<string,*>} [options] Conversion options
  * @returns {*} Converted value

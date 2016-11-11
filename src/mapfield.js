@@ -9,22 +9,21 @@ var Enum    = require("./enum"),
     util    = require("./util");
 
 /**
- * Reflected message map field.
+ * Constructs a new map field.
+ * @class Reflected map field.
  * @extends Field
  * @constructor
  * @param {string} name Unique name within its namespace
  * @param {number} id Unique id within its namespace
- * @param {string} type Value type
  * @param {string} keyType Key type
- * @param {Object.<string,*>} [options] Field options
+ * @param {string} type Value type
+ * @param {Object} [options] Declared options
  */
-function MapField(name, id, type, keyType, options) {
+function MapField(name, id, keyType, type, options) {
     Field.call(this, name, id, type, options);
     if (!util.isString(keyType))
         throw util._TypeError("keyType");
     
-    // Is it worth to improve serialization order here?
-
     /**
      * Key type.
      * @type {string}
@@ -47,7 +46,7 @@ function MapField(name, id, type, keyType, options) {
  * @returns {boolean} `true` if the object describes a field
  */
 MapField.testJSON = function testJSON(json) {
-    return Boolean(json && json.keyType !== undefined);
+    return Field.testJSON(json) && json.keyType !== undefined;
 };
 
 /**
@@ -58,7 +57,7 @@ MapField.testJSON = function testJSON(json) {
  * @throws {TypeError} If arguments are invalid
  */
 MapField.fromJSON = function fromJSON(name, json) {
-    return new MapField(name, json.id, json.type, json.keyType, json.options);
+    return new MapField(name, json.id, json.keyType, json.type, json.options);
 };
 
 /**

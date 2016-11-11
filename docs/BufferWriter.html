@@ -95,10 +95,18 @@
             
                 <li data-name="util.Buffer"><a href="util.html#.Buffer">Buffer</a></li>
             
+                <li data-name="util.codegen.supported"><a href="util.html#.codegen.supported">codegen.supported</a></li>
+            
+                <li data-name="util.codegen.verbose"><a href="util.html#.codegen.verbose">codegen.verbose</a></li>
+            
                 <li data-name="util.Long"><a href="util.html#.Long">Long</a></li>
             
             </ul>
             <ul class="typedefs itemMembers">
+            
+            <span class="subtitle">Typedefs</span>
+            
+                <li data-name="util.CodegenAppender"><a href="util.html#.CodegenAppender">CodegenAppender</a></li>
             
             </ul>
             <ul class="methods itemMembers">
@@ -126,6 +134,8 @@
                 <li data-name="util.normalizePath"><a href="util.html#.normalizePath">normalizePath</a></li>
             
                 <li data-name="util.resolvePath"><a href="util.html#.resolvePath">resolvePath</a></li>
+            
+                <li data-name="util.safeProp"><a href="util.html#.safeProp">safeProp</a></li>
             
                 <li data-name="util.toArray"><a href="util.html#.toArray">toArray</a></li>
             
@@ -882,6 +892,10 @@
             </ul>
             <ul class="typedefs itemMembers">
             
+            <span class="subtitle">Typedefs</span>
+            
+                <li data-name="Prototype.Options"><a href="Prototype.html#.Options">Options</a></li>
+            
             </ul>
             <ul class="methods itemMembers">
             
@@ -1065,6 +1079,10 @@
             </ul>
             <ul class="typedefs itemMembers">
             
+            <span class="subtitle">Typedefs</span>
+            
+                <li data-name="Root.Options"><a href="Root.html#.Options">Options</a></li>
+            
             </ul>
             <ul class="methods itemMembers">
             
@@ -1211,8 +1229,6 @@
             <ul class="members itemMembers">
             
             <span class="subtitle">Members</span>
-            
-                <li data-name="Type.useCodegen"><a href="Type.html#.useCodegen">useCodegen</a></li>
             
                 <li data-name="Type#empty"><a href="Type.html#empty">empty</a></li>
             
@@ -1461,6 +1477,8 @@
     BufferWriter
     </h2>
     
+        <div class="class-description"><p>Wire format writer using node buffers.</p></div>
+    
 </header>  
 
 <article>
@@ -1478,7 +1496,7 @@
     
         
         <div class="tag-source">
-            <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/writer.js">writer.js</a>, <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/writer.js#L508">line 508</a>
+            <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/writer.js">writer.js</a>, <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/writer.js#L515">line 515</a>
         </div>
         
     </div>
@@ -1489,7 +1507,7 @@
     
     
     <div class="description">
-        <p>Wire format writer using node buffers.</p>
+        <p>Constructs a new buffer writer.</p>
     </div>
     
 
@@ -1757,7 +1775,7 @@
     
         
         <div class="tag-source">
-            <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/writer.js">writer.js</a>, <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/writer.js#L544">line 544</a>
+            <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/writer.js">writer.js</a>, <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/writer.js#L551">line 551</a>
         </div>
         
     </div>
@@ -1902,7 +1920,7 @@
     
         
         <div class="tag-source">
-            <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/writer.js">writer.js</a>, <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/writer.js#L524">line 524</a>
+            <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/writer.js">writer.js</a>, <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/writer.js#L531">line 531</a>
         </div>
         
     </div>
@@ -2004,7 +2022,7 @@
     
         
         <div class="tag-source">
-            <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/writer.js">writer.js</a>, <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/writer.js#L235">line 235</a>
+            <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/writer.js">writer.js</a>, <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/writer.js#L239">line 239</a>
         </div>
         
     </div>
@@ -2149,7 +2167,7 @@
     
         
         <div class="tag-source">
-            <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/writer.js">writer.js</a>, <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/writer.js#L579">line 579</a>
+            <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/writer.js">writer.js</a>, <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/writer.js#L586">line 586</a>
         </div>
         
     </div>
@@ -2294,7 +2312,7 @@
     
         
         <div class="tag-source">
-            <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/writer.js">writer.js</a>, <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/writer.js#L566">line 566</a>
+            <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/writer.js">writer.js</a>, <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/writer.js#L573">line 573</a>
         </div>
         
     </div>
@@ -2441,7 +2459,7 @@
     
         
         <div class="tag-source">
-            <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/writer.js">writer.js</a>, <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/writer.js#L106">line 106</a>
+            <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/writer.js">writer.js</a>, <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/writer.js#L108">line 108</a>
         </div>
         
     </div>
@@ -2586,7 +2604,7 @@
     
         
         <div class="tag-source">
-            <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/writer.js">writer.js</a>, <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/writer.js#L612">line 612</a>
+            <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/writer.js">writer.js</a>, <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/writer.js#L619">line 619</a>
         </div>
         
     </div>
@@ -2688,7 +2706,7 @@
     
         
         <div class="tag-source">
-            <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/writer.js">writer.js</a>, <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/writer.js#L247">line 247</a>
+            <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/writer.js">writer.js</a>, <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/writer.js#L251">line 251</a>
         </div>
         
     </div>
@@ -2835,7 +2853,7 @@
     
         
         <div class="tag-source">
-            <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/writer.js">writer.js</a>, <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/writer.js#L292">line 292</a>
+            <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/writer.js">writer.js</a>, <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/writer.js#L298">line 298</a>
         </div>
         
     </div>
@@ -2983,7 +3001,7 @@
     
         
         <div class="tag-source">
-            <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/writer.js">writer.js</a>, <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/writer.js#L553">line 553</a>
+            <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/writer.js">writer.js</a>, <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/writer.js#L560">line 560</a>
         </div>
         
     </div>
@@ -3130,7 +3148,7 @@
     
         
         <div class="tag-source">
-            <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/writer.js">writer.js</a>, <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/writer.js#L444">line 444</a>
+            <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/writer.js">writer.js</a>, <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/writer.js#L450">line 450</a>
         </div>
         
     </div>
@@ -3232,7 +3250,7 @@
     
         
         <div class="tag-source">
-            <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/writer.js">writer.js</a>, <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/writer.js#L159">line 159</a>
+            <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/writer.js">writer.js</a>, <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/writer.js#L161">line 161</a>
         </div>
         
     </div>
@@ -3379,7 +3397,7 @@
     
         
         <div class="tag-source">
-            <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/writer.js">writer.js</a>, <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/writer.js#L218">line 218</a>
+            <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/writer.js">writer.js</a>, <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/writer.js#L222">line 222</a>
         </div>
         
     </div>
@@ -3529,7 +3547,7 @@
     
         
         <div class="tag-source">
-            <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/writer.js">writer.js</a>, <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/writer.js#L457">line 457</a>
+            <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/writer.js">writer.js</a>, <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/writer.js#L463">line 463</a>
         </div>
         
     </div>
@@ -3631,7 +3649,7 @@
     
         
         <div class="tag-source">
-            <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/writer.js">writer.js</a>, <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/writer.js#L262">line 262</a>
+            <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/writer.js">writer.js</a>, <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/writer.js#L266">line 266</a>
         </div>
         
     </div>
@@ -3778,7 +3796,7 @@
     
         
         <div class="tag-source">
-            <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/writer.js">writer.js</a>, <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/writer.js#L305">line 305</a>
+            <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/writer.js">writer.js</a>, <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/writer.js#L311">line 311</a>
         </div>
         
     </div>
@@ -3928,7 +3946,7 @@
     
         
         <div class="tag-source">
-            <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/writer.js">writer.js</a>, <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/writer.js#L166">line 166</a>
+            <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/writer.js">writer.js</a>, <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/writer.js#L168">line 168</a>
         </div>
         
     </div>
@@ -4075,7 +4093,7 @@
     
         
         <div class="tag-source">
-            <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/writer.js">writer.js</a>, <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/writer.js#L225">line 225</a>
+            <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/writer.js">writer.js</a>, <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/writer.js#L229">line 229</a>
         </div>
         
     </div>
@@ -4223,7 +4241,7 @@
     
         
         <div class="tag-source">
-            <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/writer.js">writer.js</a>, <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/writer.js#L596">line 596</a>
+            <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/writer.js">writer.js</a>, <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/writer.js#L603">line 603</a>
         </div>
         
     </div>
@@ -4370,7 +4388,7 @@
     
         
         <div class="tag-source">
-            <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/writer.js">writer.js</a>, <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/writer.js#L120">line 120</a>
+            <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/writer.js">writer.js</a>, <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/writer.js#L122">line 122</a>
         </div>
         
     </div>
@@ -4540,7 +4558,7 @@
     
         
         <div class="tag-source">
-            <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/writer.js">writer.js</a>, <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/writer.js#L132">line 132</a>
+            <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/writer.js">writer.js</a>, <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/writer.js#L134">line 134</a>
         </div>
         
     </div>
@@ -4687,7 +4705,7 @@
     
         
         <div class="tag-source">
-            <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/writer.js">writer.js</a>, <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/writer.js#L204">line 204</a>
+            <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/writer.js">writer.js</a>, <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/writer.js#L208">line 208</a>
         </div>
         
     </div>

@@ -5,7 +5,8 @@ var Enum    = require("./enum"),
     util    = require("./util");
 
 /**
- * Wire format encoder using code generation on top of reflection.
+ * Constructs a new encoder for the specified message type.
+ * @class Wire format encoder using code generation on top of reflection
  * @constructor
  * @param {Type} type Message type
  */
@@ -92,7 +93,7 @@ EncoderPrototype.generate = function generate() {
     /* eslint-disable no-unexpected-multiline */
     var fieldsArray = this.type.fieldsArray,
         fieldsCount = fieldsArray.length;
-    var gen = util.codegen("$t", "m", "w")
+    var gen = util.codegen("m", "w")
 
     ('"use strict"');
     
@@ -146,7 +147,7 @@ EncoderPrototype.generate = function generate() {
             }
 
         // Non-repeated
-        } else { gen
+        } else {
             if (!field.required) gen
     ("if(m%s%s%j)", prop, typeof field.defaultValue === 'object' || field.long ? "!==" : "!=", field.defaultValue);
             if (wireType !== undefined) gen
@@ -158,7 +159,8 @@ EncoderPrototype.generate = function generate() {
     }
     return gen
     ("return w")
-    .eof(this.type.fullName + "$encode")
-    .bind(this.type, fieldsArray.map(function(fld) { return fld.resolvedType; }));
+    .eof(this.type.fullName + "$encode", {
+        $t: fieldsArray.map(function(fld) { return fld.resolvedType; })
+    });
     /* eslint-enable no-unexpected-multiline */
 };

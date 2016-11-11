@@ -8,10 +8,11 @@ var Root = require("./root"),
 var _TypeError = util._TypeError;
 
 /**
- * Base class of all reflection objects.
+ * Constructs a new reflection object.
+ * @class Base class of all reflection objects.
  * @constructor
  * @param {string} name Object name
- * @param {Object.<string,*>} [options] Object options
+ * @param {Object} [options] Declared options
  * @abstract
  */
 function ReflectionObject(name, options) {
@@ -111,8 +112,7 @@ Object.defineProperties(ReflectionObjectPrototype, {
     },
 
     /**
-     * Whether this object is visible when exporting definitions. Possible values are `true` to
-     * be visible, `false` to be not and `null` (setter only) to inherit from parent.
+     * Whether this object is visible when exporting definitions. Possible values are `true` to be visible, `false` to be not and `null` (setter only) to inherit from parent.
      * @name ReflectionObject#visible
      * @type {?boolean}
      */

@@ -20,11 +20,12 @@ var Enum      = require("./enum"),
     codegen   = require("./codegen");
 
 /**
- * Reflected message type.
+ * Constructs a new message type.
+ * @class Reflected message type.
  * @extends Namespace
  * @constructor
  * @param {string} name Message name
- * @param {Object.<string,*>} [options] Message options
+ * @param {Object} [options] Declared options
  */
 function Type(name, options) {
     Namespace.call(this, name, options);
@@ -88,13 +89,6 @@ function Type(name, options) {
      */
     this._constructor = null;
 }
-
-/**
- * Whether to use code generation or not. Will be set to `false` automatically if code generation
- * on any type or field failed.
- * @type {boolean}
- */
-Type.useCodegen = true;
 
 Object.defineProperties(TypePrototype, {
 
@@ -288,8 +282,7 @@ TypePrototype.remove = function remove(object) {
 
 /**
  * Registers the specified constructor with this type.
- * @param {?Function} constructor Constructor to use for message instances or `null` to unregister
- *  the current constructor
+ * @param {?Function} constructor Constructor to use for message instances or `null` to unregister  the current constructor
  * @returns {Type} `this`
  */
 TypePrototype.register = function register(constructor) {
@@ -302,8 +295,8 @@ TypePrototype.register = function register(constructor) {
 /**
  * Creates a new message of this type using the specified properties.
  * @param {Object} [properties] Properties to set
- * @param {?Function} [constructor] Optional constructor to use or null to use the internal
- *  prototype. If a constructor, it should extend {@link Prototype}.
+ * @param {?Function} [constructor] Optional constructor to use or null to use the internal prototype.
+ * If a constructor, it should extend {@link Prototype}.
  * @returns {Prototype} Message instance
  */
 TypePrototype.create = function create(properties, constructor) {
@@ -346,8 +339,8 @@ TypePrototype.encode = function encode(message, writer) {
 };
 
 /**
- * Encodes a message of this type. This method differs from {@link Type#encode} in that it expects
- * already type checked and known to be present arguments.
+ * Encodes a message of this type.
+ * This method differs from {@link Type#encode} in that it expects already type checked and known to be present arguments.
  * @param {Prototype|Object} message Message instance or plain object
  * @param {Writer} [writer] Writer to encode to
  * @returns {Writer} writer
@@ -371,8 +364,8 @@ TypePrototype.encodeDelimited = function encodeDelimited(message, writer) {
 };
 
 /**
- * Encodes a message of this type preceeded by its byte length as a varint. This method differs
- * from {@link Type#encodeDelimited} in that it expects already type checked and known to be present arguments.
+ * Encodes a message of this type preceeded by its byte length as a varint.
+ * This method differs from {@link Type#encodeDelimited} in that it expects already type checked and known to be present arguments.
  * @param {Prototype|Object} message Message instance or plain object
  * @param {Writer} writer Writer to encode to
  * @returns {Writer} writer
@@ -401,8 +394,8 @@ TypePrototype.decode = function decode(readerOrBuffer, constructor, length) {
 };
 
 /**
- * Decodes a message of this type. This method differs from {@link Type#decode} in that it expects
- * already type checked and known to be present arguments.
+ * Decodes a message of this type.
+ * This method differs from {@link Type#decode} in that it expects already type checked and known to be present arguments.
  * @function
  * @param {Reader} reader Reader to decode from
  * @param {Prototype} message Message instance to populate
@@ -429,9 +422,8 @@ TypePrototype.decodeDelimited = function decodeDelimited(readerOrBuffer, constru
 };
 
 /**
- * Decodes a message of this type preceeded by its byte length as a varint. This method differs
- * from {@link Type#decodeDelimited} in that it expects already type checked and known to be
- * present arguments.
+ * Decodes a message of this type preceeded by its byte length as a varint.
+ * This method differs from {@link Type#decodeDelimited} in that it expects already type checked and known to be present arguments.
  * @param {Reader} reader Reader to decode from
  * @param {Prototype} message Message instance to populate
  * @returns {Prototype} Populated message instance

@@ -95,10 +95,18 @@
             
                 <li data-name="util.Buffer"><a href="util.html#.Buffer">Buffer</a></li>
             
+                <li data-name="util.codegen.supported"><a href="util.html#.codegen.supported">codegen.supported</a></li>
+            
+                <li data-name="util.codegen.verbose"><a href="util.html#.codegen.verbose">codegen.verbose</a></li>
+            
                 <li data-name="util.Long"><a href="util.html#.Long">Long</a></li>
             
             </ul>
             <ul class="typedefs itemMembers">
+            
+            <span class="subtitle">Typedefs</span>
+            
+                <li data-name="util.CodegenAppender"><a href="util.html#.CodegenAppender">CodegenAppender</a></li>
             
             </ul>
             <ul class="methods itemMembers">
@@ -126,6 +134,8 @@
                 <li data-name="util.normalizePath"><a href="util.html#.normalizePath">normalizePath</a></li>
             
                 <li data-name="util.resolvePath"><a href="util.html#.resolvePath">resolvePath</a></li>
+            
+                <li data-name="util.safeProp"><a href="util.html#.safeProp">safeProp</a></li>
             
                 <li data-name="util.toArray"><a href="util.html#.toArray">toArray</a></li>
             
@@ -882,6 +892,10 @@
             </ul>
             <ul class="typedefs itemMembers">
             
+            <span class="subtitle">Typedefs</span>
+            
+                <li data-name="Prototype.Options"><a href="Prototype.html#.Options">Options</a></li>
+            
             </ul>
             <ul class="methods itemMembers">
             
@@ -1065,6 +1079,10 @@
             </ul>
             <ul class="typedefs itemMembers">
             
+            <span class="subtitle">Typedefs</span>
+            
+                <li data-name="Root.Options"><a href="Root.html#.Options">Options</a></li>
+            
             </ul>
             <ul class="methods itemMembers">
             
@@ -1211,8 +1229,6 @@
             <ul class="members itemMembers">
             
             <span class="subtitle">Members</span>
-            
-                <li data-name="Type.useCodegen"><a href="Type.html#.useCodegen">useCodegen</a></li>
             
                 <li data-name="Type#empty"><a href="Type.html#empty">empty</a></li>
             
@@ -1613,8 +1629,6 @@ var message = AwesomeMessage.decode(buffer);
 </li>
 </ul>
 <h3>Utility</h3><ul>
-<li><p><strong>codegen(<code>...string</code>): <code>function</code></strong> [<a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/codegen.js">source</a>]<br /><br>Programmatically generates a function.</p>
-</li>
 <li><p><strong>util: <code>Object</code></strong> [<a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/util.js">source</a>]<br /><br>Utility functions.</p>
 </li>
 <li><p><strong>types: <code>Object</code></strong> [<a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/types.js">source</a>]<br /><br>Common type constants.</p>
@@ -1642,7 +1656,7 @@ $> npm install --dev</code></pre><p>Building the development and production vers
 <li><p>If you need a proper way to work with 64 bit values (uint64, int64 etc.), you can install <a target="_blank" href="https://github.com/dcodeIO/long.js">long.js</a> alongside this library. Just as with buffers, you can assign its constructor to <code>protobuf.util.Long</code>. All 64 bit numbers will then be returned as a <code>Long</code> instance instead of a possibly unsafe JavaScript number (<a target="_blank" href="https://github.com/dcodeIO/long.js">see</a>).</p>
 </li>
 </ul>
-<p><strong>License:</strong> <a target="_blank" href="http://www.apache.org/licenses/LICENSE-2.0.html">Apache License, Version 2.0</a></p></article>
+<p><strong>License:</strong> <a target="_blank" href="http://www.apache.org/licenses/LICENSE-2.0.html">Apache License, Version 2.0</a>, bundled external libraries may have <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/tree/master/lib">their own license</a></p></article>
     </section>
 
 

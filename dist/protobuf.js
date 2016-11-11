@@ -1,6 +1,6 @@
 /*!
  * protobuf.js v6.0.0-dev (c) 2016 Daniel Wirtz
- * Compiled Fri, 11 Nov 2016 15:52:52 UTC
+ * Compiled Fri, 11 Nov 2016 23:52:00 UTC
  * Licensed under the Apache License, Version 2.0
  * see: https://github.com/dcodeIO/protobuf.js for details
  */
@@ -129,7 +129,7 @@ module.exports = codegen;
 
 /**
  * Whether code generation is supported by the environment.
- * @memberof util.codegen
+ * @memberof util
  * @type {boolean}
  */
 codegen.supported = false;
@@ -137,25 +137,39 @@ try { codegen.supported = codegen("a","b")("return a-b").eof()(2,1) === 1; } cat
 
 /**
  * When set to true, codegen will log generated code to console. Useful for debugging.
- * @memberof util.codegen
+ * @memberof util
  * @type {boolean}
  */
 codegen.verbose = false;
 
 /**
+ * Appends a printf-like formatted line to the generated source. Returned when calling {@link util.codegen}.
+ * @typedef util.CodegenAppender
+ * @type {function}
+ * @param {string} format A printf-like format string
+ * @param {...*} params Format replacements
+ * @returns {util.CodegenAppender} Itself
+ * @see {@link https://nodejs.org/docs/latest/api/util.html#util_util_format_format_args}
+ */
+
+/**
  * Programmatically generates a function.
- * When done appending code, call `eof([name])` on the Appender to generate the actual function.
  * @memberof util
  * @param {...string} params Function parameter names
- * @returns {function} Appender function similar to `util.format` known from node
- * @see {@link https://nodejs.org/docs/latest/api/util.html#util_util_format_format_args}
+ * @returns {util.CodegenAppender} Printf-like appender function
  */
 function codegen(/* varargs */) {
     var args   = Array.prototype.slice.call(arguments),
         src    = [],
         indent = 1;
 
-    // Appends a formatted line to the generated source
+    /**
+     * Appends a printf-like formatted line to the generated source. This function is returned when calling {@link util.codegen}.
+     * @param {string} format A printf-like format string
+     * @param {...*} params Format replacements
+     * @returns {util.CodegenAppender} Itself
+     * @inner
+     */
     function gen(format/*, varargs */) {
         var params = Array.prototype.slice.call(arguments, 1),
             index  = 0;
@@ -184,17 +198,40 @@ function codegen(/* varargs */) {
         return gen;
     }
 
-    // Converts the so far generated source to a string
+    /**
+     * Converts the so far generated source to a string.
+     * @param {string} [name] Function name, defaults to generate an anonymous function
+     * @returns {string} Function source
+     */
     gen.toString = function toString(name) {
         return "function " + (name ? name.replace(/[^\w_$]/g, "_") : "") + "(" + args.join(",") + ") {\n" + src.join("\n") + "\n}";
     };
 
-    // Ends generation
-    gen.eof = function eof(name) {
+    /**
+     * Ends generation and builds the function.
+     * @param {string} [name] Function name, defaults to generate an anonymous function
+     * @param {Object|Array} [scope] Function scope
+     * @returns {function} A function to apply the scope manually when `scope` is an array, otherwise the generated function with scope applied
+     */
+    gen.eof = function eof(name, scope) {
+        if (name && typeof name === 'object') {
+            scope = name;
+            name = undefined;
+        }
         var code = gen.toString(name);
         if (codegen.verbose)
             console.log("--- codegen ---\n" + code.replace(/^/mg, "> ").replace(/\t/g, "  ")); // eslint-disable-line no-console
-        return new Function("return " + code + ";")(); // eslint-disable-line no-new-func
+        code = "return " + code;
+        var params, values = [];
+        if (Array.isArray(scope)) {
+            params = scope.slice();
+        } else if (scope) {
+            params = Object.keys(scope);
+            values = params.map(function(key) { return scope[key]; });
+        } else
+            params = [];
+        var fn = Function.apply(null, params.concat(code)); // eslint-disable-line no-new-func
+        return values ? fn.apply(null, values) : fn();
     };
 
     return gen;
@@ -208,7 +245,8 @@ var Enum    = require("./enum"),
     util    = require("./util");
 
 /**
- * Wire format decoder using code generation on top of reflection.
+ * Constructs a new decoder for the specified message type.
+ * @class Wire format decoder using code generation on top of reflection.
  * @constructor
  * @param {Type} type Message type
  */
@@ -302,7 +340,7 @@ DecoderPrototype.generate = function generate() {
     var fieldsArray = this.type.fieldsArray,
         fieldsCount = fieldsArray.length;
     
-    var gen = util.codegen("$t", "$h", "r", "m", "l")
+    var gen = util.codegen("r", "m", "l")
 
     ('"use strict"')
     ("while(r.pos<l){")
@@ -381,7 +419,10 @@ DecoderPrototype.generate = function generate() {
         ("}")
     ("}")
     ("return m");
-    return gen.eof(this.type.fullName + "$decode").bind(this.type, fieldsArray.map(function(fld) { return fld.resolvedType; }), util.toHash);
+    return gen.eof(this.type.fullName + "$decode", {
+        $t: fieldsArray.map(function(fld) { return fld.resolvedType; }),
+        $h: util.toHash
+    });
     /* eslint-enable no-unexpected-multiline */
 };
 
@@ -393,7 +434,8 @@ var Enum    = require("./enum"),
     util    = require("./util");
 
 /**
- * Wire format encoder using code generation on top of reflection.
+ * Constructs a new encoder for the specified message type.
+ * @class Wire format encoder using code generation on top of reflection
  * @constructor
  * @param {Type} type Message type
  */
@@ -480,7 +522,7 @@ EncoderPrototype.generate = function generate() {
     /* eslint-disable no-unexpected-multiline */
     var fieldsArray = this.type.fieldsArray,
         fieldsCount = fieldsArray.length;
-    var gen = util.codegen("$t", "m", "w")
+    var gen = util.codegen("m", "w")
 
     ('"use strict"');
     
@@ -534,7 +576,7 @@ EncoderPrototype.generate = function generate() {
             }
 
         // Non-repeated
-        } else { gen
+        } else {
             if (!field.required) gen
     ("if(m%s%s%j)", prop, typeof field.defaultValue === 'object' || field.long ? "!==" : "!=", field.defaultValue);
             if (wireType !== undefined) gen
@@ -546,8 +588,9 @@ EncoderPrototype.generate = function generate() {
     }
     return gen
     ("return w")
-    .eof(this.type.fullName + "$encode")
-    .bind(this.type, fieldsArray.map(function(fld) { return fld.resolvedType; }));
+    .eof(this.type.fullName + "$encode", {
+        $t: fieldsArray.map(function(fld) { return fld.resolvedType; })
+    });
     /* eslint-enable no-unexpected-multiline */
 };
 
@@ -563,12 +606,13 @@ var util = require("./util");
 var _TypeError = util._TypeError;
 
 /**
- * Reflected enum.
+ * Constructs a new enum.
+ * @class Reflected enum.
  * @extends ReflectionObject
  * @constructor
  * @param {string} name Unique name within its namespace
  * @param {Object.<string,number>} [values] Enum values as an object, by name
- * @param {Object.<string,*>} [options] Enum options
+ * @param {Object} [options] Declared options
  */
 function Enum(name, values, options) {
     ReflectionObject.call(this, name, options);
@@ -683,15 +727,16 @@ var Type      = require("./type"),
 var _TypeError = util._TypeError;
 
 /**
- * Reflected message field.
+ * Constructs a new message field. Note that {@link MapField|map fields} have their own class.
+ * @class Reflected message field.
  * @extends ReflectionObject
  * @constructor
  * @param {string} name Unique name within its namespace
  * @param {number} id Unique id within its namespace
- * @param {string} type Type of the underlying value
+ * @param {string} type Value type
  * @param {string} [rule=optional] Field rule
  * @param {string} [extend] Extended type if different from parent
- * @param {Object.<string,*>} [options] Field options
+ * @param {Object} [options] Declared options
  */
 function Field(name, id, type, rule, extend, options) {
     if (util.isObject(rule)) {
@@ -897,8 +942,7 @@ FieldPrototype.resolve = function resolve() {
 };
 
 /**
- * Converts a field value to JSON using the specified options. Note that this method does not
- * account for repeated fields and must be called once for each repeated element instead.
+ * Converts a field value to JSON using the specified options. Note that this method does not account for repeated fields and must be called once for each repeated element instead.
  * @param {*} value Field value
  * @param {Object.<string,*>} [options] Conversion options
  * @returns {*} Converted value
@@ -930,12 +974,18 @@ var Prototype = require("./prototype"),
 var _TypeError = util._TypeError;
 
 /**
+ * Options passed to {@link inherits}, modifying its behavior.
+ * @typedef InheritanceOptions
+ * @type {Object}
+ * @property {boolean} [noStatics=false] Skips adding the default static methods on top of the constructor
+ * @property {boolean} [noRegister=false] Skips registering the constructor with the reflected type
+ */
+
+/**
  * Inherits a custom class from the message prototype of the specified message type.
  * @param {Function} clazz Inheriting class
  * @param {Type} type Inherited message type
- * @param {Object.<string,*>} [options] Extension options
- * @param {boolean} [options.noStatics=false] Skips adding the default static methods on top of the constructor
- * @param {boolean} [options.noRegister=false] Skips registering the constructor with the reflected type
+ * @param {InheritanceOptions} [options] Inheritance options
  * @returns {Prototype} Created prototype
  */
 function inherits(clazz, type, options) {
@@ -947,8 +997,7 @@ function inherits(clazz, type, options) {
         options = {};
 
     /**
-     * This is not an actual type but stands as a reference for any constructor of a custom message class
-     * that you pass to the library.
+     * This is not an actual type but stands as a reference for any constructor of a custom message class that you pass to the library.
      * @name Class
      * @extends Prototype
      * @constructor
@@ -1040,8 +1089,7 @@ function inherits(clazz, type, options) {
 }
 
 /**
- * Defines the reflected type's default values and virtual oneof properties on the specified
- * prototype.
+ * Defines the reflected type's default values and virtual oneof properties on the specified prototype.
  * @memberof inherits
  * @param {Prototype} prototype Prototype to define properties upon
  * @param {Type} type Reflected message type
@@ -1100,7 +1148,8 @@ inherits.defineProperties = function defineProperties(prototype, type) {
 module.exports = LongBits;
 
 /**
- * A helper class to work with the low and high bits of a long.
+ * Constructs new long bits.
+ * @class Helper class for working with the low and high bits of a 64 bit value.
  * @memberof util
  * @constructor
  * @param {number} lo Low bits
@@ -1256,22 +1305,21 @@ var Enum    = require("./enum"),
     util    = require("./util");
 
 /**
- * Reflected message map field.
+ * Constructs a new map field.
+ * @class Reflected map field.
  * @extends Field
  * @constructor
  * @param {string} name Unique name within its namespace
  * @param {number} id Unique id within its namespace
- * @param {string} type Value type
  * @param {string} keyType Key type
- * @param {Object.<string,*>} [options] Field options
+ * @param {string} type Value type
+ * @param {Object} [options] Declared options
  */
-function MapField(name, id, type, keyType, options) {
+function MapField(name, id, keyType, type, options) {
     Field.call(this, name, id, type, options);
     if (!util.isString(keyType))
         throw util._TypeError("keyType");
     
-    // Is it worth to improve serialization order here?
-
     /**
      * Key type.
      * @type {string}
@@ -1294,7 +1342,7 @@ function MapField(name, id, type, keyType, options) {
  * @returns {boolean} `true` if the object describes a field
  */
 MapField.testJSON = function testJSON(json) {
-    return Boolean(json && json.keyType !== undefined);
+    return Field.testJSON(json) && json.keyType !== undefined;
 };
 
 /**
@@ -1305,7 +1353,7 @@ MapField.testJSON = function testJSON(json) {
  * @throws {TypeError} If arguments are invalid
  */
 MapField.fromJSON = function fromJSON(name, json) {
-    return new MapField(name, json.id, json.type, json.keyType, json.options);
+    return new MapField(name, json.id, json.keyType, json.type, json.options);
 };
 
 /**
@@ -1340,16 +1388,17 @@ var Type = require("./type"),
 var _TypeError = util._TypeError;
 
 /**
- * Reflected service method.
+ * Constructs a new service method.
+ * @class Reflected service method.
  * @extends ReflectionObject
  * @constructor
  * @param {string} name Method name
- * @param {string} type Usually "rpc"
+ * @param {string} type Method type, usually `"rpc"`
  * @param {string} requestType Request message type
  * @param {string} responseType Response message type
  * @param {boolean} [requestStream] Whether the request is streamed
  * @param {boolean} [responseStream] Whether the response is streamed
- * @param {Object.<string,*>} [options] Method options
+ * @param {Object} [options] Declared options
  */
 function Method(name, type, requestType, responseType, requestStream, responseStream, options) {
     if (util.isObject(requestStream)) {
@@ -1460,9 +1509,7 @@ MethodPrototype.resolve = function resolve() {
 /**
  * Calls this method.
  * @param {Prototype|Object} message Request message
- * @param {function(number[], function(?Error, (number[])=))} performRequest A function performing the
- * request on binary level, taking a buffer and a node-style callback for the response buffer as
- * its parameters.
+ * @param {function(number[], function(?Error, (number[])=))} performRequest A function performing the request on binary level, taking a buffer and a node-style callback for the response buffer as its parameters.
  * @param {function(Error, Prototype=)} [callback] Node-style callback function
  * @param {Object} [ctx] Optional callback context
  * @returns {Promise<Prototype>|undefined} A promise if `callback` has been omitted
@@ -1515,11 +1562,12 @@ var nestedTypes = [ Enum, Type, Service, Field, Namespace ],
     nestedError = "one of " + nestedTypes.map(function(ctor) { return ctor.name; }).join(', ');
 
 /**
- * Base class of all reflection objects containing nested objects.
+ * Constructs a new namespace.
+ * @class Reflected namespace and base class of all reflection objects containing nested objects.
  * @extends ReflectionObject
  * @constructor
  * @param {string} name Namespace name
- * @param {Object.<string,*>} [options] Namespace options
+ * @param {Object} [options] Declared options
  */
 function Namespace(name, options) {
     ReflectionObject.call(this, name, options);
@@ -1610,8 +1658,7 @@ NamespacePrototype.addJSON = function addJSON(json) {
 
 /**
  * Iterates over all nested objects.
- * @param {function(this:Namespace, ReflectionObject, string):*} fn Iterator function called with nested objects
- *  and their names. Can return something different than `undefined` to break the iteration.
+ * @param {function(this:Namespace, ReflectionObject, string):*} fn Iterator function called with nested objects and their names. Can return something different than `undefined` to break the iteration.
  * @param {Object} [ctx] Optional iterator function context
  * @param {Object} [object] Alternative object to iterate over
  * @returns {*|Namespace} First value returned, otherwise `this`
@@ -1723,8 +1770,7 @@ NamespacePrototype.define = function define(path, json, visible) {
 };
 
 /**
- * Resolves this namespace's and all its nested objects' type references. Useful to validate a
- * reflection tree.
+ * Resolves this namespace's and all its nested objects' type references. Useful to validate a reflection tree.
  * @returns {Namespace} `this`
  */
 NamespacePrototype.resolveAll = function resolve() {
@@ -1791,10 +1837,11 @@ var Root = require("./root"),
 var _TypeError = util._TypeError;
 
 /**
- * Base class of all reflection objects.
+ * Constructs a new reflection object.
+ * @class Base class of all reflection objects.
  * @constructor
  * @param {string} name Object name
- * @param {Object.<string,*>} [options] Object options
+ * @param {Object} [options] Declared options
  * @abstract
  */
 function ReflectionObject(name, options) {
@@ -1894,8 +1941,7 @@ Object.defineProperties(ReflectionObjectPrototype, {
     },
 
     /**
-     * Whether this object is visible when exporting definitions. Possible values are `true` to
-     * be visible, `false` to be not and `null` (setter only) to inherit from parent.
+     * Whether this object is visible when exporting definitions. Possible values are `true` to be visible, `false` to be not and `null` (setter only) to inherit from parent.
      * @name ReflectionObject#visible
      * @type {?boolean}
      */
@@ -2098,12 +2144,13 @@ var Field = require("./field"),
 var _TypeError = util._TypeError;
 
 /**
- * Reflected OneOf.
+ * Constructs a new oneof.
+ * @class Reflected oneof.
  * @extends ReflectionObject
  * @constructor
  * @param {string} name Oneof name
  * @param {string[]} [fieldNames] Field names
- * @param {Object} [options] Oneof options
+ * @param {Object} [options] Declared options
  */
 function OneOf(name, fieldNames, options) {
     if (!Array.isArray(fieldNames)) {
@@ -2249,11 +2296,23 @@ var s_required = "required",
     s_type     = "type";
 
 /**
+ * Result object returned from {@link parse}.
+ * @typedef ParserResult
+ * @type {Object}
+ * @property {string|undefined} package Package name, if declared
+ * @property {string[]|undefined} imports Imports, if any
+ * @property {string[]|undefined} publicImports Public imports, if any
+ * @property {string[]|undefined} weakImports Weak imports, if any
+ * @property {string|undefined} syntax Syntax if specified (either `"proto2"` or `"proto3"`)
+ * @property {Root} root Populated root instance
+ */
+
+/**
  * Parses the given .proto source and returns an object with the parsed contents.
  * @param {string} source Source contents
  * @param {Root} [root] Root to populate
  * @param {boolean} [visible=true] Whether types from this file are visible when exporting definitions
- * @returns {Object} Parsed contents
+ * @returns {ParserResult} Parser result
  */
 function parse(source, root, visible) {
     /* eslint-disable default-case, callback-return */
@@ -2272,8 +2331,7 @@ function parse(source, root, visible) {
         next = tn.next,
         push = tn.push,
         peek = tn.peek,
-        skip = tn.skip,
-        omit = tn.omit;
+        skip = tn.skip;
 
     var head = true,
         pkg,
@@ -2329,7 +2387,7 @@ function parse(source, root, visible) {
     function readRange() {
         var start = parseId(next());
         var end = start;
-        if (omit("to"))
+        if (skip("to", true))
             end = parseId(next());
         skip(";");
         return [ start, end ];
@@ -2445,7 +2503,7 @@ function parse(source, root, visible) {
         if (!nameRe.test(name))
             throw illegal(name, "type name");
         var type = new Type(name);
-        if (omit("{")) {
+        if (skip("{", true)) {
             while ((token = next()) !== '}') {
                 var tokenLower = lower(token);
                 if (parseCommon(type, token))
@@ -2476,7 +2534,7 @@ function parse(source, root, visible) {
                         break;
                 }
             }
-            omit(";");
+            skip(";", true);
         } else
             skip(";");
         if (!isProto3)
@@ -2512,7 +2570,7 @@ function parse(source, root, visible) {
         var name = next();
         skip("=");
         var id = parseId(next());
-        parent.add(parseInlineOptions(new MapField(name, id, valueType, keyType)));
+        parent.add(parseInlineOptions(new MapField(name, id, keyType, valueType)));
     }
 
     function parseOneOf(parent, token) {
@@ -2520,7 +2578,7 @@ function parse(source, root, visible) {
         if (!nameRe.test(name))
             throw illegal(name, s_name);
         var oneof = new OneOf(name);
-        if (omit("{")) {
+        if (skip("{", true)) {
             while ((token = next()) !== '}') {
                 if (token === s_option) {
                     parseOption(oneof, token);
@@ -2528,7 +2586,7 @@ function parse(source, root, visible) {
                 } else
                     parseField(oneof, s_optional);
             }
-            omit(";");
+            skip(";", true);
         } else
             skip(";");
         parent.add(oneof);
@@ -2540,14 +2598,14 @@ function parse(source, root, visible) {
             throw illegal(name, s_name);
         var values = {};
         var enm = new Enum(name, values);
-        if (omit("{")) {
+        if (skip("{", true)) {
             while ((token = next()) !== "}") {
                 if (lower(token) === s_option)
                     parseOption(enm);
                 else
                     parseEnumField(enm, token);
             }
-            omit(";");
+            skip(";", true);
         } else
             skip(";");
         parent.add(enm);
@@ -2563,7 +2621,7 @@ function parse(source, root, visible) {
     }
 
     function parseOption(parent, token) {
-        var custom = omit('(');
+        var custom = skip('(', true);
         var name = next();
         if (!typeRefRe.test(name))
             throw illegal(name, s_name);
@@ -2581,17 +2639,17 @@ function parse(source, root, visible) {
     }
 
     function parseOptionValue(parent, name) {
-        if (omit('{')) {
+        if (skip('{', true)) {
             while ((token = next()) !== '}') {
                 if (!nameRe.test(token))
                     throw illegal(token, s_name);
                 name = name + "." + token;
-                if (omit(":"))
+                if (skip(":", true))
                     setOption(parent, name, readValue(true));
                 else
                     parseOptionValue(parent, name);
             }
-            omit(";");
+            skip(";", true);
         } else
             setOption(parent, name, readValue(true));
         // Does not enforce a delimiter to be universal
@@ -2605,10 +2663,10 @@ function parse(source, root, visible) {
     }
 
     function parseInlineOptions(parent) {
-        if (omit("[")) {
+        if (skip("[", true)) {
             do {
                 parseOption(parent, s_option);
-            } while (omit(","));
+            } while (skip(",", true));
             skip("]");
         }
         skip(";");
@@ -2621,7 +2679,7 @@ function parse(source, root, visible) {
             throw illegal(token, "service name");
         var name = token;
         var service = new Service(name);
-        if (omit("{")) {
+        if (skip("{", true)) {
             while ((token = next()) !== '}') {
                 var tokenLower = lower(token);
                 switch (tokenLower) {
@@ -2636,7 +2694,7 @@ function parse(source, root, visible) {
                         throw illegal(token);
                 }
             }
-            omit(";");
+            skip(";", true);
         } else
             skip(";");
         parent.add(service);
@@ -2650,20 +2708,20 @@ function parse(source, root, visible) {
         var requestType, requestStream,
             responseType, responseStream;
         skip("(");
-        if (omit("stream"))
+        if (skip("stream", true))
             requestStream = true;
         if (!typeRefRe.test(token = next()))
             throw illegal(token);
         requestType = token;
         skip(")"); skip("returns"); skip("(");
-        if (omit("stream"))
+        if (skip("stream", true))
             responseStream = true;
         if (!typeRefRe.test(token = next()))
             throw illegal(token);
         responseType = token;
         skip(")");
         var method = new Method(name, type, requestType, responseType, requestStream, responseStream);
-        if (omit("{")) {
+        if (skip("{", true)) {
             while ((token = next()) !== '}') {
                 var tokenLower = lower(token);
                 switch (tokenLower) {
@@ -2675,7 +2733,7 @@ function parse(source, root, visible) {
                         throw illegal(token);
                 }
             }
-            omit(";");
+            skip(";", true);
         } else
             skip(";");
         parent.add(method);
@@ -2685,7 +2743,7 @@ function parse(source, root, visible) {
         var reference = next();
         if (!typeRefRe.test(reference))
             throw illegal(reference, "reference");
-        if (omit("{")) {
+        if (skip("{", true)) {
             while ((token = next()) !== '}') {
                 var tokenLower = lower(token);
                 switch (tokenLower) {
@@ -2702,7 +2760,7 @@ function parse(source, root, visible) {
                         break;
                 }
             }
-            omit(";");
+            skip(";", true);
         } else
             skip(";");
     }
@@ -2748,11 +2806,19 @@ function parse(source, root, visible) {
 module.exports = Prototype;
 
 /**
- * Runtime message prototype ready to be extended by custom classes or generated code.
+ * Options passed to the {@link Prototype|prototype constructor}, modifying its behavior.
+ * @typedef Prototype.Options
+ * @type {Object}
+ * @property {boolean} [fieldsOnly=false] Sets only properties that reference a field
+ */
+
+/**
+ * Constructs a new prototype.
+ * This method should be called in your custom constructors, i.e. `Prototype.call(this, properties)`.
+ * @class Runtime message prototype ready to be extended by custom classes or generated code.
  * @constructor
  * @param {Object.<string,*>} [properties] Properties to set
- * @param {Object.<string,*>} [options] Initialization options
- * @param {boolean} [options.fieldsOnly=false] Sets only properties that reference a field
+ * @param {Prototype.Options} [options] Prototype options
  * @abstract
  * @see {@link inherits}
  * @see {@link Class}
@@ -2772,11 +2838,11 @@ function Prototype(properties, options) {
  * Converts a runtime message to a JSON object.
  * @param {Object.<string,*>} [options] Conversion options
  * @param {boolean} [options.fieldsOnly=false] Converts only properties that reference a field
- * @param {Function} [options.long] Long conversion type. Only relevant with a long library. Valid
- * values are `String` and `Number` (the global types).
+ * @param {Function} [options.long] Long conversion type. Only relevant with a long library.
+ * Valid values are `String` and `Number` (the global types).
  * Defaults to a possibly unsafe number without, and a `Long` with a long library.
- * @param {Function} [options.enum=Number] Enum value conversion type. Valid values are `String`
- * and `Number` (the global types).
+ * @param {Function} [options.enum=Number] Enum value conversion type.
+ * Valid values are `String` and `Number` (the global types).
  * Defaults to the values' numeric ids.
  * @returns {Object.<string,*>} JSON object
  */
@@ -2818,7 +2884,9 @@ function indexOutOfRange(reader, writeLength) {
 }
 
 /**
- * Wire format reader using `Uint8Array` if available, otherwise `Array`.
+ * Constructs a new reader using the specified buffer.
+ * When called as a function, returns an appropriate reader for the specified buffer.
+ * @class Wire format reader using `Uint8Array` if available, otherwise `Array`.
  * @constructor
  * @param {number[]} buffer Buffer to read from
  */
@@ -2917,9 +2985,11 @@ ReaderPrototype.sint32 = function read_sint32() {
 /**
  * Reads a possibly 64 bits varint.
  * @returns {LongBits} Long bits
- * @private
+ * @this {Reader}
+ * @inner
+ * @ignore
  */
-ReaderPrototype._readLongVarint = function readLongVarint() {
+function readLongVarint() {
     var lo = 0, hi = 0,
         i  = 0, b  = 0;
     if (this.len - this.pos > 9) { // fast route
@@ -2966,14 +3036,14 @@ ReaderPrototype._readLongVarint = function readLongVarint() {
         }
     }
     throw Error("invalid varint encoding");
-};
+}
 
 /**
  * Reads a varint as a signed 64 bit value.
  * @returns {Long|number} Value read
  */
 ReaderPrototype.int64 = function read_int64() {
-    var bits = this._readLongVarint();
+    var bits = readLongVarint.call(this);
     if (util.Long)
         return util.Long.fromBits(bits.lo, bits.hi, false);
     return bits.toNumber(false);
@@ -2984,7 +3054,7 @@ ReaderPrototype.int64 = function read_int64() {
  * @returns {Long|number} Value read
  */
 ReaderPrototype.uint64 = function read_uint64() {
-    var bits = this._readLongVarint();
+    var bits = readLongVarint.call(this);
     if (util.Long)
         return util.Long.fromBits(bits.lo, bits.hi, true);
     return bits.toNumber(true);
@@ -2995,7 +3065,7 @@ ReaderPrototype.uint64 = function read_uint64() {
  * @returns {Long|number} Value read
  */
 ReaderPrototype.sint64 = function read_sint64() {
-    var bits = this._readLongVarint().zzDecode();
+    var bits = readLongVarint.call(this).zzDecode();
     if (util.Long)
         return util.Long.fromBits(bits.lo, bits.hi, false);
     return bits.toNumber(false);
@@ -3035,9 +3105,11 @@ ReaderPrototype.sfixed32 = function read_sfixed32() {
 /**
  * Reads a 64 bit value.
  * @returns {LongBits} Long bits
- * @private 
+ * @this {Reader}
+ * @inner 
+ * @ignore
  */
-ReaderPrototype._readLongFixed = function readLongFixed() {
+function readLongFixed() {
     if (this.pos + 8 > this.len)
         throw RangeError(indexOutOfRange(this, 8));
     return new LongBits(
@@ -3051,14 +3123,14 @@ ReaderPrototype._readLongFixed = function readLongFixed() {
       | this.buf[this.pos++] << 16
       | this.buf[this.pos++] << 24 ) >>> 0
     );
-};
+}
 
 /**
  * Reads fixed 64 bits as a Long.
  * @returns {Long|number} Value read
  */
 ReaderPrototype.fixed64 = function read_fixed64() {
-    var bits = this._readLongFixed();
+    var bits = readLongFixed.call(this);
     if (util.Long)
         return util.Long.fromBits(bits.lo, bits.hi, true);
     return bits.toNumber(true);
@@ -3069,7 +3141,7 @@ ReaderPrototype.fixed64 = function read_fixed64() {
  * @returns {Long|number} Value read
  */
 ReaderPrototype.sfixed64 = function read_sfixed64() {
-    var bits = this._readLongFixed().zzDecode();
+    var bits = readLongFixed.call(this).zzDecode();
     if (util.Long)
         return util.Long.fromBits(bits.lo, bits.hi, false);
     return bits.toNumber(false);
@@ -3197,7 +3269,7 @@ ReaderPrototype.skipType = function(wireType) {
 
 /**
  * Resets this instance and frees all resources.
- * @param {number[]} [buffer] Optionally a new buffer for a new sequence of read operations
+ * @param {number[]} [buffer] New buffer for a new sequence of read operations
  * @returns {Reader} `this`
  */
 ReaderPrototype.reset = function reset(buffer) {
@@ -3214,8 +3286,7 @@ ReaderPrototype.reset = function reset(buffer) {
 
 /**
  * Finishes the current sequence of read operations, frees all resources and returns the remaining buffer.
- * Optionally accepts a new buffer for a new sequence of read operations.
- * @param {number[]} [buffer] Optionally a new buffer for a new sequence of read operations
+ * @param {number[]} [buffer] New buffer for a new sequence of read operations
  * @returns {number[]} Finished buffer
  */
 ReaderPrototype.finish = function finish(buffer) {
@@ -3226,8 +3297,7 @@ ReaderPrototype.finish = function finish(buffer) {
     return remain;
 };
 
-// One time function to initialize BufferReader with the now-known buffer
-// implementation's slice method
+// One time function to initialize BufferReader with the now-known buffer implementation's slice method
 var initBufferReader = function() {
     if (!util.Buffer)
         throw Error("Buffer is not supported");
@@ -3236,7 +3306,8 @@ var initBufferReader = function() {
 };
 
 /**
- * Wire format reader using node buffers.
+ * Constructs a new buffer reader.
+ * @class Wire format reader using node buffers.
  * @extends Reader
  * @constructor
  * @param {Buffer} buffer Buffer to read from
@@ -3294,8 +3365,7 @@ BufferReaderPrototype.string = function read_string_buffer(length) {
 
 /**
  * Finishes the current sequence of read operations using node buffers, frees all resources and returns the remaining buffer.
- * Optionally accepts a new buffer for a new sequence of read operations using node buffers.
- * @param {Buffer} [buffer] Optionally a new buffer for a new sequence of read operations
+ * @param {Buffer} [buffer] New buffer for a new sequence of read operations
  * @returns {Buffer} Finished buffer
  */
 BufferReaderPrototype.finish = function finish_buffer(buffer) {
@@ -3315,18 +3385,25 @@ var Namespace = require("./namespace"),
     util      = require("./util");
 
 /**
- * Root namespace.
+ * Options provided to a {@link Root|root namespace}, modifying its behavior.
+ * @typedef Root.Options
+ * @type {Object}
+ * @property {boolean} [noGoogleTypes=false] Skips loading of common Google types like `google.protobuf.Any`.
+ */
+
+/**
+ * Constructs a new root namespace.
+ * @class Root namespace wrapping all types, enums, services, sub-namespaces etc. that belong together.
  * @extends Namespace
  * @constructor
- * @param {Object.<string,*>} [contextOptions] Context options
- * @param {Object.<string,*>} [options] Namespace options
- * @param {boolean} [contextOptions.noGoogleTypes=false] Skips loading of common google types
+ * @param {Root.Options} [rootOptions] Root options
+ * @param {Object} [options] Declared options
  */
-function Root(contextOptions, options) {
+function Root(rootOptions, options) {
     Namespace.call(this, "", options);
 
-    if (!contextOptions)
-        contextOptions = {};
+    if (!rootOptions)
+        rootOptions = {};
 
     /**
      * References to common google types.
@@ -3347,7 +3424,7 @@ function Root(contextOptions, options) {
      */
     this._loaded = []; // use addLoaded/isLoaded instead
 
-    if (!contextOptions.noGoogleTypes)
+    if (!rootOptions.noGoogleTypes)
         importGoogleTypes(this, false);
 }
 
@@ -3740,7 +3817,8 @@ var ServicePrototype = Namespace.extend(Service, [ "methods" ]);
 var Method    = require("./method");
 
 /**
- * Reflected service.
+ * Constructs a new service.
+ * @class Reflected service.
  * @extends Namespace
  * @constructor
  * @param {string} name Service name
@@ -3852,9 +3930,19 @@ var delimRe        = /[\s{}=;:\[\],'"\(\)<>]/g,
     stringSingleRe = /(?:'([^'\\]*(?:\\.[^'\\]*)*)')/g;
 
 /**
+ * Handle object returned from {@link tokenize}.
+ * @typedef {Object} TokenizerHandle
+ * @property {function():number} line Gets the current line number
+ * @property {function():?string} next Gets the next token and advances (`null` on eof)
+ * @property {function():?string} peek Peeks for the next token (`null` on eof)
+ * @property {function(string)} push Pushes a token back to the stack
+ * @property {function(string, boolean=):boolean} skip Skips a token, returns its presence and advances or, if non-optional and not present, throws
+ */
+
+/**
  * Tokenizes the given .proto source and returns an object with useful utility functions.
  * @param {string} source Source contents
- * @returns {Object} Tokenizer handle
+ * @returns {TokenizerHandle} Tokenizer handle
  */
 function tokenize(source) {
     source = source.toString();
@@ -3867,10 +3955,21 @@ function tokenize(source) {
 
     var stringDelim = null;
 
-    function illegal(name) {
-        return Error("illegal " + name + " (line " + line + ")");
+    /**
+     * Creates an error for illegal syntax.
+     * @param {string} subject Subject
+     * @returns {Error} Error created
+     * @inner
+     */
+    function illegal(subject) {
+        return Error("illegal " + subject + " (line " + line + ")");
     }
 
+    /**
+     * Reads a string till its end.
+     * @returns {string} String read
+     * @inner
+     */
     function readString() {
         var re = stringDelim === '"' ? stringDoubleRe : stringSingleRe;
         re.lastIndex = offset - 1;
@@ -3883,6 +3982,21 @@ function tokenize(source) {
         return match[1];
     }
 
+    /**
+     * Gets the character at `pos` within the source.
+     * @param {number} pos Position
+     * @returns {string} Character
+     * @inner
+     */
+    function charAt(pos) {
+        return source.charAt(pos);
+    }
+
+    /**
+     * Obtains the next token.
+     * @returns {?string} Next token or `null` on eof
+     * @inner
+     */
     function next() {
         if (stack.length > 0)
             return stack.shift();
@@ -3895,30 +4009,30 @@ function tokenize(source) {
             if (offset === length)
                 return null;
             repeat = false;
-            while (/\s/.test(curr = source.charAt(offset))) {
+            while (/\s/.test(curr = charAt(offset))) {
                 if (curr === '\n')
                     ++line;
                 if (++offset === length)
                     return null;
             }
-            if (source.charAt(offset) === '/') {
+            if (charAt(offset) === '/') {
                 if (++offset === length)
                     throw illegal("comment");
-                if (source.charAt(offset) === '/') { // Line
-                    while (source.charAt(++offset) !== '\n')
+                if (charAt(offset) === '/') { // Line
+                    while (charAt(++offset) !== '\n')
                         if (offset === length)
                             return null;
                     ++offset;
                     ++line;
                     repeat = true;
-                } else if ((curr = source.charAt(offset)) === '*') { /* Block */
+                } else if ((curr = charAt(offset)) === '*') { /* Block */
                     do {
                         if (curr === '\n')
                             ++line;
                         if (++offset === length)
                             return null;
                         prev = curr;
-                        curr = source.charAt(offset);
+                        curr = charAt(offset);
                     } while (prev !== '*' || curr !== '/');
                     ++offset;
                     repeat = true;
@@ -3931,9 +4045,9 @@ function tokenize(source) {
             return null;
         var end = offset;
         delimRe.lastIndex = 0;
-        var delim = delimRe.test(source.charAt(end++));
+        var delim = delimRe.test(charAt(end++));
         if (!delim)
-            while (end < length && !delimRe.test(source.charAt(end)))
+            while (end < length && !delimRe.test(charAt(end)))
                 ++end;
         var token = source.substring(offset, offset = end);
         if (token === '"' || token === "'")
@@ -3941,10 +4055,21 @@ function tokenize(source) {
         return token;
     }
 
+    /**
+     * Pushes a token back to the stack.
+     * @param {string} token Token
+     * @returns {undefined}
+     * @inner
+     */
     function push(token) {
         stack.push(token);
     }
 
+    /**
+     * Peeks for the next token.
+     * @returns {?string} Token or `null` on eof
+     * @inner
+     */
     function peek() {
         if (!stack.length) {
             var token = next();
@@ -3955,28 +4080,32 @@ function tokenize(source) {
         return stack[0];
     }
 
-    function skip(expected) {
-        var actual = next();
-        if (actual !== expected)
-            throw illegal("token '" + actual + "', '" + expected + "' expected");
-    }
-
-    function omit(optional) {
-        var actual = peek();
-        if (actual === optional) {
+    /**
+     * Skips a token.
+     * @param {string} expected Expected token
+     * @param {boolean} [optional=false] Whether the token is optional
+     * @returns {boolean} `true` when skipped, `false` if not
+     * @throws {Error} When a required token is not present
+     * @inner
+     */
+    function skip(expected, optional) {
+        var actual = peek(),
+            equals = actual === expected;
+        if (equals) {
             next();
             return true;
         }
+        if (!optional)
+            throw illegal("token '" + actual + "', '" + expected + "' expected");
         return false;
     }
 
     return {
         line: function() { return line; },
         next: next,
-        push: push,
         peek: peek,
-        skip: skip,
-        omit: omit
+        push: push,
+        skip: skip
     };
 }
 },{}],20:[function(require,module,exports){
@@ -4002,11 +4131,12 @@ var Enum      = require("./enum"),
     codegen   = require("./codegen");
 
 /**
- * Reflected message type.
+ * Constructs a new message type.
+ * @class Reflected message type.
  * @extends Namespace
  * @constructor
  * @param {string} name Message name
- * @param {Object.<string,*>} [options] Message options
+ * @param {Object} [options] Declared options
  */
 function Type(name, options) {
     Namespace.call(this, name, options);
@@ -4070,13 +4200,6 @@ function Type(name, options) {
      */
     this._constructor = null;
 }
-
-/**
- * Whether to use code generation or not. Will be set to `false` automatically if code generation
- * on any type or field failed.
- * @type {boolean}
- */
-Type.useCodegen = true;
 
 Object.defineProperties(TypePrototype, {
 
@@ -4270,8 +4393,7 @@ TypePrototype.remove = function remove(object) {
 
 /**
  * Registers the specified constructor with this type.
- * @param {?Function} constructor Constructor to use for message instances or `null` to unregister
- *  the current constructor
+ * @param {?Function} constructor Constructor to use for message instances or `null` to unregister  the current constructor
  * @returns {Type} `this`
  */
 TypePrototype.register = function register(constructor) {
@@ -4284,8 +4406,8 @@ TypePrototype.register = function register(constructor) {
 /**
  * Creates a new message of this type using the specified properties.
  * @param {Object} [properties] Properties to set
- * @param {?Function} [constructor] Optional constructor to use or null to use the internal
- *  prototype. If a constructor, it should extend {@link Prototype}.
+ * @param {?Function} [constructor] Optional constructor to use or null to use the internal prototype.
+ * If a constructor, it should extend {@link Prototype}.
  * @returns {Prototype} Message instance
  */
 TypePrototype.create = function create(properties, constructor) {
@@ -4328,8 +4450,8 @@ TypePrototype.encode = function encode(message, writer) {
 };
 
 /**
- * Encodes a message of this type. This method differs from {@link Type#encode} in that it expects
- * already type checked and known to be present arguments.
+ * Encodes a message of this type.
+ * This method differs from {@link Type#encode} in that it expects already type checked and known to be present arguments.
  * @param {Prototype|Object} message Message instance or plain object
  * @param {Writer} [writer] Writer to encode to
  * @returns {Writer} writer
@@ -4353,8 +4475,8 @@ TypePrototype.encodeDelimited = function encodeDelimited(message, writer) {
 };
 
 /**
- * Encodes a message of this type preceeded by its byte length as a varint. This method differs
- * from {@link Type#encodeDelimited} in that it expects already type checked and known to be present arguments.
+ * Encodes a message of this type preceeded by its byte length as a varint.
+ * This method differs from {@link Type#encodeDelimited} in that it expects already type checked and known to be present arguments.
  * @param {Prototype|Object} message Message instance or plain object
  * @param {Writer} writer Writer to encode to
  * @returns {Writer} writer
@@ -4383,8 +4505,8 @@ TypePrototype.decode = function decode(readerOrBuffer, constructor, length) {
 };
 
 /**
- * Decodes a message of this type. This method differs from {@link Type#decode} in that it expects
- * already type checked and known to be present arguments.
+ * Decodes a message of this type.
+ * This method differs from {@link Type#decode} in that it expects already type checked and known to be present arguments.
  * @function
  * @param {Reader} reader Reader to decode from
  * @param {Prototype} message Message instance to populate
@@ -4411,9 +4533,8 @@ TypePrototype.decodeDelimited = function decodeDelimited(readerOrBuffer, constru
 };
 
 /**
- * Decodes a message of this type preceeded by its byte length as a varint. This method differs
- * from {@link Type#decodeDelimited} in that it expects already type checked and known to be
- * present arguments.
+ * Decodes a message of this type preceeded by its byte length as a varint.
+ * This method differs from {@link Type#decodeDelimited} in that it expects already type checked and known to be present arguments.
  * @param {Reader} reader Reader to decode from
  * @param {Prototype} message Message instance to populate
  * @returns {Prototype} Populated message instance
@@ -4549,8 +4670,8 @@ util.codegen  = codegen;
 util.LongBits = LongBits;
 
 /**
- * Optional buffer class to use. If you assign any compatible buffer implementation to this
- * property, the library will use it.
+ * Optional buffer class to use.
+ * If you assign any compatible buffer implementation to this property, the library will use it.
  * @type {?Function}
  */
 util.Buffer = null;
@@ -4558,8 +4679,8 @@ util.Buffer = null;
 try { util.Buffer = require("buffer").Buffer; } catch (e) {} // eslint-disable-line no-empty
 
 /**
- * Optional Long class to use. If you assign any compatible long implementation to this property,
- * the library will use it.
+ * Optional Long class to use.
+ * If you assign any compatible long implementation to this property, the library will use it.
  * @type {?Function}
  */
 util.Long = null;
@@ -4803,7 +4924,9 @@ var LongBits = require("./longbits"),
 Writer.BUFFER_SIZE = 256; // For some reason this is considerably faster on node than 128 or 512.
 
 /**
- * Wire format writer using `Uint8Array` if available, otherwise `Array`.
+ * Constructs a new writer.
+ * When called as a function, returns an appropriate writer for the current environment.
+ * @class Wire format writer using `Uint8Array` if available, otherwise `Array`.
  * @exports Writer
  * @constructor
  */
@@ -4855,8 +4978,8 @@ var ArrayImpl = typeof Uint8Array !== 'undefined'
     : Array;
 
 /**
- * Sets up the Writer class before first use. This is done automatically when the first buffer is
- * allocated.
+ * Sets up the Writer class before first use.
+ * Done automatically when the first buffer is allocated.
  * @returns {Function} `Writer`
  */
 Writer.setup = function setup() {
@@ -4962,9 +5085,11 @@ WriterPrototype.sint32 = function write_sint32(value) {
  * @param {number} lo Low bits
  * @param {number} hi High bits
  * @returns {Writer} `this`
- * @private
+ * @this {Writer}
+ * @inner
+ * @ignore
  */
-WriterPrototype._writeLongVarint = function writeLongVarint(lo, hi) {
+function writeLongVarint(lo, hi) {
     if (this.pos + 9 < this.len) { // fast route
         while (hi > 0 || lo > 127) {
             this.buf[this.pos++] = lo & 127 | 128;
@@ -4984,7 +5109,7 @@ WriterPrototype._writeLongVarint = function writeLongVarint(lo, hi) {
     }
     this.buf[this.pos++] = lo;
     return this;
-};
+}
 
 /**
  * Writes an unsigned 64 bit value as a varint.
@@ -4994,9 +5119,9 @@ WriterPrototype._writeLongVarint = function writeLongVarint(lo, hi) {
 WriterPrototype.uint64 = function write_uint64(value) {
     if (typeof value === 'number') {
         var bits = value ? LongBits.fromNumber(value) : LongBits.zero;
-        return this._writeLongVarint(bits.lo, bits.hi);
+        return writeLongVarint.call(this, bits.lo, bits.hi);
     } 
-    return this._writeLongVarint(value.low >>> 0, value.high >>> 0);
+    return writeLongVarint.call(this, value.low >>> 0, value.high >>> 0);
 };
 
 /**
@@ -5014,7 +5139,7 @@ WriterPrototype.int64 = WriterPrototype.uint64;
  */
 WriterPrototype.sint64 = function sint64(value) {
     var bits = LongBits.fromValue(value).zzEncode();
-    return this._writeLongVarint(bits.lo, bits.hi);
+    return writeLongVarint.call(this, bits.lo, bits.hi);
 };
 
 /**
@@ -5058,9 +5183,11 @@ WriterPrototype.sfixed32 = function write_sfixed32(value) {
  * @param {number} lo Low bits
  * @param {number} hi High bits
  * @returns {Writer} `this`
- * @private
+ * @this {Writer}
+ * @inner
+ * @ignore
  */
-WriterPrototype._writeLongFixed = function writeLongFixed(lo, hi) {
+function writeLongFixed(lo, hi) {
     if (this.pos + 8 > this.len)
         this.expand(8);
     this.buf[this.pos++] = lo        & 255;
@@ -5072,7 +5199,7 @@ WriterPrototype._writeLongFixed = function writeLongFixed(lo, hi) {
     this.buf[this.pos++] = hi >>> 16 & 255;
     this.buf[this.pos++] = hi >>> 24      ;
     return this;
-};
+}
 
 /**
  * Writes a 64 bit value as fixed 64 bits.
@@ -5082,9 +5209,9 @@ WriterPrototype._writeLongFixed = function writeLongFixed(lo, hi) {
 WriterPrototype.fixed64 = function write_fixed64(value) {
     if (typeof value === 'number') {
         var bits = value ? LongBits.fromNumber(value) : LongBits.zero;
-        return this._writeLongFixed(bits.lo, bits.hi);
+        return writeLongFixed.call(this, bits.lo, bits.hi);
     }
-    return this._writeLongFixed(value.low >>> 0, value.high >>> 0);
+    return writeLongFixed.call(this, value.low >>> 0, value.high >>> 0);
 };
 
 /**
@@ -5094,7 +5221,7 @@ WriterPrototype.fixed64 = function write_fixed64(value) {
  */
 WriterPrototype.sfixed64 = function write_sfixed64(value) {
     var bits = LongBits.from(value).zzEncode();
-    return this._writeLongFixed(bits.lo, bits.hi);
+    return writeLongFixed.call(this, bits.lo, bits.hi);
 };
 
 /**
@@ -5290,7 +5417,8 @@ WriterPrototype.finish = function finish() {
 };
 
 /**
- * Wire format writer using node buffers.
+ * Constructs a new buffer writer.
+ * @class Wire format writer using node buffers.
  * @exports BufferWriter
  * @extends Writer
  * @constructor
