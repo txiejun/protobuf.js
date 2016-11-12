@@ -1,6 +1,6 @@
 /*!
  * protobuf.js v6.0.0-dev (c) 2016 Daniel Wirtz
- * Compiled Sat, 12 Nov 2016 10:02:21 UTC
+ * Compiled Sat, 12 Nov 2016 10:17:48 UTC
  * Licensed under the Apache License, Version 2.0
  * see: https://github.com/dcodeIO/protobuf.js for details
  */
@@ -1297,9 +1297,9 @@ LongBitsPrototype.zzDecode = function zzDecode() {
  * @returns {number} Length
  */
 LongBitsPrototype.length = function length() {
-    var part0 =  this.lo;
-    var part1 = ((this.hi & 15) << 4 | this.lo >>> 28) >>> 0;
-    var part2 =  this.hi >>> 24;
+    var part0 =  this.lo,
+        part1 = (this.lo >>> 28 | (this.hi & 15) << 28) >>> 0,
+        part2 =  this.hi >>> 24;
     if (part2 === 0) {
         if (part1 === 0) {
             if (part0 < 1 << 14)
