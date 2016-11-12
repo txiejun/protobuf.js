@@ -1,6 +1,6 @@
 /*
  * protobuf.js v6.0.0-dev TypeScript definitions
- * Generated Sat, 12 Nov 2016 10:02:38 UTC
+ * Generated Sat, 12 Nov 2016 23:34:13 UTC
  */
 declare module protobuf {
 
@@ -388,13 +388,6 @@ declare module protobuf {
    }
    
    /**
-    * Length calculators.
-    * @namespace
-    */
-   module length {
-   }
-   
-   /**
     * Constructs a new map field.
     * @classdesc Reflected map field.
     * @extends Field
@@ -552,10 +545,17 @@ declare module protobuf {
       constructor(name: string, options?: Object);
    
       /**
-       * Nested reflection objects by name.
+       * Nested objects by name.
        * @type {Object.<string,ReflectionObject>|undefined}
        */
       nested: ({ [k: string]: ReflectionObject }|undefined);
+   
+      /**
+       * Cached nested objects as an array.
+       * @type {?ReflectionObject[]}
+       * @private
+       */
+      private _nestedArray: ReflectionObject[];
    
       /**
        * Determines whether this namespace is empty.
@@ -564,6 +564,14 @@ declare module protobuf {
        * @readonly
        */
       empty: boolean;
+   
+      /**
+       * Nested objects of this namespace as an array for iteration.
+       * @name Namespace#nestedArray
+       * @type {ReflectionObject[]}
+       * @readonly
+       */
+      nestedArray: ReflectionObject[];
    
       /**
        * Tests if the specified JSON object describes not another reflection object.
@@ -587,15 +595,6 @@ declare module protobuf {
        * @returns {Namespace} `this`
        */
       addJSON(json: { [k: string]: any }): Namespace;
-   
-      /**
-       * Iterates over all nested objects.
-       * @param {function(this:Namespace, ReflectionObject, string):*} fn Iterator function called with nested objects and their names. Can return something different than `undefined` to break the iteration.
-       * @param {Object} [ctx] Iterator function context
-       * @param {Object} [object] Alternative object to iterate over
-       * @returns {*|Namespace} First value returned, otherwise `this`
-       */
-      each(fn: (() => any), ctx?: Object, object?: Object): (any|Namespace);
    
       /**
        * Gets the nested object of the specified name.
@@ -1246,6 +1245,21 @@ declare module protobuf {
        */
       methods: { [k: string]: Method };
    
+      /**
+       * Cached methods as an array.
+       * @type {?Method[]}
+       * @private
+       */
+      private _methodsArray: Method[];
+   
+      /**
+       * Methods of this service as an array for iteration.
+       * @name Service#methodsArray
+       * @type {Method[]}
+       * @readonly
+       */
+      methodsArray: Method[];
+   
    }
    
    /**
@@ -1336,13 +1350,6 @@ declare module protobuf {
        * @private
        */
       private _oneofsArray: OneOf[];
-   
-      /**
-       * Cached prototype.
-       * @type {?Prototype}
-       * @private
-       */
-      private _prototype: Prototype;
    
       /**
        * Cached constructor.
@@ -1494,7 +1501,8 @@ declare module protobuf {
       var codegen.supported: boolean;
    
       /**
-       * When set to true, codegen will log generated code to console. Useful for debugging.
+       * When set to true, codegen will log generated code to console.
+       * Useful for debugging.
        * @memberof util
        * @type {boolean}
        */
@@ -1507,9 +1515,30 @@ declare module protobuf {
        * @param {string} format A printf-like format string
        * @param {...*} params Format replacements
        * @returns {util.CodegenAppender} Itself
+       * @property {util.CodegenStringer} str
+       * @property {util.CodegenEnder} eof
        * @see {@link https://nodejs.org/docs/latest/api/util.html#util_util_format_format_args}
        */
       type CodegenAppender = (format: string, params: any) => util.CodegenAppender;
+   
+      /**
+       * Ends generation and builds the function.
+       * @typedef util.CodegenEnder
+       * @type {function}
+       * @param {string} [name] Function name, defaults to generate an anonymous function
+       * @param {Object|Array} [scope] Function scope
+       * @returns {function} A function to apply the scope manually when `scope` is an array, otherwise the generated function with scope applied
+       */
+      type CodegenEnder = (name?: string, scope?: (Object|Array)) => (() => any);
+   
+      /**
+       * Stringifies the so far generated function source.
+       * @typedef util.CodegenStringer
+       * @type {function}
+       * @param {string} [name] Function name, defaults to generate an anonymous function
+       * @returns {string} Function source using tabs for indentation
+       */
+      type CodegenStringer = (name?: string) => string;
    
       /**
        * Programmatically generates a function.
@@ -1758,28 +1787,31 @@ declare module protobuf {
       constructor();
    
       /**
-       * Operations head.
-       * @type {Op}
-       */
-      head: Op;
-   
-      /**
-       * Operations tail
-       * @type {Op}
-       */
-      tail: Op;
-   
-      /**
        * Current length.
        * @type {number}
        */
       len: number;
    
       /**
+       * Operations head.
+       * @type {Op}
+       * @private
+       */
+      private _head: Op;
+   
+      /**
+       * Operations tail
+       * @type {Op}
+       * @private
+       */
+      private _tail: Op;
+   
+      /**
        * State stack.
        * @type {State[]}
+       * @private
        */
-      stack: State[];
+      private _stack: State[];
    
       /**
        * Pushes a new operation to the queue.
@@ -1787,8 +1819,9 @@ declare module protobuf {
        * @param {number} len Value length
        * @param {number} val Value
        * @returns {Writer} `this`
+       * @private
        */
-      push(fn: (() => any), len: number, val: number): Writer;
+      private _push(fn: (() => any), len: number, val: number): Writer;
    
       /**
        * Writes a tag.

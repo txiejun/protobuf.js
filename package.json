@@ -21,13 +21,14 @@
     "lint": "eslint src",
     "test": "tap tests/*.js",
     "bench": "node scripts/bench",
-    "all": "npm run test && npm run build && npm run docs && npm run types && npm run lint && npm run bench"
+    "all": "npm run lint && npm run test && npm run build && npm run docs && npm run types && npm run bench"
   },
   "optionalDependencies": {
     "long": "^3.2.0"
   },
   "devDependencies": {
     "browserify": "^13.1.0",
+    "bundle-collapser": "^1.2.1",
     "chalk": "^1.1.3",
     "eslint": "^3.9.0",
     "gulp": "^3.9.1",

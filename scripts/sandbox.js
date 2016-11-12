@@ -52,6 +52,7 @@ protobuf.load(require.resolve("./simple.proto"), function(err, root) {
         if (err)
             throw err;
         var Test = root.object.Test;
+        console.log(root.object);
         var writer = Test.encode({ a: "hi", b: { a: "le" }, c: 1 });
         console.log(require("util").inspect(writer, { depth: 15 }));
     } catch (err) {

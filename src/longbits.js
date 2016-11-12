@@ -36,7 +36,7 @@ var zero = new LongBits(0, 0);
 
 zero.toNumber = function() { return 0; };
 zero.zzEncode = zero.zzDecode = function() { return this; };
-zero.length = function() { return 1; }
+zero.length = function() { return 1; };
 
 /**
  * Constructs new long bits from the specified number.
@@ -156,17 +156,13 @@ LongBitsPrototype.length = function length() {
         part1 = (this.lo >>> 28 | (this.hi & 15) << 28) >>> 0,
         part2 =  this.hi >>> 24;
     if (part2 === 0) {
-        if (part1 === 0) {
-            if (part0 < 1 << 14)
-                return part0 < 1 << 7 ? 1 : 2;
-            else
-                return part0 < 1 << 21 ? 3 : 4;
-        } else {
-            if (part1 < 1 << 14)
-                return part1 < 1 << 7 ? 5 : 6;
-            else
-                return part1 < 1 << 21 ? 7 : 8;
-        }
-    } else
-        return part2 < 1 << 7 ? 9 : 10;
+        if (part1 === 0)
+            return part0 < 1 << 14
+                ? part0 < 1 << 7 ? 1 : 2
+                : part0 < 1 << 21 ? 3 : 4;
+        return part1 < 1 << 14
+            ? part1 < 1 << 7 ? 5 : 6
+            : part1 < 1 << 21 ? 7 : 8;
+    }
+    return part2 < 1 << 7 ? 9 : 10;
 };

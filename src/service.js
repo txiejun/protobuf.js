@@ -6,7 +6,8 @@ var NamespacePrototype = Namespace.prototype;
 /** @alias Service.prototype */
 var ServicePrototype = Namespace.extend(Service, [ "methods" ]);
 
-var Method    = require("./method");
+var Method = require("./method"),
+    util   = require("./util");
 
 /**
  * Constructs a new service.
@@ -25,27 +26,51 @@ function Service(name, options) {
      * @type {Object.<string,Method>}
      */
     this.methods = {}; // exposed, marker
+
+    /**
+     * Cached methods as an array.
+     * @type {?Method[]}
+     * @private
+     */
+    this._methodsArray = null;
 }
 
 Object.defineProperties(ServicePrototype, {
+
+    /**
+     * Methods of this service as an array for iteration.
+     * @name Service#methodsArray
+     * @type {Method[]}
+     * @readonly
+     */
+    methodsArray: {
+        get: function() {
+            return this._methodsArray || (this._methodsArray = util.toArray(this.methods));
+        }
+    },
 
     // override
     object: {
         get: function() {
             if (this._object)
                 return this._object;
-            var obj = this._object = Object.create(this);
-            this.each(function(method, name) {
-                obj[name] = method.object;
-            }, this, this.methods);
-            this.each(function(nested, name) {
-                obj[name] = nested.object;
-            });
-            return obj;
+            this._object = Object.create(this);
+            var nested = this.methodsArray, i = 0, k = nested.length, obj;
+            while (i < k)
+                this._object[(obj = nested[i++]).name] = obj.object;
+            nested = this.nestedArray; i = 0; k = nested.length;
+            while (i < k)
+                this._object[(obj = nested[i++]).name] = obj.object;
+            return this._object;
         }
     }
 
 });
+
+function clearCache(service) {
+    service._methodsArray = null;
+    return service;
+}
 
 /**
  * Tests if the specified JSON object describes a service.
@@ -78,9 +103,9 @@ ServicePrototype.get = function get(name) {
  * @override
  */
 ServicePrototype.resolveAll = function resolve() {
-    this.each(function(method) {
-        method.resolve();
-    }, this, this.methods);
+    var methods = this.methodsArray, i = 0, k = methods.length;
+    while (i < k)
+        methods[i++].resolve();
     return NamespacePrototype.resolve.call(this);
 };
 
@@ -93,7 +118,7 @@ ServicePrototype.add = function add(object) {
     if (object instanceof Method) {
         this.methods[object.name] = object;
         object.parent = this;
-        return this;
+        return clearCache(this);
     }
     return NamespacePrototype.add.call(this, object);
 };
@@ -107,7 +132,7 @@ ServicePrototype.remove = function remove(object) {
             throw Error(object + " is not a member of " + this);
         delete this.methods[object.name];
         object.parent = null;
-        return this;
+        return clearCache(this);
     }
     return NamespacePrototype.remove.call(this, object);
 };

@@ -37,6 +37,7 @@ function bundle(compress) {
     .exclude("process")
     .exclude("_process") // what is it...
     .exclude("fs")
+    .plugin(require('bundle-collapser/plugin'))
     .bundle()
     .pipe(source(compress ? 'protobuf.min.js' : 'protobuf.js'))
     .pipe(buffer())

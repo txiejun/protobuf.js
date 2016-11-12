@@ -76,13 +76,6 @@ function Type(name, options) {
     this._oneofsArray = null;
 
     /**
-     * Cached prototype.
-     * @type {?Prototype}
-     * @private
-     */
-    this._prototype = null;
-
-    /**
      * Cached constructor.
      * @type {?Function}
      * @private
@@ -169,15 +162,8 @@ Object.defineProperties(TypePrototype, {
     }
 });
 
-/**
- * Clears the internal cache on a message type.
- * @param {Type} type Message type
- * @returns {Type} type
- * @inner
- * @ignore
- */
 function clearCache(type) {
-    type._fieldsById = type._fieldsArray = type._oneofsArray = type._prototype = type._ctor = null;
+    type._fieldsById = type._fieldsArray = type._oneofsArray = type._ctor = null;
     delete type.encode_;
     delete type.decode_;
     return type;
@@ -229,13 +215,12 @@ Type.fromJSON = function fromJSON(name, json) {
  * @override
  */
 TypePrototype.resolveAll = function resolve() {
-    this.each(function(field) {
-        field.resolve();
-    }, this, this.fields);
-    if (this.oneofs)
-        this.each(function(oneof) {
-            oneof.resolve();
-        }, this, this.oneofs);
+    var fields = this.fieldsArray, i = 0, k = fields.length;
+    while (i < k)
+        fields[i++].resolve();
+    var oneofs = this.oneofsArray; i = 0; k = oneofs.length;
+    while (i < k)
+        oneofs[i++].resolve();
     return NamespacePrototype.resolve.call(this);
 };
 
@@ -252,32 +237,23 @@ TypePrototype.get = function get(name) {
 TypePrototype.add = function add(object) {
     if (this.get(object.name))
         throw Error("duplicate name '" + object.name + '" in ' + this);
-    if (object instanceof Field) {
+    if (object instanceof Field && object.extend === undefined) {
         // NOTE: Extension fields aren't actual fields on the declaring type, but nested objects.
         // The root object takes care of adding distinct sister-fields to the respective extended
         // type instead.
-        if (object.extend === undefined) {
-            if (object.parent)
-                object.parent.remove(object);
-            clearCache(this).fields[object.name] = object;
-            object.message = this;
-            object.onAdd(this);
-        } else {
-            if (!this.nested)
-                this.nested = {};
-            else if (this.get(object.name))
-                throw Error("duplicate name '" + object.name + "' in " + this);
-            this.nested[object.name] = object;
-            object.onAdd(this);
-        }
-        return this;
+        if (object.parent)
+            object.parent.remove(object);
+        this.fields[object.name] = object;
+        object.message = this;
+        object.onAdd(this);
+        return clearCache(this);
     }
     if (object instanceof OneOf) {
         if (!this.oneofs)
             this.oneofs = {};
         this.oneofs[object.name] = object;
         object.onAdd(this);
-        return this;
+        return clearCache(this);
     }
     return NamespacePrototype.add.call(this, object);
 };
@@ -290,9 +266,9 @@ TypePrototype.remove = function remove(object) {
         // See Type#add for the reason why extension fields are excluded here.
         if (this.fields[object.name] !== object)
             throw Error(object + " is not a member of " + this);
-        delete clearCache(this).fields[object.name];
+        delete this.fields[object.name];
         object.message = null;
-        return this;
+        return clearCache(this);
     }
     return NamespacePrototype.remove.call(this, object);
 };
@@ -350,11 +326,9 @@ TypePrototype.encode_ = function encode_internal(message, writer) {
  * @returns {Writer} writer
  */
 TypePrototype.encodeDelimited = function encodeDelimited(message, writer) {
-    if (writer)
-        writer.fork();
-    else
+    if (!writer)
         writer = Writer();
-    return writer.bytes(this.encode_(message, writer).finish());
+    return this.encode_(message, writer.fork()).ldelim();
 };
 
 /**

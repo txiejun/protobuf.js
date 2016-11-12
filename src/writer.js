@@ -13,18 +13,18 @@ function Op(fn, len, val) {
     this.next = null;
 }
 
-function noop() {}
+function noop() {} // eslint-disable-line no-empty-function
 
 function State(writer) {
-    this.head = writer.head;
-    this.tail = writer.tail;
-    this.len  = writer.len;
+    this._head = writer._head;
+    this._tail = writer._tail;
+    this.len   = writer.len;
 }
 
 State.prototype.apply = function apply(writer) {
-    writer.head = this.head;
-    writer.tail = this.tail;
-    writer.len  = this.len;
+    writer._head = this._head;
+    writer._tail = this._tail;
+    writer.len   = this.len;
 };
 
 /**
@@ -41,28 +41,37 @@ function Writer() {
             : new Writer();
 
     /**
-     * Operations head.
-     * @type {Op}
-     */
-    this.head = new Op(noop, 0, 0);
-
-    /**
-     * Operations tail
-     * @type {Op}
-     */
-    this.tail = this.head;
-
-    /**
      * Current length.
      * @type {number}
      */
     this.len = 0;
 
     /**
+     * Operations head.
+     * @type {Op}
+     * @private
+     */
+    this._head = new Op(noop, 0, 0);
+
+    /**
+     * Operations tail
+     * @type {Op}
+     * @private
+     */
+    this._tail = this._head;
+
+    /**
      * State stack.
      * @type {State[]}
+     * @private
      */
-    this.stack = [];
+    this._stack = [];
+
+    // When a value is written, the writer calculates its byte length and puts it into a linked
+    // list of operations to perform when finish() is called. This both allows us to allocate
+    // buffers of the exact required size and reduces the amount of work we have to do compared
+    // to first calculating over objects and then encoding over objects. In our case, the encoding
+    // part is just a linked list walk calling linked operations with already prepared values.
 }
 
 /** @alias Writer.prototype */
@@ -74,11 +83,12 @@ var WriterPrototype = Writer.prototype;
  * @param {number} len Value length
  * @param {number} val Value
  * @returns {Writer} `this`
+ * @private
  */
-WriterPrototype.push = function push(fn, len, val) {
+WriterPrototype._push = function push(fn, len, val) {
     var op = new Op(fn, len, val);
-    this.tail.next = op;
-    this.tail = op;
+    this._tail.next = op;
+    this._tail = op;
     this.len += len;
     return this;
 };
@@ -94,7 +104,7 @@ function writeByte(buf, pos, val) {
  * @returns {Writer} `this`
  */
 WriterPrototype.tag = function write_tag(id, wireType) {
-    return this.push(writeByte, 1, (id << 3 | wireType & 7) & 255);
+    return this._push(writeByte, 1, (id << 3 | wireType & 7) & 255);
 };
 
 function writeVarint32(buf, pos, val) {
@@ -112,7 +122,7 @@ function writeVarint32(buf, pos, val) {
  */
 WriterPrototype.uint32 = function write_uint32(value) {
     value >>>= 0;
-    return this.push(writeVarint32,
+    return this._push(writeVarint32,
           value < 128       ? 1
         : value < 16384     ? 2
         : value < 2097152   ? 3
@@ -160,7 +170,7 @@ WriterPrototype.uint64 = function write_uint64(value) {
         bits = value ? LongBits.fromNumber(value) : LongBits.zero;
     else
         bits = new LongBits(value.low >>> 0, value.high >>> 0);
-    return this.push(writeVarint64, bits.length(), bits);
+    return this._push(writeVarint64, bits.length(), bits);
 };
 
 /**
@@ -178,7 +188,7 @@ WriterPrototype.int64 = WriterPrototype.uint64;
  */
 WriterPrototype.sint64 = function sint64(value) {
     var bits = LongBits.from(value).zzEncode();
-    return this.push(writeVarint64, bits.length(), bits);
+    return this._push(writeVarint64, bits.length(), bits);
 };
 
 /**
@@ -187,7 +197,7 @@ WriterPrototype.sint64 = function sint64(value) {
  * @returns {Writer} `this`
  */
 WriterPrototype.bool = function write_bool(value) {
-    return this.push(writeByte, 1, value ? 1 : 0);
+    return this._push(writeByte, 1, value ? 1 : 0);
 };
 
 function writeFixed32(buf, pos, val) {
@@ -203,7 +213,7 @@ function writeFixed32(buf, pos, val) {
  * @returns {Writer} `this`
  */
 WriterPrototype.fixed32 = function write_fixed32(value) {
-    return this.push(writeFixed32, 4, value >>> 0);
+    return this._push(writeFixed32, 4, value >>> 0);
 };
 
 /**
@@ -212,7 +222,7 @@ WriterPrototype.fixed32 = function write_fixed32(value) {
  * @returns {Writer} `this`
  */
 WriterPrototype.sfixed32 = function write_sfixed32(value) {
-    return this.fixed32(value << 1 ^ value >> 31);
+    return this._push(writeFixed32, 4, value << 1 ^ value >> 31);
 };
 
 function writeFixed64(buf, pos, bits) {
@@ -234,7 +244,7 @@ function writeFixed64(buf, pos, bits) {
  * @returns {Writer} `this`
  */
 WriterPrototype.fixed64 = function write_fixed64(value) {
-    return this.push(writeFixed64, 8, LongBits.from(value));
+    return this._push(writeFixed64, 8, LongBits.from(value));
 };
 
 /**
@@ -243,7 +253,7 @@ WriterPrototype.fixed64 = function write_fixed64(value) {
  * @returns {Writer} `this`
  */
 WriterPrototype.sfixed64 = function write_sfixed64(value) {
-    return this.push(writeFixed64, 8, LongBits.from(value).zzEncode());
+    return this._push(writeFixed64, 8, LongBits.from(value).zzEncode());
 };
 
 function writeFloat(buf, pos, val) {
@@ -257,7 +267,7 @@ function writeFloat(buf, pos, val) {
  * @returns {Writer} `this`
  */
 WriterPrototype.float = function write_float(value) {
-    return this.push(writeFloat, 4, value);
+    return this._push(writeFloat, 4, value);
 };
 
 function writeDouble(buf, pos, val) {
@@ -271,7 +281,7 @@ function writeDouble(buf, pos, val) {
  * @returns {Writer} `this`
  */
 WriterPrototype.double = function write_double(value) {
-    return this.push(writeDouble, 8, value);
+    return this._push(writeDouble, 8, value);
 };
 
 function writeBytes(buf, pos, val) {
@@ -287,8 +297,8 @@ function writeBytes(buf, pos, val) {
 WriterPrototype.bytes = function write_bytes(value) {
     var len = value.length >>> 0;
     return len
-        ? this.uint32(len).push(writeBytes, len, value)
-        : this.push(writeByte, 1, 0);
+        ? this.uint32(len)._push(writeBytes, len, value)
+        : this._push(writeByte, 1, 0);
 };
 
 function writeString(buf, pos, val) {
@@ -343,8 +353,8 @@ function byteLength(value) {
 WriterPrototype.string = function write_string(value) {
     var len = byteLength(value);
     return len
-        ? this.uint32(len).push(writeString, len, value)
-        : this.push(writeByte, 1, 0);
+        ? this.uint32(len)._push(writeString, len, value)
+        : this._push(writeByte, 1, 0);
 };
 
 /**
@@ -354,8 +364,8 @@ WriterPrototype.string = function write_string(value) {
  * @returns {Writer} `this`
  */
 WriterPrototype.fork = function fork() {
-    this.stack.push(new State(this));
-    this.head = this.tail = new Op(noop, 0, 0);
+    this._stack.push(new State(this));
+    this._head = this._tail = new Op(noop, 0, 0);
     this.len = 0;
     return this;
 };
@@ -366,10 +376,10 @@ WriterPrototype.fork = function fork() {
  * @returns {Writer} `this`
  */
 WriterPrototype.reset = function reset() {
-    if (this.stack.length)
-        this.stack.pop().apply(this);
+    if (this._stack.length)
+        this._stack.pop().apply(this);
     else {
-        this.head = this.tail = new Op(noop, 0, 0);
+        this._head = this._tail = new Op(noop, 0, 0);
         this.len = 0;
     }
     return this;
@@ -380,16 +390,16 @@ WriterPrototype.reset = function reset() {
  * @returns {Writer} `this` 
  */
 WriterPrototype.ldelim = function ldelim() {
-    var head = this.head,
-        tail = this.tail,
+    var head = this._head,
+        tail = this._tail,
         len  = this.len;
     this.reset();
     this.uint32(len);
-    this.tail.next = head.next; // skip noop
-    this.tail = tail;
+    this._tail.next = head.next; // skip noop
+    this._tail = tail;
     this.len += len;
     return this;
-}
+};
 
 var ArrayImpl =  typeof Uint8Array !== 'undefined' ? Uint8Array : Array;
 
@@ -398,7 +408,7 @@ var ArrayImpl =  typeof Uint8Array !== 'undefined' ? Uint8Array : Array;
  * @returns {number[]} Finished buffer
  */
 WriterPrototype.finish = function finish() {
-    var head = this.head.next, // skip noop
+    var head = this._head.next, // skip noop
         buf = new ArrayImpl(this.len),
         pos = 0;
     this.reset();
@@ -425,7 +435,7 @@ function BufferWriter() {
 var BufferWriterPrototype = BufferWriter.prototype = Object.create(Writer.prototype);
 BufferWriterPrototype.constructor = BufferWriter;
 
-Op.prototype.fb = function writeFloatBuffer(buf, pos, val) {
+function writeFloatBuffer(buf, pos, val) {
     buf.writeFloatLE(val, pos, true);
 }
 
@@ -435,7 +445,7 @@ Op.prototype.fb = function writeFloatBuffer(buf, pos, val) {
  * @returns {BufferWriter} `this`
  */
 BufferWriterPrototype.float = function write_float_buffer(value) {
-    return this.push(writeFloatBuffer, 4, value);
+    return this._push(writeFloatBuffer, 4, value);
 };
 
 function writeDoubleBuffer(buf, pos, val) {
@@ -448,7 +458,7 @@ function writeDoubleBuffer(buf, pos, val) {
  * @returns {BufferWriter} `this`
  */
 BufferWriterPrototype.double = function write_double_buffer(value) {
-    return this.push(writeDoubleBuffer, 8, value);
+    return this._push(writeDoubleBuffer, 8, value);
 };
 
 function writeBytesBuffer(buf, pos, val) {
@@ -463,8 +473,8 @@ function writeBytesBuffer(buf, pos, val) {
 BufferWriterPrototype.bytes = function write_bytes_buffer(value) {
     var len = value.length >>> 0;
     return len
-        ? this.uint32(len).push(writeBytesBuffer, len, value)
-        : this.push(writeByte, 1, 0);
+        ? this.uint32(len)._push(writeBytesBuffer, len, value)
+        : this._push(writeByte, 1, 0);
 };
 
 function writeStringBuffer(buf, pos, val, len) {
@@ -479,8 +489,8 @@ function writeStringBuffer(buf, pos, val, len) {
 BufferWriterPrototype.string = function write_string_buffer(value) {
     var len = byteLength(value);
     return len
-        ? this.uint32(len).push(writeStringBuffer, len, value)
-        : this.push(writeByte, 1, 0);
+        ? this.uint32(len)._push(writeStringBuffer, len, value)
+        : this._push(writeByte, 1, 0);
 };
 
 /**
@@ -488,7 +498,7 @@ BufferWriterPrototype.string = function write_string_buffer(value) {
  * @returns {Buffer} Finished buffer
  */
 BufferWriterPrototype.finish = function finish_buffer() {
-    var head = this.head.next, // skip noop
+    var head = this._head.next, // skip noop
         buf = new util.Buffer(this.len);
     this.reset();
     var pos = 0;

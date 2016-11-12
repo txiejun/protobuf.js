@@ -80,7 +80,9 @@ function inherits(clazz, type, options) {
              */
             encodeDelimited: {
                 value: function encodeDelimited(message, writer) {
-                    return this.$type.encodeDelimited(message, writer || Writer()).finish();
+                    if (!writer)
+                        writer = Writer();
+                    return this.$type.encode_(message, writer.fork()).ldelim().finish();
                 }
             },
 

@@ -3,8 +3,8 @@ module.exports = Root;
 var Namespace = require("./namespace"),
     Type      = require("./type"),
     Field     = require("./field"),
-    OneOf     = require("./oneof"),
-    Enum      = require("./enum"),
+    // OneOf     = require("./oneof"),
+    // Enum      = require("./enum"),
     util      = require("./util");
 
 /**
@@ -89,20 +89,20 @@ RootPrototype.addLoaded = function addLoaded(filename) {
  */
 function importGoogleTypes(root, visible) {
 
-    var bool     = "bool",
+    var // bool     = "bool",
         int32    = "int32",
-        uint32   = "uint32",
+        // uint32   = "uint32",
         int64    = "int64",
-        uint64   = "uint64",
-        float    = "float",
-        double   = "double",
+        // uint64   = "uint64",
+        // float    = "float",
+        // double   = "double",
         string   = "string",
         bytes    = "bytes",
-        repeated = "repeated",
+        // repeated = "repeated",
         value    = "value",
-        name     = "name",
-        number   = "number",
-        options  = "options",
+        // name     = "name",
+        // number   = "number",
+        // options  = "options",
         seconds  = "seconds",
         nanos    = "nanos";
 
@@ -131,7 +131,7 @@ function importGoogleTypes(root, visible) {
             .add(new Field(seconds, 1, int64))
             .add(new Field(nanos  , 2, int32))
         ],
-        "wrappers": [
+        /* "wrappers": [
 
             new Type("DoubleValue")
             .add(new Field(value, 1, double)),
@@ -252,7 +252,7 @@ function importGoogleTypes(root, visible) {
 
             new Type("FieldMask")
             .add(new Field("paths", 1, string, repeated))
-        ]
+        ] */
     };
 
     var gp = "google/protobuf";
@@ -384,18 +384,21 @@ RootPrototype._handleAdd = function handleAdd(object) {
     // Try to handle any pending extensions
     var newPendingExtensions = this.pendingExtensions.slice();
     this.pendingExtensions = []; // because the loop calls handleAdd
-    for (var i = 0; i < newPendingExtensions.length;) {
+    var i = 0;
+    while (i < newPendingExtensions.length)
         if (handleExtension(newPendingExtensions[i]))
             newPendingExtensions.splice(i, 1);
         else
             ++i;
-    }
     this.pendingExtensions = newPendingExtensions;
     // Handle new declaring extension fields without a sister field yet
     if (object instanceof Field && object.extend !== undefined && !object.extensionField && !handleExtension(object) && this.pendingExtensions.indexOf(object) < 0)
         this.pendingExtensions.push(object);
-    else if (object instanceof Namespace)
-        object.each(this._handleAdd, this); // recurse into the namespace
+    else if (object instanceof Namespace) {
+        var nested = object.nestedArray, k = nested.length; i = 0;
+        while (i < k) // recurse into the namespace
+            this._handleAdd(nested[i++]);
+    }
 };
 
 /**
@@ -417,8 +420,11 @@ RootPrototype._handleRemove = function handleRemove(object) {
             object.extensionField.parent.remove(object.extensionField);
             object.extensionField = null;
         }
-    } else if (object instanceof Namespace)
-        object.each(this._handleRemove, this); // recurse into the namespace
+    } else if (object instanceof Namespace) {
+        var nested = object.nestedArray, i = 0, k = nested.length;
+        while (i < k) // recurse into the namespace
+            this._handleRemove(nested[i++]);
+    }
 };
 
 /**

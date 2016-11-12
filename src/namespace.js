@@ -27,10 +27,22 @@ function Namespace(name, options) {
     ReflectionObject.call(this, name, options);
 
     /**
-     * Nested reflection objects by name.
+     * Nested objects by name.
      * @type {Object.<string,ReflectionObject>|undefined}
      */
     this.nested = undefined; // exposed
+
+    /**
+     * Cached nested objects as an array.
+     * @type {?ReflectionObject[]}
+     * @private
+     */
+    this._nestedArray = null;
+}
+
+function clearCache(namespace) {
+    namespace._nestedArray = null;
+    return namespace;
 }
 
 Object.defineProperties(NamespacePrototype, {
@@ -47,16 +59,28 @@ Object.defineProperties(NamespacePrototype, {
         }
     },
 
+    /**
+     * Nested objects of this namespace as an array for iteration.
+     * @name Namespace#nestedArray
+     * @type {ReflectionObject[]}
+     * @readonly
+     */
+    nestedArray: {
+        get: function() {
+            return this._nestedArray || (this._nestedArray = util.toArray(this.nested));
+        }
+    },
+
     // override
     object: {
         get: function() {
             if (this._object)
                 return this._object;
-            var obj = this._object = Object.create(this);
-            this.each(function(nested, name) {
-                obj[name] = nested.object;
-            });
-            return obj;
+            this._object = Object.create(this);
+            var nested = this.nestedArray, i = 0, k = nested.length, obj;
+            while (i < k)
+                this._object[(obj = nested[i++]).name] = obj.object;
+            return this._object;
         }
     }
 
@@ -111,25 +135,6 @@ NamespacePrototype.addJSON = function addJSON(json) {
 };
 
 /**
- * Iterates over all nested objects.
- * @param {function(this:Namespace, ReflectionObject, string):*} fn Iterator function called with nested objects and their names. Can return something different than `undefined` to break the iteration.
- * @param {Object} [ctx] Iterator function context
- * @param {Object} [object] Alternative object to iterate over
- * @returns {*|Namespace} First value returned, otherwise `this`
- */
-NamespacePrototype.each = function each(fn, ctx, object) {
-    if (!object)
-        object = this.nested;
-    if (object) {
-        var names = Object.keys(object);
-        for (var i = 0, k = names.length, name, ret; i < k; ++i)
-            if ((ret = fn.call(ctx || this, object[name = names[i]], name)) !== undefined)
-                return ret;
-    }
-    return this;
-};
-
-/**
  * Gets the nested object of the specified name.
  * @param {string} name Nested object name
  * @returns {?ReflectionObject} The reflection object or `null` if it doesn't exist
@@ -154,15 +159,18 @@ NamespacePrototype.add = function add(object) {
         var prev = this.get(object.name);
         if (prev) {
             if (prev instanceof Namespace && !(prev instanceof Type) && object instanceof Type) {
-                prev.each(object.add, object); // move existing nested objects to the message type
-                this.remove(prev);             // and remove the previous namespace
+                // move existing nested objects to the message type and remove the previous namespace
+                var nested = prev.nestedArray, i = 0, k = nested.length;
+                while (i < k)
+                    object.add(nested[i++]);
+                this.remove(prev);
             } else
                 throw Error("duplicate name '" + object.name + "' in " + this);
         }
     }
     this.nested[object.name] = object;
     object.onAdd(this);
-    return this;
+    return clearCache(this);
 };
 
 /**
@@ -179,7 +187,7 @@ NamespacePrototype.remove = function remove(object) {
     if (this.empty)
         this.nested = undefined;
     object.onRemove(this);
-    return this;
+    return clearCache(this);
 };
 
 /**
@@ -228,9 +236,9 @@ NamespacePrototype.define = function define(path, json, visible) {
  * @returns {Namespace} `this`
  */
 NamespacePrototype.resolveAll = function resolve() {
-    this.each(function(nested) {
-        nested.resolve();
-    }, this);
+    var nested = this.nestedArray, i = 0, k = nested.length;
+    while (i < k)
+        nested[i++].resolve();
     return ReflectionObject.prototype.resolve.call(this);
 };
 
@@ -270,12 +278,13 @@ NamespacePrototype.toJSON = function toJSON() {
     // Otherwise expose visible members only
     var visibleMembers = {};
     var hasVisibleMembers = false;
-    this.each(function(nested, name) {
-        var json = nested.toJSON();
+    var nested = this.nestedArray, i = 0, k = nested.length, obj;
+    while (i < k) {
+        var json = (obj = nested[i++]).toJSON();
         if (json) {
-            visibleMembers[name] = json;
+            visibleMembers[obj.name] = json;
             hasVisibleMembers = true;
         }
-    }, this);
+    }
     return hasVisibleMembers ? { nested: visibleMembers } : undefined;
 };
