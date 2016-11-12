@@ -33,7 +33,7 @@ codegen.verbose = false;
  */
 function codegen(/* varargs */) {
     var args   = Array.prototype.slice.call(arguments),
-        src    = [],
+        src    = ['"use strict";'],
         indent = 1;
 
     /**

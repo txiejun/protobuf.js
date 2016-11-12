@@ -17,7 +17,7 @@ var nestedTypes = [ Enum, Type, Service, Field, Namespace ],
 
 /**
  * Constructs a new namespace.
- * @class Reflected namespace and base class of all reflection objects containing nested objects.
+ * @classdesc Reflected namespace and base class of all reflection objects containing nested objects.
  * @extends ReflectionObject
  * @constructor
  * @param {string} name Namespace name
@@ -113,7 +113,7 @@ NamespacePrototype.addJSON = function addJSON(json) {
 /**
  * Iterates over all nested objects.
  * @param {function(this:Namespace, ReflectionObject, string):*} fn Iterator function called with nested objects and their names. Can return something different than `undefined` to break the iteration.
- * @param {Object} [ctx] Optional iterator function context
+ * @param {Object} [ctx] Iterator function context
  * @param {Object} [object] Alternative object to iterate over
  * @returns {*|Namespace} First value returned, otherwise `this`
  */
@@ -185,7 +185,7 @@ NamespacePrototype.remove = function remove(object) {
 /**
  * Defines additial namespaces within this one if not yet existing.
  * @param {string|string[]} path Path to create
- * @param {*} [json] Optional nested types to create from JSON
+ * @param {*} [json] Nested types to create from JSON
  * @param {?boolean} [visible=null] Whether visible when exporting definitions. Defaults to inherit from parent.
  * @returns {Namespace} Pointer to the last namespace created or `this` if path is empty
  */

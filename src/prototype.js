@@ -10,7 +10,7 @@ module.exports = Prototype;
 /**
  * Constructs a new prototype.
  * This method should be called from your custom constructors, i.e. `Prototype.call(this, properties)`.
- * @class Runtime message prototype ready to be extended by custom classes or generated code.
+ * @classdesc Runtime message prototype ready to be extended by custom classes or generated code.
  * @constructor
  * @param {Object.<string,*>} [properties] Properties to set
  * @param {Prototype.Options} [options] Prototype options

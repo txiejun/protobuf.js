@@ -16,7 +16,7 @@ var Namespace = require("./namespace"),
 
 /**
  * Constructs a new root namespace.
- * @class Root namespace wrapping all types, enums, services, sub-namespaces etc. that belong together.
+ * @classdesc Root namespace wrapping all types, enums, services, sub-namespaces etc. that belong together.
  * @extends Namespace
  * @constructor
  * @param {Root.Options} [rootOptions] Root options
@@ -273,7 +273,7 @@ Root.importGoogleTypes = importGoogleTypes;
  * Loads one or multiple .proto or preprocessed .json files into this root namespace.
  * @param {string|string[]} filename Names of one or multiple files to load
  * @param {function(?Error, Root=)} [callback] Node-style callback function
- * @param {Object} [ctx] Optional callback context
+ * @param {Object} [ctx] Callback context
  * @returns {Promise<Root>|undefined} A promise if `callback` has been omitted
  * @throws {TypeError} If arguments are invalid
  */

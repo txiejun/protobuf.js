@@ -10,7 +10,7 @@ var Enum    = require("./enum"),
 
 /**
  * Constructs a new map field.
- * @class Reflected map field.
+ * @classdesc Reflected map field.
  * @extends Field
  * @constructor
  * @param {string} name Unique name within its namespace

@@ -10,7 +10,7 @@ var Method    = require("./method");
 
 /**
  * Constructs a new service.
- * @class Reflected service.
+ * @classdesc Reflected service.
  * @extends Namespace
  * @constructor
  * @param {string} name Service name

@@ -61,7 +61,7 @@ function inherits(clazz, type, options) {
              * @name Class.encode
              * @function
              * @param {Prototype|Object} message Message to encode
-             * @param {Writer} [writer] Optional writer to use
+             * @param {Writer} [writer] Writer to use
              * @returns {number[]} Encoded message
              */
             encode: {
@@ -75,12 +75,12 @@ function inherits(clazz, type, options) {
              * @name Class.encodeDelimited
              * @function
              * @param {Prototype|Object} message Message to encode
-             * @param {Writer} [writer] Optional writer to use
+             * @param {Writer} [writer] Writer to use
              * @returns {number[]} Encoded message
              */
             encodeDelimited: {
                 value: function encodeDelimited(message, writer) {
-                    return this.$type.encodeDelimited_(message, writer || Writer()).finish();
+                    return this.$type.encodeDelimited(message, writer || Writer()).finish();
                 }
             },
 
@@ -106,7 +106,8 @@ function inherits(clazz, type, options) {
              */
             decodeDelimited: {
                 value: function decodeDelimited(buffer) {
-                    return this.$type.decodeDelimited_(Reader(buffer), new this(), buffer.length);
+                    var reader = Reader(buffer);
+                    return this.$type.decode_(reader, new this(), reader.uint32() + reader.pos);
                 }
             }
 
@@ -118,7 +119,7 @@ function inherits(clazz, type, options) {
     prototype.constructor = clazz;
 
     if (!options.noRegister)
-        type.register(clazz);
+        type.constructor = clazz;
 
     return prototype;
 }

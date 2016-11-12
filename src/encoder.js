@@ -6,7 +6,7 @@ var Enum    = require("./enum"),
 
 /**
  * Constructs a new encoder for the specified message type.
- * @class Wire format encoder using code generation on top of reflection
+ * @classdesc Wire format encoder using code generation on top of reflection
  * @constructor
  * @param {Type} type Message type
  */
@@ -45,9 +45,9 @@ EncoderPrototype.encode = function encode(message, writer) { // codegen referenc
                     if (wireType !== undefined)
                         writer.tag(2, wireType)[type](value[key]);
                     else
-                        field.resolvedType.encodeDelimited_(value[key], writer.tag(2, 2));
+                        field.resolvedType.encode_(value[key], writer.tag(2, 2).fork()).ldelim();
                 }
-                writer.bytes(writer.finish());
+                writer.ldelim();
             }
 
         // Repeated fields
@@ -66,7 +66,7 @@ EncoderPrototype.encode = function encode(message, writer) { // codegen referenc
             // Non-packed
             } else {
                 while (i < k)
-                    field.resolvedType.encodeDelimited_(values[i++], writer.tag(field.id, 2));
+                    field.resolvedType.encode_(values[i++], writer.tag(field.id, 2).fork()).ldelim();
             }
 
         // Non-repeated
@@ -77,7 +77,7 @@ EncoderPrototype.encode = function encode(message, writer) { // codegen referenc
                 if (wireType !== undefined)
                     writer.tag(field.id, wireType)[type](value);
                 else
-                    field.resolvedType.encodeDelimited_(value, writer.tag(field.id, 2));
+                    field.resolvedType.encode_(value, writer.tag(field.id, 2).fork()).ldelim();
             }
         }
     }
@@ -93,9 +93,7 @@ EncoderPrototype.generate = function generate() {
     /* eslint-disable no-unexpected-multiline */
     var fieldsArray = this.type.fieldsArray,
         fieldsCount = fieldsArray.length;
-    var gen = util.codegen("m", "w")
-
-    ('"use strict"');
+    var gen = util.codegen("m", "w");
     
     for (var i = 0; i < fieldsCount; ++i) {
         var field = fieldsArray[i].resolve();
@@ -117,10 +115,10 @@ EncoderPrototype.generate = function generate() {
             if (wireType !== undefined) gen
             ("w.tag(2,%d).%s(o[k])", wireType, type);
             else gen
-            ("$t[%d].encodeDelimited_(o[k],w.tag(2,2))", i);
+            ("$t[%d].encode_(o[k],w.tag(2,2).fork()).ldelim()", i);
             gen
         ("}")
-        ("w.bytes(w.finish())")
+        ("w.ldelim()")
     ("}");
 
         // Repeated fields
@@ -142,18 +140,18 @@ EncoderPrototype.generate = function generate() {
             } else { gen
 
     ("while(i<k)")
-        ("$t[%d].encodeDelimited_(vs[i++],w.tag(%d,2))", i, field.id);
+        ("$t[%d].encode_(vs[i++],w.tag(%d,2).fork()).ldelim()", i, field.id);
 
             }
 
         // Non-repeated
         } else {
             if (!field.required) gen
-    ("if(m%s%s%j)", prop, typeof field.defaultValue === 'object' || field.long ? "!==" : "!=", field.defaultValue);
+    ("if(m%s%s%j)", prop, typeof field.defaultValue === 'object' || field.long ? "!==" : "!=", field.defaultValue); 
             if (wireType !== undefined) gen
-    ("w.tag(%d,%d).%s(m%s)", field.id, wireType, type, prop);
+        ("w.tag(%d,%d).%s(m%s)", field.id, wireType, type, prop);
             else gen
-    ("$t[%d].encodeDelimited_(m%s,w.tag(%d,2))", i, prop, field.id);
+        ("$t[%d].encode_(m%s,w.tag(%d,2).fork()).ldelim()", i, prop, field.id);
     
         }
     }

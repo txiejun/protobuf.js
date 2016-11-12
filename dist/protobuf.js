@@ -1,6 +1,6 @@
 /*!
  * protobuf.js v6.0.0-dev (c) 2016 Daniel Wirtz
- * Compiled Fri, 11 Nov 2016 23:52:00 UTC
+ * Compiled Sat, 12 Nov 2016 10:02:21 UTC
  * Licensed under the Apache License, Version 2.0
  * see: https://github.com/dcodeIO/protobuf.js for details
  */
@@ -160,7 +160,7 @@ codegen.verbose = false;
  */
 function codegen(/* varargs */) {
     var args   = Array.prototype.slice.call(arguments),
-        src    = [],
+        src    = ['"use strict";'],
         indent = 1;
 
     /**
@@ -246,7 +246,7 @@ var Enum    = require("./enum"),
 
 /**
  * Constructs a new decoder for the specified message type.
- * @class Wire format decoder using code generation on top of reflection.
+ * @classdesc Wire format decoder using code generation on top of reflection.
  * @constructor
  * @param {Type} type Message type
  */
@@ -291,7 +291,7 @@ DecoderPrototype.decode = function decode(reader, message, limit) { // codegen r
                         else if (wireType !== undefined)
                             values[vi++] = reader[type]();
                         else
-                            values[vi++] = field.resolvedType.decodeDelimited_(reader, field.resolvedType.create_());
+                            values[vi++] = field.resolvedType.decode_(reader, new field.resolvedType.ctor(), reader.uint32() + reader.pos);
                     }
                     var key;
                     for (ki = 0; ki < vi; ++ki)
@@ -315,13 +315,13 @@ DecoderPrototype.decode = function decode(reader, message, limit) { // codegen r
                 } else if (wireType !== undefined)
                     values[length++] = reader[type]();
                 else
-                    values[length++] = field.resolvedType.decodeDelimited_(reader, field.resolvedType.create_());
+                    values[length++] = field.resolvedType.decode_(reader, new field.resolvedType.ctor(), reader.uint32() + reader.pos);
 
             // Non-repeated
             } else if (wireType !== undefined)
                 message[field.name] = reader[type]();
             else
-                message[field.name] = field.resolvedType.decodeDelimited_(reader, field.resolvedType.create_());
+                message[field.name] = field.resolvedType.decode_(reader, new field.resolvedType.ctor(), reader.uint32() + reader.pos);
 
         // Unknown fields
         } else
@@ -342,7 +342,6 @@ DecoderPrototype.generate = function generate() {
     
     var gen = util.codegen("r", "m", "l")
 
-    ('"use strict"')
     ("while(r.pos<l){")
         ("var t=r.tag()")
         ("switch(t.id){");
@@ -371,7 +370,7 @@ DecoderPrototype.generate = function generate() {
                             ("vs[vi++]=r.%s()", type);
                         else gen
                         ("else")
-                            ("vs[vi++]=$t[%d].decodeDelimited_(r,$t[%d].create_())", i, i);
+                            ("vs[vi++]=$t[%d].decode_(r,new $t[%d].ctor(),r.uint32()+r.pos)", i, i);
                     gen
                     ("}")
                     ("var k")
@@ -400,7 +399,7 @@ DecoderPrototype.generate = function generate() {
 
             else gen
 
-                    ("vs[n++]=$t[%d].decodeDelimited_(r,$t[%d].create_())", i, i);
+                    ("vs[n++]=$t[%d].decode_(r,new $t[%d].ctor(),r.uint32()+r.pos)", i, i);
 
         } else if (wireType !== undefined) { gen
 
@@ -408,7 +407,7 @@ DecoderPrototype.generate = function generate() {
 
         } else { gen
 
-                ("m%s=$t[%d].decodeDelimited_(r,$t[%d].create_())", prop, i, i);
+                ("m%s=$t[%d].decode_(r,new $t[%d].ctor(),r.uint32()+r.pos)", prop, i, i);
 
         } gen
                 ("break");
@@ -435,7 +434,7 @@ var Enum    = require("./enum"),
 
 /**
  * Constructs a new encoder for the specified message type.
- * @class Wire format encoder using code generation on top of reflection
+ * @classdesc Wire format encoder using code generation on top of reflection
  * @constructor
  * @param {Type} type Message type
  */
@@ -474,9 +473,9 @@ EncoderPrototype.encode = function encode(message, writer) { // codegen referenc
                     if (wireType !== undefined)
                         writer.tag(2, wireType)[type](value[key]);
                     else
-                        field.resolvedType.encodeDelimited_(value[key], writer.tag(2, 2));
+                        field.resolvedType.encode_(value[key], writer.tag(2, 2).fork()).ldelim();
                 }
-                writer.bytes(writer.finish());
+                writer.ldelim();
             }
 
         // Repeated fields
@@ -495,7 +494,7 @@ EncoderPrototype.encode = function encode(message, writer) { // codegen referenc
             // Non-packed
             } else {
                 while (i < k)
-                    field.resolvedType.encodeDelimited_(values[i++], writer.tag(field.id, 2));
+                    field.resolvedType.encode_(values[i++], writer.tag(field.id, 2).fork()).ldelim();
             }
 
         // Non-repeated
@@ -506,7 +505,7 @@ EncoderPrototype.encode = function encode(message, writer) { // codegen referenc
                 if (wireType !== undefined)
                     writer.tag(field.id, wireType)[type](value);
                 else
-                    field.resolvedType.encodeDelimited_(value, writer.tag(field.id, 2));
+                    field.resolvedType.encode_(value, writer.tag(field.id, 2).fork()).ldelim();
             }
         }
     }
@@ -522,9 +521,7 @@ EncoderPrototype.generate = function generate() {
     /* eslint-disable no-unexpected-multiline */
     var fieldsArray = this.type.fieldsArray,
         fieldsCount = fieldsArray.length;
-    var gen = util.codegen("m", "w")
-
-    ('"use strict"');
+    var gen = util.codegen("m", "w");
     
     for (var i = 0; i < fieldsCount; ++i) {
         var field = fieldsArray[i].resolve();
@@ -546,10 +543,10 @@ EncoderPrototype.generate = function generate() {
             if (wireType !== undefined) gen
             ("w.tag(2,%d).%s(o[k])", wireType, type);
             else gen
-            ("$t[%d].encodeDelimited_(o[k],w.tag(2,2))", i);
+            ("$t[%d].encode_(o[k],w.tag(2,2).fork()).ldelim()", i);
             gen
         ("}")
-        ("w.bytes(w.finish())")
+        ("w.ldelim()")
     ("}");
 
         // Repeated fields
@@ -571,18 +568,18 @@ EncoderPrototype.generate = function generate() {
             } else { gen
 
     ("while(i<k)")
-        ("$t[%d].encodeDelimited_(vs[i++],w.tag(%d,2))", i, field.id);
+        ("$t[%d].encode_(vs[i++],w.tag(%d,2).fork()).ldelim()", i, field.id);
 
             }
 
         // Non-repeated
         } else {
             if (!field.required) gen
-    ("if(m%s%s%j)", prop, typeof field.defaultValue === 'object' || field.long ? "!==" : "!=", field.defaultValue);
+    ("if(m%s%s%j)", prop, typeof field.defaultValue === 'object' || field.long ? "!==" : "!=", field.defaultValue); 
             if (wireType !== undefined) gen
-    ("w.tag(%d,%d).%s(m%s)", field.id, wireType, type, prop);
+        ("w.tag(%d,%d).%s(m%s)", field.id, wireType, type, prop);
             else gen
-    ("$t[%d].encodeDelimited_(m%s,w.tag(%d,2))", i, prop, field.id);
+        ("$t[%d].encode_(m%s,w.tag(%d,2).fork()).ldelim()", i, prop, field.id);
     
         }
     }
@@ -607,7 +604,7 @@ var _TypeError = util._TypeError;
 
 /**
  * Constructs a new enum.
- * @class Reflected enum.
+ * @classdesc Reflected enum.
  * @extends ReflectionObject
  * @constructor
  * @param {string} name Unique name within its namespace
@@ -728,7 +725,7 @@ var _TypeError = util._TypeError;
 
 /**
  * Constructs a new message field. Note that {@link MapField|map fields} have their own class.
- * @class Reflected message field.
+ * @classdesc Reflected message field.
  * @extends ReflectionObject
  * @constructor
  * @param {string} name Unique name within its namespace
@@ -1026,7 +1023,7 @@ function inherits(clazz, type, options) {
              * @name Class.encode
              * @function
              * @param {Prototype|Object} message Message to encode
-             * @param {Writer} [writer] Optional writer to use
+             * @param {Writer} [writer] Writer to use
              * @returns {number[]} Encoded message
              */
             encode: {
@@ -1040,12 +1037,12 @@ function inherits(clazz, type, options) {
              * @name Class.encodeDelimited
              * @function
              * @param {Prototype|Object} message Message to encode
-             * @param {Writer} [writer] Optional writer to use
+             * @param {Writer} [writer] Writer to use
              * @returns {number[]} Encoded message
              */
             encodeDelimited: {
                 value: function encodeDelimited(message, writer) {
-                    return this.$type.encodeDelimited_(message, writer || Writer()).finish();
+                    return this.$type.encodeDelimited(message, writer || Writer()).finish();
                 }
             },
 
@@ -1071,7 +1068,8 @@ function inherits(clazz, type, options) {
              */
             decodeDelimited: {
                 value: function decodeDelimited(buffer) {
-                    return this.$type.decodeDelimited_(Reader(buffer), new this(), buffer.length);
+                    var reader = Reader(buffer);
+                    return this.$type.decode_(reader, new this(), reader.uint32() + reader.pos);
                 }
             }
 
@@ -1083,7 +1081,7 @@ function inherits(clazz, type, options) {
     prototype.constructor = clazz;
 
     if (!options.noRegister)
-        type.register(clazz);
+        type.constructor = clazz;
 
     return prototype;
 }
@@ -1149,7 +1147,7 @@ module.exports = LongBits;
 
 /**
  * Constructs new long bits.
- * @class Helper class for working with the low and high bits of a 64 bit value.
+ * @classdesc Helper class for working with the low and high bits of a 64 bit value.
  * @memberof util
  * @constructor
  * @param {number} lo Low bits
@@ -1183,6 +1181,7 @@ var zero = new LongBits(0, 0);
 
 zero.toNumber = function() { return 0; };
 zero.zzEncode = zero.zzDecode = function() { return this; };
+zero.length = function() { return 1; }
 
 /**
  * Constructs new long bits from the specified number.
@@ -1293,6 +1292,30 @@ LongBitsPrototype.zzDecode = function zzDecode() {
     return this;
 };
 
+/**
+ * Calculates the length of this longbits when encoded as a varint.
+ * @returns {number} Length
+ */
+LongBitsPrototype.length = function length() {
+    var part0 =  this.lo;
+    var part1 = ((this.hi & 15) << 4 | this.lo >>> 28) >>> 0;
+    var part2 =  this.hi >>> 24;
+    if (part2 === 0) {
+        if (part1 === 0) {
+            if (part0 < 1 << 14)
+                return part0 < 1 << 7 ? 1 : 2;
+            else
+                return part0 < 1 << 21 ? 3 : 4;
+        } else {
+            if (part1 < 1 << 14)
+                return part1 < 1 << 7 ? 5 : 6;
+            else
+                return part1 < 1 << 21 ? 7 : 8;
+        }
+    } else
+        return part2 < 1 << 7 ? 9 : 10;
+};
+
 },{}],9:[function(require,module,exports){
 module.exports = MapField;
 
@@ -1306,7 +1329,7 @@ var Enum    = require("./enum"),
 
 /**
  * Constructs a new map field.
- * @class Reflected map field.
+ * @classdesc Reflected map field.
  * @extends Field
  * @constructor
  * @param {string} name Unique name within its namespace
@@ -1389,7 +1412,7 @@ var _TypeError = util._TypeError;
 
 /**
  * Constructs a new service method.
- * @class Reflected service method.
+ * @classdesc Reflected service method.
  * @extends ReflectionObject
  * @constructor
  * @param {string} name Method name
@@ -1511,7 +1534,7 @@ MethodPrototype.resolve = function resolve() {
  * @param {Prototype|Object} message Request message
  * @param {function(number[], function(?Error, (number[])=))} performRequest A function performing the request on binary level, taking a buffer and a node-style callback for the response buffer as its parameters.
  * @param {function(Error, Prototype=)} [callback] Node-style callback function
- * @param {Object} [ctx] Optional callback context
+ * @param {Object} [ctx] Callback context
  * @returns {Promise<Prototype>|undefined} A promise if `callback` has been omitted
  */
 MethodPrototype.call = function call(message, performRequest, callback, ctx) {
@@ -1563,7 +1586,7 @@ var nestedTypes = [ Enum, Type, Service, Field, Namespace ],
 
 /**
  * Constructs a new namespace.
- * @class Reflected namespace and base class of all reflection objects containing nested objects.
+ * @classdesc Reflected namespace and base class of all reflection objects containing nested objects.
  * @extends ReflectionObject
  * @constructor
  * @param {string} name Namespace name
@@ -1659,7 +1682,7 @@ NamespacePrototype.addJSON = function addJSON(json) {
 /**
  * Iterates over all nested objects.
  * @param {function(this:Namespace, ReflectionObject, string):*} fn Iterator function called with nested objects and their names. Can return something different than `undefined` to break the iteration.
- * @param {Object} [ctx] Optional iterator function context
+ * @param {Object} [ctx] Iterator function context
  * @param {Object} [object] Alternative object to iterate over
  * @returns {*|Namespace} First value returned, otherwise `this`
  */
@@ -1731,7 +1754,7 @@ NamespacePrototype.remove = function remove(object) {
 /**
  * Defines additial namespaces within this one if not yet existing.
  * @param {string|string[]} path Path to create
- * @param {*} [json] Optional nested types to create from JSON
+ * @param {*} [json] Nested types to create from JSON
  * @param {?boolean} [visible=null] Whether visible when exporting definitions. Defaults to inherit from parent.
  * @returns {Namespace} Pointer to the last namespace created or `this` if path is empty
  */
@@ -1838,7 +1861,7 @@ var _TypeError = util._TypeError;
 
 /**
  * Constructs a new reflection object.
- * @class Base class of all reflection objects.
+ * @classdesc Base class of all reflection objects.
  * @constructor
  * @param {string} name Object name
  * @param {Object} [options] Declared options
@@ -2145,7 +2168,7 @@ var _TypeError = util._TypeError;
 
 /**
  * Constructs a new oneof.
- * @class Reflected oneof.
+ * @classdesc Reflected oneof.
  * @extends ReflectionObject
  * @constructor
  * @param {string} name Oneof name
@@ -2814,8 +2837,8 @@ module.exports = Prototype;
 
 /**
  * Constructs a new prototype.
- * This method should be called in your custom constructors, i.e. `Prototype.call(this, properties)`.
- * @class Runtime message prototype ready to be extended by custom classes or generated code.
+ * This method should be called from your custom constructors, i.e. `Prototype.call(this, properties)`.
+ * @classdesc Runtime message prototype ready to be extended by custom classes or generated code.
  * @constructor
  * @param {Object.<string,*>} [properties] Properties to set
  * @param {Prototype.Options} [options] Prototype options
@@ -2886,7 +2909,7 @@ function indexOutOfRange(reader, writeLength) {
 /**
  * Constructs a new reader using the specified buffer.
  * When called as a function, returns an appropriate reader for the specified buffer.
- * @class Wire format reader using `Uint8Array` if available, otherwise `Array`.
+ * @classdesc Wire format reader using `Uint8Array` if available, otherwise `Array`.
  * @constructor
  * @param {number[]} buffer Buffer to read from
  */
@@ -3137,7 +3160,7 @@ ReaderPrototype.fixed64 = function read_fixed64() {
 };
 
 /**
- * Reads zig-zag encoded 64 bits as a Long.
+ * Reads zig-zag encoded fixed 64 bits as a Long.
  * @returns {Long|number} Value read
  */
 ReaderPrototype.sfixed64 = function read_sfixed64() {
@@ -3216,7 +3239,7 @@ ReaderPrototype.string = function read_string() {
 };
 
 /**
- * Skips the specified number of bytes if provided, otherwise skips a varint.
+ * Skips the specified number of bytes if specified, otherwise skips a varint.
  * @param {number} [length] Length if known, otherwise a varint is assumed
  * @returns {Reader} `this`
  */
@@ -3307,7 +3330,7 @@ var initBufferReader = function() {
 
 /**
  * Constructs a new buffer reader.
- * @class Wire format reader using node buffers.
+ * @classdesc Wire format reader using node buffers.
  * @extends Reader
  * @constructor
  * @param {Buffer} buffer Buffer to read from
@@ -3349,13 +3372,11 @@ BufferReaderPrototype.double = function read_double_buffer() {
 
 /**
  * Reads a string.
- * @param {number} [length] Optional number of bytes to read, if known beforehand
  * @returns {string} Value read
  */
-BufferReaderPrototype.string = function read_string_buffer(length) {
-    if (length === undefined)
-        length = this.int32() >>> 0;
-    var start = this.pos,
+BufferReaderPrototype.string = function read_string_buffer() {
+    var length = this.int32() >>> 0,
+        start = this.pos,
         end   = this.pos + length;
     if (end > this.len)
         throw RangeError(indexOutOfRange(this, length));
@@ -3393,7 +3414,7 @@ var Namespace = require("./namespace"),
 
 /**
  * Constructs a new root namespace.
- * @class Root namespace wrapping all types, enums, services, sub-namespaces etc. that belong together.
+ * @classdesc Root namespace wrapping all types, enums, services, sub-namespaces etc. that belong together.
  * @extends Namespace
  * @constructor
  * @param {Root.Options} [rootOptions] Root options
@@ -3650,7 +3671,7 @@ Root.importGoogleTypes = importGoogleTypes;
  * Loads one or multiple .proto or preprocessed .json files into this root namespace.
  * @param {string|string[]} filename Names of one or multiple files to load
  * @param {function(?Error, Root=)} [callback] Node-style callback function
- * @param {Object} [ctx] Optional callback context
+ * @param {Object} [ctx] Callback context
  * @returns {Promise<Root>|undefined} A promise if `callback` has been omitted
  * @throws {TypeError} If arguments are invalid
  */
@@ -3818,7 +3839,7 @@ var Method    = require("./method");
 
 /**
  * Constructs a new service.
- * @class Reflected service.
+ * @classdesc Reflected service.
  * @extends Namespace
  * @constructor
  * @param {string} name Service name
@@ -4132,7 +4153,7 @@ var Enum      = require("./enum"),
 
 /**
  * Constructs a new message type.
- * @class Reflected message type.
+ * @classdesc Reflected message type.
  * @extends Namespace
  * @constructor
  * @param {string} name Message name
@@ -4194,11 +4215,11 @@ function Type(name, options) {
     this._prototype = null;
 
     /**
-     * Registered constructor.
+     * Cached constructor.
      * @type {?Function}
      * @private
      */
-    this._constructor = null;
+    this._ctor = null;
 }
 
 Object.defineProperties(TypePrototype, {
@@ -4251,14 +4272,31 @@ Object.defineProperties(TypePrototype, {
     },
 
     /**
-     * Runtime prototype of this message.
-     * @name Type#prototype
+     * The registered constructor, if any registered, otherwise a generic constructor.
+     * @name Type#ctor
      * @type {Prototype}
-     * @readonly
      */
-    prototype: {
+    ctor: {
         get: function() {
-            return this._prototype || (this._prototype = inherits.defineProperties(new Prototype(), this));
+            if (this._ctor)
+                return this._ctor;
+            var ctor;
+            if (codegen.supported)
+                ctor = codegen("p")("$p.call(this,p)").eof(this.fullName + "$ctor", {
+                    $p: Prototype
+                });
+            else
+                ctor = function GenericMessage(properties) {
+                    Prototype.call(this, properties);
+                };
+            ctor.prototype = inherits(ctor, this);
+            this._ctor = ctor;
+            return ctor;
+        },
+        set: function(ctor) {
+            if (ctor && !(ctor.prototype instanceof Prototype))
+                throw util._TypeError("ctor", "a constructor inheriting from Prototype");
+            this._ctor = ctor;
         }
     }
 });
@@ -4271,7 +4309,7 @@ Object.defineProperties(TypePrototype, {
  * @ignore
  */
 function clearCache(type) {
-    type._fieldsById = type._fieldsArray = type._oneofsArray = type._prototype = null;
+    type._fieldsById = type._fieldsArray = type._oneofsArray = type._prototype = type._ctor = null;
     delete type.encode_;
     delete type.decode_;
     return type;
@@ -4392,51 +4430,24 @@ TypePrototype.remove = function remove(object) {
 };
 
 /**
- * Registers the specified constructor with this type.
- * @param {?Function} constructor Constructor to use for message instances or `null` to unregister  the current constructor
- * @returns {Type} `this`
- */
-TypePrototype.register = function register(constructor) {
-    if (constructor !== null && typeof constructor !== 'function')
-        throw util._TypeError("constructor", "a function or null");
-    this._constructor = constructor;
-    return this;
-};
-
-/**
  * Creates a new message of this type using the specified properties.
  * @param {Object} [properties] Properties to set
- * @param {?Function} [constructor] Optional constructor to use or null to use the internal prototype.
- * If a constructor, it should extend {@link Prototype}.
+ * @param {?Function} [ctor] Constructor to use.
+ * Defaults to use the internal constuctor.
  * @returns {Prototype} Message instance
  */
-TypePrototype.create = function create(properties, constructor) {
+TypePrototype.create = function create(properties, ctor) {
     if (typeof properties === 'function') {
-        constructor = properties;
+        ctor = properties;
         properties = undefined;
     } else if (properties /* already */ instanceof Prototype)
         return properties;
-    if (!constructor)
-        constructor = this._constructor;
-    if (constructor)
-        return new constructor(properties);
-    var message = Object.create(this.prototype);
-    if (properties) {
-        var keys = Object.keys(properties);
-        for (var i = 0, k = keys.length, key; i < k; ++i)
-            message[key = keys[i]] = properties[key];
-    }
-    return message;
-};
-
-/**
- * Creates a new message of this type by using the registered constructor or internal prototype.
- * @returns {Prototype} Message instance
- */
-TypePrototype.create_ = function create_internal() {
-    return this._constructor
-        ? new this._constructor()
-        : Object.create(this.prototype);
+    if (ctor) {
+        if (!(ctor.prototype instanceof Prototype))
+            throw util._TypeError("ctor", "a constructor inheriting from Prototype");
+    } else
+        ctor = this.ctor;
+    return new ctor(properties);
 };
 
 /**
@@ -4471,37 +4482,23 @@ TypePrototype.encode_ = function encode_internal(message, writer) {
  * @returns {Writer} writer
  */
 TypePrototype.encodeDelimited = function encodeDelimited(message, writer) {
-    return this.encodeDelimited_(message, writer || Writer());
-};
-
-/**
- * Encodes a message of this type preceeded by its byte length as a varint.
- * This method differs from {@link Type#encodeDelimited} in that it expects already type checked and known to be present arguments.
- * @param {Prototype|Object} message Message instance or plain object
- * @param {Writer} writer Writer to encode to
- * @returns {Writer} writer
- */
-TypePrototype.encodeDelimited_ = function encodeDelimited_internal(message, writer) {
-    return writer.bytes(this.encode_(message, writer.fork()).finish());
+    if (writer)
+        writer.fork();
+    else
+        writer = Writer();
+    return writer.bytes(this.encode_(message, writer).finish());
 };
 
 /**
  * Decodes a message of this type.
  * @param {Reader|number[]} readerOrBuffer Reader or buffer to decode from
- * @param {Function} [constructor] Optional constructor of the created message, see {@link Type#create}
  * @param {number} [length] Length of the message, if known beforehand
  * @returns {Prototype} Decoded message
  */
-TypePrototype.decode = function decode(readerOrBuffer, constructor, length) {
-    if (typeof constructor === 'number') {
-        length = constructor;
-        constructor = this._constructor;
-    } else if (!constructor)
-        constructor = this._constructor;
+TypePrototype.decode = function decode(readerOrBuffer, length) {
     var reader  = readerOrBuffer instanceof Reader ? readerOrBuffer : Reader(readerOrBuffer),
-        message = this._constructor ? new this._constructor() : Object.create(this.prototype),
         limit   = length === undefined ? reader.len : reader.pos + length;
-    return this.decode_(reader, message, limit);
+    return this.decode_(reader, new this.ctor(), limit);
 };
 
 /**
@@ -4524,23 +4521,11 @@ TypePrototype.decode_ = function decode_internal(reader, message, limit) {
 /**
  * Decodes a message of this type preceeded by its byte length as a varint.
  * @param {Reader|number[]} readerOrBuffer Reader or buffer to decode from
- * @param {Function} [constructor] Optional constructor of the created message, see {@link Type#create}
  * @returns {Prototype} Decoded message
  */
-TypePrototype.decodeDelimited = function decodeDelimited(readerOrBuffer, constructor) {
+TypePrototype.decodeDelimited = function decodeDelimited(readerOrBuffer) {
     var reader = readerOrBuffer instanceof Reader ? readerOrBuffer : Reader(readerOrBuffer);
-    return this.decode(reader, constructor, reader.uint32());
-};
-
-/**
- * Decodes a message of this type preceeded by its byte length as a varint.
- * This method differs from {@link Type#decodeDelimited} in that it expects already type checked and known to be present arguments.
- * @param {Reader} reader Reader to decode from
- * @param {Prototype} message Message instance to populate
- * @returns {Prototype} Populated message instance
- */
-TypePrototype.decodeDelimited_ = function decodeDelimited_internal(reader, message) {
-    return this.decode_(reader, message, reader.uint32() + reader.pos);
+    return this.decode(reader, reader.uint32());
 };
 
 },{"./codegen":2,"./decoder":3,"./encoder":4,"./enum":5,"./field":6,"./inherits":7,"./namespace":11,"./oneof":13,"./prototype":15,"./reader":16,"./service":18,"./util":22,"./writer":23}],21:[function(require,module,exports){
@@ -4917,16 +4902,31 @@ var LongBits = require("./longbits"),
     util     = require("./util"),
     ieee754  = require("../lib/ieee754");
 
-/**
- * Default buffer size.
- * @type {number}
- */
-Writer.BUFFER_SIZE = 256; // For some reason this is considerably faster on node than 128 or 512.
+function Op(fn, len, val) {
+    this.fn = fn;
+    this.len = len;
+    this.val = val;
+    this.next = null;
+}
+
+function noop() {}
+
+function State(writer) {
+    this.head = writer.head;
+    this.tail = writer.tail;
+    this.len  = writer.len;
+}
+
+State.prototype.apply = function apply(writer) {
+    writer.head = this.head;
+    writer.tail = this.tail;
+    writer.len  = this.len;
+};
 
 /**
  * Constructs a new writer.
  * When called as a function, returns an appropriate writer for the current environment.
- * @class Wire format writer using `Uint8Array` if available, otherwise `Array`.
+ * @classdesc Wire format writer using `Uint8Array` if available, otherwise `Array`.
  * @exports Writer
  * @constructor
  */
@@ -4937,92 +4937,51 @@ function Writer() {
             : new Writer();
 
     /**
-     * Current buffer.
-     * @type {?number[]}
+     * Operations head.
+     * @type {Op}
      */
-    this.buf = null;
+    this.head = new Op(noop, 0, 0);
 
     /**
-     * Current buffer position.
-     * @type {number}
+     * Operations tail
+     * @type {Op}
      */
-    this.pos = 0;
+    this.tail = this.head;
 
     /**
-     * Current buffer length.
+     * Current length.
      * @type {number}
      */
     this.len = 0;
 
     /**
-     * Completed buffers.
-     * @type {number[][]}
+     * State stack.
+     * @type {State[]}
      */
-    this.bufs = [];
-
-    /**
-     * Forked states stack.
-     * @type {number[][][]}
-     * @private
-     */
-    this._stack = [];
+    this.stack = [];
 }
 
 /** @alias Writer.prototype */
 var WriterPrototype = Writer.prototype;
 
-var emptyArray = null;
-
-var ArrayImpl = typeof Uint8Array !== 'undefined'
-    ? Uint8Array
-    : Array;
-
 /**
- * Sets up the Writer class before first use.
- * Done automatically when the first buffer is allocated.
- * @returns {Function} `Writer`
- */
-Writer.setup = function setup() {
-
-    WriterPrototype._slice = ArrayImpl.prototype.slice || ArrayImpl.prototype.subarray;
-
-    WriterPrototype._set = ArrayImpl.prototype.set || function set_array(array, offset) {
-        if (offset + array.length > this.length)
-            throw RangeError("offset");
-        for (var i = 0, k = array.length; i < k; ++i)
-            this[offset + i] = array[i];
-    };
-
-    Writer.alloc = function alloc_array(size) { return new ArrayImpl(size); };
-
-    emptyArray = Writer.alloc(0);
-    if (Object.freeze)
-        try { Object.freeze(emptyArray); } catch(e) {} // eslint-disable-line no-empty
-
-    return Writer;
-};
-
-/**
- * Allocates a chunk of memory.
- * @param {number} size Buffer size
- * @returns {number[]} Allocated buffer
- */
-Writer.alloc = function alloc_array_setup(size) {
-    return Writer.setup().alloc(size); // overrides this method
-};
-
-/**
- * Allocates more memory on the specified writer.
- * @param {number} writeLength Write length requested
+ * Pushes a new operation to the queue.
+ * @param {function} fn Function to apply
+ * @param {number} len Value length
+ * @param {number} val Value
  * @returns {Writer} `this`
  */
-WriterPrototype.expand = function expand(writeLength) {
-    if (this.pos)
-        this.bufs.push(this._slice.call(this.buf, 0, this.pos));
-    this.buf = this.constructor.alloc(this.len = Math.max(writeLength, Writer.BUFFER_SIZE));
-    this.pos = 0;
+WriterPrototype.push = function push(fn, len, val) {
+    var op = new Op(fn, len, val);
+    this.tail.next = op;
+    this.tail = op;
+    this.len += len;
     return this;
 };
+
+function writeByte(buf, pos, val) {
+    buf[pos] = val;
+}
 
 /**
  * Writes a tag.
@@ -5031,11 +4990,16 @@ WriterPrototype.expand = function expand(writeLength) {
  * @returns {Writer} `this`
  */
 WriterPrototype.tag = function write_tag(id, wireType) {
-    if (this.pos + 1 > this.len)
-        this.expand(1);
-    this.buf[this.pos++] = (id << 3 | wireType & 7) & 255;
-    return this;
+    return this.push(writeByte, 1, (id << 3 | wireType & 7) & 255);
 };
+
+function writeVarint32(buf, pos, val) {
+    while (val > 127) {
+        buf[pos++] = val & 127 | 128;
+        val >>>= 7;
+    }
+    buf[pos] = val;
+}
 
 /**
  * Writes an unsigned 32 bit value as a varint.
@@ -5044,23 +5008,13 @@ WriterPrototype.tag = function write_tag(id, wireType) {
  */
 WriterPrototype.uint32 = function write_uint32(value) {
     value >>>= 0;
-    if (this.pos + 4 < this.len) // fast route
-        while (value > 127) {
-            this.buf[this.pos++] = value & 127 | 128;
-            value >>>= 7;
-        }
-    else {
-        while (value > 127) {
-            if (this.pos >= this.len)
-                this.expand(1);
-            this.buf[this.pos++] = value & 127 | 128;
-            value >>>= 7;
-        }
-        if (this.pos >= this.len)
-            this.expand(1);
-    }
-    this.buf[this.pos++] = value;
-    return this;
+    return this.push(writeVarint32,
+          value < 128       ? 1
+        : value < 16384     ? 2
+        : value < 2097152   ? 3
+        : value < 268435456 ? 4
+        :                     5
+    , value);
 };
 
 /**
@@ -5080,35 +5034,15 @@ WriterPrototype.sint32 = function write_sint32(value) {
     return this.uint32(value << 1 ^ value >> 31);
 };
 
-/**
- * Writes a long as a varint.
- * @param {number} lo Low bits
- * @param {number} hi High bits
- * @returns {Writer} `this`
- * @this {Writer}
- * @inner
- * @ignore
- */
-function writeLongVarint(lo, hi) {
-    if (this.pos + 9 < this.len) { // fast route
-        while (hi > 0 || lo > 127) {
-            this.buf[this.pos++] = lo & 127 | 128;
-            lo = (lo >>> 7 | hi << 25) >>> 0;
-            hi >>>= 7;
-        }
-    } else {
-        while (hi > 0 || lo > 127) {
-            if (this.pos >= this.len)
-                this.expand(1);
-            this.buf[this.pos++] = lo & 127 | 128;
-            lo = (lo >>> 7 | hi << 25) >>> 0;
-            hi >>>= 7;
-        }
-        if (this.pos >= this.len)
-            this.expand(1);
+function writeVarint64(buf, pos, bits) {
+    var lo = bits.lo,
+        hi = bits.hi;
+    while (hi || lo > 127) {
+        buf[pos++] = lo & 127 | 128;
+        lo = (lo >>> 7 | hi << 25) >>> 0;
+        hi >>>= 7;
     }
-    this.buf[this.pos++] = lo;
-    return this;
+    buf[pos] = lo;
 }
 
 /**
@@ -5117,11 +5051,12 @@ function writeLongVarint(lo, hi) {
  * @returns {Writer} `this`
  */
 WriterPrototype.uint64 = function write_uint64(value) {
-    if (typeof value === 'number') {
-        var bits = value ? LongBits.fromNumber(value) : LongBits.zero;
-        return writeLongVarint.call(this, bits.lo, bits.hi);
-    } 
-    return writeLongVarint.call(this, value.low >>> 0, value.high >>> 0);
+    var bits;
+    if (typeof value === 'number')
+        bits = value ? LongBits.fromNumber(value) : LongBits.zero;
+    else
+        bits = new LongBits(value.low >>> 0, value.high >>> 0);
+    return this.push(writeVarint64, bits.length(), bits);
 };
 
 /**
@@ -5138,8 +5073,8 @@ WriterPrototype.int64 = WriterPrototype.uint64;
  * @returns {Writer} `this`
  */
 WriterPrototype.sint64 = function sint64(value) {
-    var bits = LongBits.fromValue(value).zzEncode();
-    return writeLongVarint.call(this, bits.lo, bits.hi);
+    var bits = LongBits.from(value).zzEncode();
+    return this.push(writeVarint64, bits.length(), bits);
 };
 
 /**
@@ -5148,11 +5083,15 @@ WriterPrototype.sint64 = function sint64(value) {
  * @returns {Writer} `this`
  */
 WriterPrototype.bool = function write_bool(value) {
-    if (this.pos >= this.len)
-        this.expand(1);
-    this.buf[this.pos++] = value ? 1 : 0;
-    return this;
+    return this.push(writeByte, 1, value ? 1 : 0);
 };
+
+function writeFixed32(buf, pos, val) {
+    buf[pos++] =  val         & 255;
+    buf[pos++] =  val >>> 8   & 255;
+    buf[pos++] =  val >>> 16  & 255;
+    buf[pos  ] =  val >>> 24  & 255;
+}
 
 /**
  * Writes a 32 bit value as fixed 32 bits.
@@ -5160,13 +5099,7 @@ WriterPrototype.bool = function write_bool(value) {
  * @returns {Writer} `this`
  */
 WriterPrototype.fixed32 = function write_fixed32(value) {
-    if (this.pos + 4 > this.len)
-        this.expand(4);
-    this.buf[this.pos++] = (value >>>= 0) & 255;
-    this.buf[this.pos++] =  value >>> 8   & 255;
-    this.buf[this.pos++] =  value >>> 16  & 255;
-    this.buf[this.pos++] =  value >>> 24  & 255;
-    return this;
+    return this.push(writeFixed32, 4, value >>> 0);
 };
 
 /**
@@ -5178,27 +5111,17 @@ WriterPrototype.sfixed32 = function write_sfixed32(value) {
     return this.fixed32(value << 1 ^ value >> 31);
 };
 
-/**
- * Writes a 64 bit value.
- * @param {number} lo Low bits
- * @param {number} hi High bits
- * @returns {Writer} `this`
- * @this {Writer}
- * @inner
- * @ignore
- */
-function writeLongFixed(lo, hi) {
-    if (this.pos + 8 > this.len)
-        this.expand(8);
-    this.buf[this.pos++] = lo        & 255;
-    this.buf[this.pos++] = lo >>> 8  & 255;
-    this.buf[this.pos++] = lo >>> 16 & 255;
-    this.buf[this.pos++] = lo >>> 24      ;
-    this.buf[this.pos++] = hi        & 255;
-    this.buf[this.pos++] = hi >>> 8  & 255;
-    this.buf[this.pos++] = hi >>> 16 & 255;
-    this.buf[this.pos++] = hi >>> 24      ;
-    return this;
+function writeFixed64(buf, pos, bits) {
+    var lo = bits.lo,
+        hi = bits.hi;
+    buf[pos++] = lo        & 255;
+    buf[pos++] = lo >>> 8  & 255;
+    buf[pos++] = lo >>> 16 & 255;
+    buf[pos++] = lo >>> 24      ;
+    buf[pos++] = hi        & 255;
+    buf[pos++] = hi >>> 8  & 255;
+    buf[pos++] = hi >>> 16 & 255;
+    buf[pos  ] = hi >>> 24      ;
 }
 
 /**
@@ -5207,11 +5130,7 @@ function writeLongFixed(lo, hi) {
  * @returns {Writer} `this`
  */
 WriterPrototype.fixed64 = function write_fixed64(value) {
-    if (typeof value === 'number') {
-        var bits = value ? LongBits.fromNumber(value) : LongBits.zero;
-        return writeLongFixed.call(this, bits.lo, bits.hi);
-    }
-    return writeLongFixed.call(this, value.low >>> 0, value.high >>> 0);
+    return this.push(writeFixed64, 8, LongBits.from(value));
 };
 
 /**
@@ -5220,9 +5139,12 @@ WriterPrototype.fixed64 = function write_fixed64(value) {
  * @returns {Writer} `this`
  */
 WriterPrototype.sfixed64 = function write_sfixed64(value) {
-    var bits = LongBits.from(value).zzEncode();
-    return writeLongFixed.call(this, bits.lo, bits.hi);
+    return this.push(writeFixed64, 8, LongBits.from(value).zzEncode());
 };
+
+function writeFloat(buf, pos, val) {
+    ieee754.write(buf, val, pos, false, 23, 4);
+}
 
 /**
  * Writes a float (32 bit).
@@ -5231,12 +5153,12 @@ WriterPrototype.sfixed64 = function write_sfixed64(value) {
  * @returns {Writer} `this`
  */
 WriterPrototype.float = function write_float(value) {
-    if (this.pos + 4 > this.len)
-        this.expand(4);
-    ieee754.write(this.buf, value, this.pos, false, 23, 4);
-    this.pos += 4;
-    return this;
+    return this.push(writeFloat, 4, value);
 };
+
+function writeDouble(buf, pos, val) {
+    ieee754.write(buf, val, pos, false, 52, 8);
+}
 
 /**
  * Writes a double (64 bit float).
@@ -5245,12 +5167,13 @@ WriterPrototype.float = function write_float(value) {
  * @returns {Writer} `this`
  */
 WriterPrototype.double = function write_double(value) {
-    if (this.pos + 8 > this.len)
-        this.expand(8);
-    ieee754.write(this.buf, value, this.pos, false, 52, 8);
-    this.pos += 8;
-    return this;
+    return this.push(writeDouble, 8, value);
 };
+
+function writeBytes(buf, pos, val) {
+    for (var i = 0, k = val.length; i < k; ++i)
+        buf[pos + i] = val[i];
+}
 
 /**
  * Writes a sequence of bytes.
@@ -5259,19 +5182,54 @@ WriterPrototype.double = function write_double(value) {
  */
 WriterPrototype.bytes = function write_bytes(value) {
     var len = value.length >>> 0;
-    if (len) {
-        this.uint32(len);
-        if (this.pos + len > this.len)
-            this.expand(len);
-        this._set.call(this.buf, value, this.pos);
-        this.pos += len;
-    } else {
-        if (this.pos >= this.len)
-            this.expand(1);
-        this.buf[this.pos++] = 0;
-    }
-    return this;
+    return len
+        ? this.uint32(len).push(writeBytes, len, value)
+        : this.push(writeByte, 1, 0);
 };
+
+function writeString(buf, pos, val) {
+    for (var i = 0, len = val.length, c1, c2; i < len; ++i) {
+        c1 = val.charCodeAt(i);
+        if (c1 < 128) {
+            buf[pos++] = c1;
+        } else if (c1 < 2048) {
+            buf[pos++] = c1 >> 6 | 192;
+            buf[pos++] = c1 & 63 | 128;
+        } else if ((c1 & 0xFC00) === 0xD800 && i + 1 < len && ((c2 = val.charCodeAt(i + 1)) & 0xFC00) === 0xDC00) {
+            c1 = 0x10000 + ((c1 & 0x03FF) << 10) + (c2 & 0x03FF);
+            ++i;
+            buf[pos++] = c1 >> 18      | 240;
+            buf[pos++] = c1 >> 12 & 63 | 128;
+            buf[pos++] = c1 >> 6  & 63 | 128;
+            buf[pos++] = c1       & 63 | 128;
+        } else {
+            buf[pos++] = c1 >> 12      | 224;
+            buf[pos++] = c1 >> 6  & 63 | 128;
+            buf[pos++] = c1       & 63 | 128;
+        }
+    }
+}
+
+function byteLength(value) {
+    var strlen = value.length >>> 0;
+    if (strlen) {
+        var len = 0;
+        for (var i = 0, c1; i < strlen; ++i) {
+            c1 = value.charCodeAt(i);
+            if (c1 < 128)
+                len += 1;
+            else if (c1 < 2048)
+                len += 2;
+            else if ((c1 & 0xFC00) === 0xD800 && i + 1 < strlen && (value.charCodeAt(i + 1) & 0xFC00) === 0xDC00) {
+                ++i;
+                len += 4;
+            } else
+                len += 3;
+        }
+        return len;
+    }
+    return 0;
+}
 
 /**
  * Writes a string.
@@ -5279,77 +5237,10 @@ WriterPrototype.bytes = function write_bytes(value) {
  * @returns {Writer} `this`
  */
 WriterPrototype.string = function write_string(value) {
-    // ref: https://github.com/google/closure-library/blob/master/closure/goog/crypt/crypt.js
-    var len = value.length >>> 0;
-    if (len) {
-        var blen = 0, i = 0, c1, c2;
-        for (; i < len; ++i) {
-            c1 = value.charCodeAt(i);
-            if (c1 < 128)
-                blen += 1;
-            else if (c1 < 2048)
-                blen += 2;
-            else if ((c1 & 0xFC00) === 0xD800 && i + 1 < len && ((c2 = value.charCodeAt(i + 1)) & 0xFC00) === 0xDC00) {
-                ++i;
-                blen += 4;
-            } else
-                blen += 3;
-        }
-        this.uint32(blen);
-        if (this.pos + blen > this.len)
-            this.expand(blen);
-        for (i = 0; i < len; ++i) {
-            c1 = value.charCodeAt(i);
-            if (c1 < 128) {
-                this.buf[this.pos++] = c1;
-            } else if (c1 < 2048) {
-                this.buf[this.pos++] = c1 >> 6 | 192;
-                this.buf[this.pos++] = c1 & 63 | 128;
-            } else if ((c1 & 0xFC00) === 0xD800 && i + 1 < len && ((c2 = value.charCodeAt(i + 1)) & 0xFC00) === 0xDC00) {
-                c1 = 0x10000 + ((c1 & 0x03FF) << 10) + (c2 & 0x03FF);
-                ++i;
-                this.buf[this.pos++] = c1 >> 18      | 240;
-                this.buf[this.pos++] = c1 >> 12 & 63 | 128;
-                this.buf[this.pos++] = c1 >> 6  & 63 | 128;
-                this.buf[this.pos++] = c1       & 63 | 128;
-            } else {
-                this.buf[this.pos++] = c1 >> 12      | 224;
-                this.buf[this.pos++] = c1 >> 6  & 63 | 128;
-                this.buf[this.pos++] = c1       & 63 | 128;
-            }
-        }
-        return this;
-    }
-    if (this.pos >= this.len)
-        this.expand(1);
-    this.buf[this.pos++] = 0;
-    return this;
-};
-
-/**
- * Writer state.
- * @constructor
- * @param {Writer} writer Writer to copy state from
- * @ignore
- */
-function State(writer) {
-    this.bufs = writer.bufs;
-    this.buf  = writer.buf;
-    this.pos  = writer.pos;
-    this.len  = writer.len;
-}
-
-/**
- * Applies this state to the specified writer.
- * @param {Writer} writer Writer to copy state to
- * @returns {undefined}
- * @ignore
- */
-State.prototype.apply = function apply(writer) {
-    writer.bufs = this.bufs;
-    writer.buf  = this.buf;
-    writer.pos  = this.pos;
-    writer.len  = this.len;
+    var len = byteLength(value);
+    return len
+        ? this.uint32(len).push(writeString, len, value)
+        : this.push(writeByte, 1, 0);
 };
 
 /**
@@ -5359,10 +5250,9 @@ State.prototype.apply = function apply(writer) {
  * @returns {Writer} `this`
  */
 WriterPrototype.fork = function fork() {
-    this._stack.push(new State(this));
-    this.bufs = [];
-    this.buf = null;
-    this.pos = this.len = 0;
+    this.stack.push(new State(this));
+    this.head = this.tail = new Op(noop, 0, 0);
+    this.len = 0;
     return this;
 };
 
@@ -5372,53 +5262,53 @@ WriterPrototype.fork = function fork() {
  * @returns {Writer} `this`
  */
 WriterPrototype.reset = function reset() {
-    if (this._stack.length)
-        this._stack.pop().apply(this);
+    if (this.stack.length)
+        this.stack.pop().apply(this);
     else {
-        this.bufs = [];
-        this.buf = null;
-        this.pos = this.len = 0;
+        this.head = this.tail = new Op(noop, 0, 0);
+        this.len = 0;
     }
     return this;
 };
+
+/**
+ * Resets to the last state and appends the fork state's current write length as a varint followed by its operations.
+ * @returns {Writer} `this` 
+ */
+WriterPrototype.ldelim = function ldelim() {
+    var head = this.head,
+        tail = this.tail,
+        len  = this.len;
+    this.reset();
+    this.uint32(len);
+    this.tail.next = head.next; // skip noop
+    this.tail = tail;
+    this.len += len;
+    return this;
+}
+
+var ArrayImpl =  typeof Uint8Array !== 'undefined' ? Uint8Array : Array;
 
 /**
  * Finishes the current sequence of write operations and frees all resources.
  * @returns {number[]} Finished buffer
  */
 WriterPrototype.finish = function finish() {
-    var bufs = this.bufs,
-        buf  = this.buf,
-        pos  = this.pos,
-        len  = this.len;
+    var head = this.head.next, // skip noop
+        buf = new ArrayImpl(this.len),
+        pos = 0;
     this.reset();
-    if (buf) {
-        if (pos < len)
-            buf = this._slice.call(buf, 0, pos);
-        if (!bufs.length)
-            return buf;
-    } else
-        return emptyArray;
-    len = pos;
-    pos = 0;
-    var i = 0,
-        k = bufs.length;
-    while (i < k)
-        len += bufs[i++].length;
-    var concat = this.constructor.alloc(len),
-        sub;
-    i = 0;
-    while (i < k) {
-        this._set.call(concat, sub = bufs[i++], pos);
-        pos += sub.length;
+    while (head) {
+        head.fn(buf, pos, head.val, head.len);
+        pos += head.len;
+        head = head.next;
     }
-    this._set.call(concat, buf, pos);
-    return concat;
+    return buf;
 };
 
 /**
  * Constructs a new buffer writer.
- * @class Wire format writer using node buffers.
+ * @classdesc Wire format writer using node buffers.
  * @exports BufferWriter
  * @extends Writer
  * @constructor
@@ -5431,37 +5321,9 @@ function BufferWriter() {
 var BufferWriterPrototype = BufferWriter.prototype = Object.create(Writer.prototype);
 BufferWriterPrototype.constructor = BufferWriter;
 
-var emptyBuffer = null;
-
-/**
- * Sets up the BufferWriter class to use the available buffer implementation. This is done
- * automatically when the first buffer is allocated. If the Buffer implementation is changed
- * after the first buffer has been allocated, this method must be called again manually.
- * @returns {Function} `BufferWriter`
- */
-BufferWriter.setup = function setup_buffer() {
-    if (!util.Buffer)
-        throw Error("Buffer is not supported");
-
-    BufferWriterPrototype._slice = util.Buffer.prototype.slice;
-
-    BufferWriter.alloc = util.Buffer.allocUnsafe || util.Buffer.alloc || function alloc_buffer(size) { return new util.Buffer(size); };
-
-    emptyBuffer = BufferWriter.alloc(0);
-    if (Object.freeze)
-        try { Object.freeze(emptyBuffer); } catch (e) {} // eslint-disable-line no-empty
-
-    return BufferWriter;
-};
-
-/**
- * Allocates a chunk of memory using node buffers.
- * @param {number} size Buffer size
- * @returns {Buffer} Allocated buffer
- */
-BufferWriter.alloc = function alloc_buffer_setup(size) {
-    return BufferWriter.setup().alloc(size); // overrides this method
-};
+Op.prototype.fb = function writeFloatBuffer(buf, pos, val) {
+    buf.writeFloatLE(val, pos, true);
+}
 
 /**
  * Writes a float (32 bit) using node buffers.
@@ -5469,12 +5331,12 @@ BufferWriter.alloc = function alloc_buffer_setup(size) {
  * @returns {BufferWriter} `this`
  */
 BufferWriterPrototype.float = function write_float_buffer(value) {
-    if (this.pos + 4 > this.len)
-        this.expand(4);
-    this.buf.writeFloatLE(value, this.pos, true);
-    this.pos += 4;
-    return this;
+    return this.push(writeFloatBuffer, 4, value);
 };
+
+function writeDoubleBuffer(buf, pos, val) {
+    buf.writeDoubleLE(val, pos, true);
+}
 
 /**
  * Writes a double (64 bit float) using node buffers.
@@ -5482,12 +5344,12 @@ BufferWriterPrototype.float = function write_float_buffer(value) {
  * @returns {BufferWriter} `this`
  */
 BufferWriterPrototype.double = function write_double_buffer(value) {
-    if (this.pos + 8 > this.len)
-        this.expand(8);
-    this.buf.writeDoubleLE(value, this.pos, true);
-    this.pos += 8;
-    return this;
+    return this.push(writeDoubleBuffer, 8, value);
 };
+
+function writeBytesBuffer(buf, pos, val) {
+    val.copy(buf, pos, 0, val.length);
+}
 
 /**
  * Writes a sequence of bytes using node buffers.
@@ -5496,15 +5358,14 @@ BufferWriterPrototype.double = function write_double_buffer(value) {
  */
 BufferWriterPrototype.bytes = function write_bytes_buffer(value) {
     var len = value.length >>> 0;
-    this.uint32(len);
-    if (len) {
-        if (this.pos + len > this.len)
-            this.expand(len);
-        value.copy(this.buf, this.pos, 0, len);
-        this.pos += len;
-    }
-    return this;
+    return len
+        ? this.uint32(len).push(writeBytesBuffer, len, value)
+        : this.push(writeByte, 1, 0);
 };
+
+function writeStringBuffer(buf, pos, val, len) {
+    buf.write(val, pos, len);
+}
 
 /**
  * Writes a string using node buffers.
@@ -5512,15 +5373,10 @@ BufferWriterPrototype.bytes = function write_bytes_buffer(value) {
  * @returns {BufferWriter} `this`
  */
 BufferWriterPrototype.string = function write_string_buffer(value) {
-    var len = util.Buffer.byteLength(value);
-    this.uint32(len);
-    if (len) {
-        if (this.pos + len > this.len)
-            this.expand(len);
-        this.buf.write(value, this.pos, len, "utf8");
-        this.pos += len;
-    }
-    return this;
+    var len = byteLength(value);
+    return len
+        ? this.uint32(len).push(writeStringBuffer, len, value)
+        : this.push(writeByte, 1, 0);
 };
 
 /**
@@ -5528,19 +5384,16 @@ BufferWriterPrototype.string = function write_string_buffer(value) {
  * @returns {Buffer} Finished buffer
  */
 BufferWriterPrototype.finish = function finish_buffer() {
-    var bufs = this.bufs,
-        buf  = this.buf,
-        pos  = this.pos;
+    var head = this.head.next, // skip noop
+        buf = new util.Buffer(this.len);
     this.reset();
-    if (buf) {
-        var len = bufs.length;
-        if (len) {
-            bufs[len] = buf.slice(0, pos);
-            return util.Buffer.concat(bufs);
-        }
-        return buf.slice(0, pos);
+    var pos = 0;
+    while (head) {
+        head.fn(buf, pos, head.val, head.len);
+        pos += head.len;
+        head = head.next;
     }
-    return emptyBuffer;
+    return buf;
 };
 
 },{"../lib/ieee754":1,"./longbits":8,"./util":22}],"protobuf":[function(require,module,exports){
@@ -5554,7 +5407,7 @@ var util = require("./util");
  * @param {string|string[]} filename One or multiple files to load
  * @param {Root} [root] Root namespace, defaults to create a new one if omitted.
  * @param {function(?Error, Root=)} [callback] Callback function
- * @param {Object} [ctx] Optional callback context
+ * @param {Object} [ctx] Callback context
  * @returns {Promise<Root>|Object} A promise if callback has been omitted, otherwise the protobuf namespace
  * @throws {TypeError} If arguments are invalid
  */

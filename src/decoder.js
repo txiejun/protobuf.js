@@ -6,7 +6,7 @@ var Enum    = require("./enum"),
 
 /**
  * Constructs a new decoder for the specified message type.
- * @class Wire format decoder using code generation on top of reflection.
+ * @classdesc Wire format decoder using code generation on top of reflection.
  * @constructor
  * @param {Type} type Message type
  */
@@ -51,7 +51,7 @@ DecoderPrototype.decode = function decode(reader, message, limit) { // codegen r
                         else if (wireType !== undefined)
                             values[vi++] = reader[type]();
                         else
-                            values[vi++] = field.resolvedType.decodeDelimited_(reader, field.resolvedType.create_());
+                            values[vi++] = field.resolvedType.decode_(reader, new field.resolvedType.ctor(), reader.uint32() + reader.pos);
                     }
                     var key;
                     for (ki = 0; ki < vi; ++ki)
@@ -75,13 +75,13 @@ DecoderPrototype.decode = function decode(reader, message, limit) { // codegen r
                 } else if (wireType !== undefined)
                     values[length++] = reader[type]();
                 else
-                    values[length++] = field.resolvedType.decodeDelimited_(reader, field.resolvedType.create_());
+                    values[length++] = field.resolvedType.decode_(reader, new field.resolvedType.ctor(), reader.uint32() + reader.pos);
 
             // Non-repeated
             } else if (wireType !== undefined)
                 message[field.name] = reader[type]();
             else
-                message[field.name] = field.resolvedType.decodeDelimited_(reader, field.resolvedType.create_());
+                message[field.name] = field.resolvedType.decode_(reader, new field.resolvedType.ctor(), reader.uint32() + reader.pos);
 
         // Unknown fields
         } else
@@ -102,7 +102,6 @@ DecoderPrototype.generate = function generate() {
     
     var gen = util.codegen("r", "m", "l")
 
-    ('"use strict"')
     ("while(r.pos<l){")
         ("var t=r.tag()")
         ("switch(t.id){");
@@ -131,7 +130,7 @@ DecoderPrototype.generate = function generate() {
                             ("vs[vi++]=r.%s()", type);
                         else gen
                         ("else")
-                            ("vs[vi++]=$t[%d].decodeDelimited_(r,$t[%d].create_())", i, i);
+                            ("vs[vi++]=$t[%d].decode_(r,new $t[%d].ctor(),r.uint32()+r.pos)", i, i);
                     gen
                     ("}")
                     ("var k")
@@ -160,7 +159,7 @@ DecoderPrototype.generate = function generate() {
 
             else gen
 
-                    ("vs[n++]=$t[%d].decodeDelimited_(r,$t[%d].create_())", i, i);
+                    ("vs[n++]=$t[%d].decode_(r,new $t[%d].ctor(),r.uint32()+r.pos)", i, i);
 
         } else if (wireType !== undefined) { gen
 
@@ -168,7 +167,7 @@ DecoderPrototype.generate = function generate() {
 
         } else { gen
 
-                ("m%s=$t[%d].decodeDelimited_(r,$t[%d].create_())", prop, i, i);
+                ("m%s=$t[%d].decode_(r,new $t[%d].ctor(),r.uint32()+r.pos)", prop, i, i);
 
         } gen
                 ("break");

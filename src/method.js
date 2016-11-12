@@ -11,7 +11,7 @@ var _TypeError = util._TypeError;
 
 /**
  * Constructs a new service method.
- * @class Reflected service method.
+ * @classdesc Reflected service method.
  * @extends ReflectionObject
  * @constructor
  * @param {string} name Method name
@@ -133,7 +133,7 @@ MethodPrototype.resolve = function resolve() {
  * @param {Prototype|Object} message Request message
  * @param {function(number[], function(?Error, (number[])=))} performRequest A function performing the request on binary level, taking a buffer and a node-style callback for the response buffer as its parameters.
  * @param {function(Error, Prototype=)} [callback] Node-style callback function
- * @param {Object} [ctx] Optional callback context
+ * @param {Object} [ctx] Callback context
  * @returns {Promise<Prototype>|undefined} A promise if `callback` has been omitted
  */
 MethodPrototype.call = function call(message, performRequest, callback, ctx) {

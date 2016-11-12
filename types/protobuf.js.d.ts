@@ -1,19 +1,19 @@
 /*
  * protobuf.js v6.0.0-dev TypeScript definitions
- * Generated Fri, 11 Nov 2016 23:54:47 UTC
+ * Generated Sat, 12 Nov 2016 10:02:38 UTC
  */
 declare module protobuf {
 
    /**
     * Constructs a new decoder for the specified message type.
-    * @class Wire format decoder using code generation on top of reflection.
+    * @classdesc Wire format decoder using code generation on top of reflection.
     * @constructor
     * @param {Type} type Message type
     */
    class Decoder {
       /**
        * Constructs a new decoder for the specified message type.
-       * @class Wire format decoder using code generation on top of reflection.
+       * @classdesc Wire format decoder using code generation on top of reflection.
        * @constructor
        * @param {Type} type Message type
        */
@@ -38,14 +38,14 @@ declare module protobuf {
    
    /**
     * Constructs a new encoder for the specified message type.
-    * @class Wire format encoder using code generation on top of reflection
+    * @classdesc Wire format encoder using code generation on top of reflection
     * @constructor
     * @param {Type} type Message type
     */
    class Encoder {
       /**
        * Constructs a new encoder for the specified message type.
-       * @class Wire format encoder using code generation on top of reflection
+       * @classdesc Wire format encoder using code generation on top of reflection
        * @constructor
        * @param {Type} type Message type
        */
@@ -69,7 +69,7 @@ declare module protobuf {
    
    /**
     * Constructs a new enum.
-    * @class Reflected enum.
+    * @classdesc Reflected enum.
     * @extends ReflectionObject
     * @constructor
     * @param {string} name Unique name within its namespace
@@ -79,7 +79,7 @@ declare module protobuf {
    class Enum extends ReflectionObject {
       /**
        * Constructs a new enum.
-       * @class Reflected enum.
+       * @classdesc Reflected enum.
        * @extends ReflectionObject
        * @constructor
        * @param {string} name Unique name within its namespace
@@ -144,7 +144,7 @@ declare module protobuf {
    
    /**
     * Constructs a new message field. Note that {@link MapField|map fields} have their own class.
-    * @class Reflected message field.
+    * @classdesc Reflected message field.
     * @extends ReflectionObject
     * @constructor
     * @param {string} name Unique name within its namespace
@@ -157,7 +157,7 @@ declare module protobuf {
    class Field extends ReflectionObject {
       /**
        * Constructs a new message field. Note that {@link MapField|map fields} have their own class.
-       * @class Reflected message field.
+       * @classdesc Reflected message field.
        * @extends ReflectionObject
        * @constructor
        * @param {string} name Unique name within its namespace
@@ -300,7 +300,7 @@ declare module protobuf {
     * @param {string|string[]} filename One or multiple files to load
     * @param {Root} [root] Root namespace, defaults to create a new one if omitted.
     * @param {function(?Error, Root=)} [callback] Callback function
-    * @param {Object} [ctx] Optional callback context
+    * @param {Object} [ctx] Callback context
     * @returns {Promise<Root>|Object} A promise if callback has been omitted, otherwise the protobuf namespace
     * @throws {TypeError} If arguments are invalid
     */
@@ -352,7 +352,7 @@ declare module protobuf {
        * @name Class.encode
        * @function
        * @param {Prototype|Object} message Message to encode
-       * @param {Writer} [writer] Optional writer to use
+       * @param {Writer} [writer] Writer to use
        * @returns {number[]} Encoded message
        */
       static encode(message: (Prototype|Object), writer?: Writer): number[];
@@ -362,7 +362,7 @@ declare module protobuf {
        * @name Class.encodeDelimited
        * @function
        * @param {Prototype|Object} message Message to encode
-       * @param {Writer} [writer] Optional writer to use
+       * @param {Writer} [writer] Writer to use
        * @returns {number[]} Encoded message
        */
       static encodeDelimited(message: (Prototype|Object), writer?: Writer): number[];
@@ -388,8 +388,15 @@ declare module protobuf {
    }
    
    /**
+    * Length calculators.
+    * @namespace
+    */
+   module length {
+   }
+   
+   /**
     * Constructs a new map field.
-    * @class Reflected map field.
+    * @classdesc Reflected map field.
     * @extends Field
     * @constructor
     * @param {string} name Unique name within its namespace
@@ -401,7 +408,7 @@ declare module protobuf {
    class MapField extends Field {
       /**
        * Constructs a new map field.
-       * @class Reflected map field.
+       * @classdesc Reflected map field.
        * @extends Field
        * @constructor
        * @param {string} name Unique name within its namespace
@@ -428,7 +435,7 @@ declare module protobuf {
    
    /**
     * Constructs a new service method.
-    * @class Reflected service method.
+    * @classdesc Reflected service method.
     * @extends ReflectionObject
     * @constructor
     * @param {string} name Method name
@@ -442,7 +449,7 @@ declare module protobuf {
    class Method extends ReflectionObject {
       /**
        * Constructs a new service method.
-       * @class Reflected service method.
+       * @classdesc Reflected service method.
        * @extends ReflectionObject
        * @constructor
        * @param {string} name Method name
@@ -518,7 +525,7 @@ declare module protobuf {
        * @param {Prototype|Object} message Request message
        * @param {function(number[], function(?Error, (number[])=))} performRequest A function performing the request on binary level, taking a buffer and a node-style callback for the response buffer as its parameters.
        * @param {function(Error, Prototype=)} [callback] Node-style callback function
-       * @param {Object} [ctx] Optional callback context
+       * @param {Object} [ctx] Callback context
        * @returns {Promise<Prototype>|undefined} A promise if `callback` has been omitted
        */
       call(message: (Prototype|Object), performRequest: (() => any), callback?: (() => any), ctx?: Object): (Promise<Prototype>|undefined);
@@ -527,7 +534,7 @@ declare module protobuf {
    
    /**
     * Constructs a new namespace.
-    * @class Reflected namespace and base class of all reflection objects containing nested objects.
+    * @classdesc Reflected namespace and base class of all reflection objects containing nested objects.
     * @extends ReflectionObject
     * @constructor
     * @param {string} name Namespace name
@@ -536,7 +543,7 @@ declare module protobuf {
    class Namespace extends ReflectionObject {
       /**
        * Constructs a new namespace.
-       * @class Reflected namespace and base class of all reflection objects containing nested objects.
+       * @classdesc Reflected namespace and base class of all reflection objects containing nested objects.
        * @extends ReflectionObject
        * @constructor
        * @param {string} name Namespace name
@@ -584,7 +591,7 @@ declare module protobuf {
       /**
        * Iterates over all nested objects.
        * @param {function(this:Namespace, ReflectionObject, string):*} fn Iterator function called with nested objects and their names. Can return something different than `undefined` to break the iteration.
-       * @param {Object} [ctx] Optional iterator function context
+       * @param {Object} [ctx] Iterator function context
        * @param {Object} [object] Alternative object to iterate over
        * @returns {*|Namespace} First value returned, otherwise `this`
        */
@@ -614,7 +621,7 @@ declare module protobuf {
       /**
        * Defines additial namespaces within this one if not yet existing.
        * @param {string|string[]} path Path to create
-       * @param {*} [json] Optional nested types to create from JSON
+       * @param {*} [json] Nested types to create from JSON
        * @param {?boolean} [visible=null] Whether visible when exporting definitions. Defaults to inherit from parent.
        * @returns {Namespace} Pointer to the last namespace created or `this` if path is empty
        */
@@ -638,7 +645,7 @@ declare module protobuf {
    
    /**
     * Constructs a new reflection object.
-    * @class Base class of all reflection objects.
+    * @classdesc Base class of all reflection objects.
     * @constructor
     * @param {string} name Object name
     * @param {Object} [options] Declared options
@@ -809,7 +816,7 @@ declare module protobuf {
    
    /**
     * Constructs a new oneof.
-    * @class Reflected oneof.
+    * @classdesc Reflected oneof.
     * @extends ReflectionObject
     * @constructor
     * @param {string} name Oneof name
@@ -819,7 +826,7 @@ declare module protobuf {
    class OneOf extends ReflectionObject {
       /**
        * Constructs a new oneof.
-       * @class Reflected oneof.
+       * @classdesc Reflected oneof.
        * @extends ReflectionObject
        * @constructor
        * @param {string} name Oneof name
@@ -906,7 +913,7 @@ declare module protobuf {
    /**
     * Constructs a new prototype.
     * This method should be called from your custom constructors, i.e. `Prototype.call(this, properties)`.
-    * @class Runtime message prototype ready to be extended by custom classes or generated code.
+    * @classdesc Runtime message prototype ready to be extended by custom classes or generated code.
     * @constructor
     * @param {Object.<string,*>} [properties] Properties to set
     * @param {Prototype.Options} [options] Prototype options
@@ -943,7 +950,7 @@ declare module protobuf {
    /**
     * Constructs a new reader using the specified buffer.
     * When called as a function, returns an appropriate reader for the specified buffer.
-    * @class Wire format reader using `Uint8Array` if available, otherwise `Array`.
+    * @classdesc Wire format reader using `Uint8Array` if available, otherwise `Array`.
     * @constructor
     * @param {number[]} buffer Buffer to read from
     */
@@ -951,7 +958,7 @@ declare module protobuf {
       /**
        * Constructs a new reader using the specified buffer.
        * When called as a function, returns an appropriate reader for the specified buffer.
-       * @class Wire format reader using `Uint8Array` if available, otherwise `Array`.
+       * @classdesc Wire format reader using `Uint8Array` if available, otherwise `Array`.
        * @constructor
        * @param {number[]} buffer Buffer to read from
        */
@@ -1042,7 +1049,7 @@ declare module protobuf {
       fixed64(): (Long|number);
    
       /**
-       * Reads zig-zag encoded 64 bits as a Long.
+       * Reads zig-zag encoded fixed 64 bits as a Long.
        * @returns {Long|number} Value read
        */
       sfixed64(): (Long|number);
@@ -1074,7 +1081,7 @@ declare module protobuf {
       string(): string;
    
       /**
-       * Skips the specified number of bytes if provided, otherwise skips a varint.
+       * Skips the specified number of bytes if specified, otherwise skips a varint.
        * @param {number} [length] Length if known, otherwise a varint is assumed
        * @returns {Reader} `this`
        */
@@ -1105,7 +1112,7 @@ declare module protobuf {
    
    /**
     * Constructs a new buffer reader.
-    * @class Wire format reader using node buffers.
+    * @classdesc Wire format reader using node buffers.
     * @extends Reader
     * @constructor
     * @param {Buffer} buffer Buffer to read from
@@ -1113,7 +1120,7 @@ declare module protobuf {
    class BufferReader extends Reader {
       /**
        * Constructs a new buffer reader.
-       * @class Wire format reader using node buffers.
+       * @classdesc Wire format reader using node buffers.
        * @extends Reader
        * @constructor
        * @param {Buffer} buffer Buffer to read from
@@ -1124,7 +1131,7 @@ declare module protobuf {
    
    /**
     * Constructs a new root namespace.
-    * @class Root namespace wrapping all types, enums, services, sub-namespaces etc. that belong together.
+    * @classdesc Root namespace wrapping all types, enums, services, sub-namespaces etc. that belong together.
     * @extends Namespace
     * @constructor
     * @param {Root.Options} [rootOptions] Root options
@@ -1133,7 +1140,7 @@ declare module protobuf {
    class Root extends Namespace {
       /**
        * Constructs a new root namespace.
-       * @class Root namespace wrapping all types, enums, services, sub-namespaces etc. that belong together.
+       * @classdesc Root namespace wrapping all types, enums, services, sub-namespaces etc. that belong together.
        * @extends Namespace
        * @constructor
        * @param {Root.Options} [rootOptions] Root options
@@ -1188,7 +1195,7 @@ declare module protobuf {
        * Loads one or multiple .proto or preprocessed .json files into this root namespace.
        * @param {string|string[]} filename Names of one or multiple files to load
        * @param {function(?Error, Root=)} [callback] Node-style callback function
-       * @param {Object} [ctx] Optional callback context
+       * @param {Object} [ctx] Callback context
        * @returns {Promise<Root>|undefined} A promise if `callback` has been omitted
        * @throws {TypeError} If arguments are invalid
        */
@@ -1214,7 +1221,7 @@ declare module protobuf {
    
    /**
     * Constructs a new service.
-    * @class Reflected service.
+    * @classdesc Reflected service.
     * @extends Namespace
     * @constructor
     * @param {string} name Service name
@@ -1224,7 +1231,7 @@ declare module protobuf {
    class Service extends Namespace {
       /**
        * Constructs a new service.
-       * @class Reflected service.
+       * @classdesc Reflected service.
        * @extends Namespace
        * @constructor
        * @param {string} name Service name
@@ -1268,7 +1275,7 @@ declare module protobuf {
    
    /**
     * Constructs a new message type.
-    * @class Reflected message type.
+    * @classdesc Reflected message type.
     * @extends Namespace
     * @constructor
     * @param {string} name Message name
@@ -1277,7 +1284,7 @@ declare module protobuf {
    class Type extends Namespace {
       /**
        * Constructs a new message type.
-       * @class Reflected message type.
+       * @classdesc Reflected message type.
        * @extends Namespace
        * @constructor
        * @param {string} name Message name
@@ -1338,11 +1345,11 @@ declare module protobuf {
       private _prototype: Prototype;
    
       /**
-       * Registered constructor.
+       * Cached constructor.
        * @type {?Function}
        * @private
        */
-      private _constructor: (() => any);
+      private _ctor: (() => any);
    
       /**
        * Message fields by id.
@@ -1369,34 +1376,20 @@ declare module protobuf {
       oneofsArray: OneOf[];
    
       /**
-       * Runtime prototype of this message.
-       * @name Type#prototype
+       * The registered constructor, if any registered, otherwise a generic constructor.
+       * @name Type#ctor
        * @type {Prototype}
-       * @readonly
        */
-      prototype: Prototype;
-   
-      /**
-       * Registers the specified constructor with this type.
-       * @param {?Function} constructor Constructor to use for message instances or `null` to unregister  the current constructor
-       * @returns {Type} `this`
-       */
-      register(constructor?: (() => any)): Type;
+      ctor: Prototype;
    
       /**
        * Creates a new message of this type using the specified properties.
        * @param {Object} [properties] Properties to set
-       * @param {?Function} [constructor] Optional constructor to use or null to use the internal prototype.
-       * If a constructor, it should extend {@link Prototype}.
+       * @param {?Function} [ctor] Constructor to use.
+       * Defaults to use the internal constuctor.
        * @returns {Prototype} Message instance
        */
-      create(properties?: Object, constructor?: (() => any)): Prototype;
-   
-      /**
-       * Creates a new message of this type by using the registered constructor or internal prototype.
-       * @returns {Prototype} Message instance
-       */
-      create_(): Prototype;
+      create(properties?: Object, ctor?: (() => any)): Prototype;
    
       /**
        * Encodes a message of this type.
@@ -1424,22 +1417,12 @@ declare module protobuf {
       encodeDelimited(message: (Prototype|Object), writer?: Writer): Writer;
    
       /**
-       * Encodes a message of this type preceeded by its byte length as a varint.
-       * This method differs from {@link Type#encodeDelimited} in that it expects already type checked and known to be present arguments.
-       * @param {Prototype|Object} message Message instance or plain object
-       * @param {Writer} writer Writer to encode to
-       * @returns {Writer} writer
-       */
-      encodeDelimited_(message: (Prototype|Object), writer: Writer): Writer;
-   
-      /**
        * Decodes a message of this type.
        * @param {Reader|number[]} readerOrBuffer Reader or buffer to decode from
-       * @param {Function} [constructor] Optional constructor of the created message, see {@link Type#create}
        * @param {number} [length] Length of the message, if known beforehand
        * @returns {Prototype} Decoded message
        */
-      decode(readerOrBuffer: (Reader|number[]), constructor?: (() => any), length?: number): Prototype;
+      decode(readerOrBuffer: (Reader|number[]), length?: number): Prototype;
    
       /**
        * Decodes a message of this type.
@@ -1455,19 +1438,9 @@ declare module protobuf {
       /**
        * Decodes a message of this type preceeded by its byte length as a varint.
        * @param {Reader|number[]} readerOrBuffer Reader or buffer to decode from
-       * @param {Function} [constructor] Optional constructor of the created message, see {@link Type#create}
        * @returns {Prototype} Decoded message
        */
-      decodeDelimited(readerOrBuffer: (Reader|number[]), constructor?: (() => any)): Prototype;
-   
-      /**
-       * Decodes a message of this type preceeded by its byte length as a varint.
-       * This method differs from {@link Type#decodeDelimited} in that it expects already type checked and known to be present arguments.
-       * @param {Reader} reader Reader to decode from
-       * @param {Prototype} message Message instance to populate
-       * @returns {Prototype} Populated message instance
-       */
-      decodeDelimited_(reader: Reader, message: Prototype): Prototype;
+      decodeDelimited(readerOrBuffer: (Reader|number[])): Prototype;
    
    }
    
@@ -1548,7 +1521,7 @@ declare module protobuf {
    
       /**
        * Constructs new long bits.
-       * @class Helper class for working with the low and high bits of a 64 bit value.
+       * @classdesc Helper class for working with the low and high bits of a 64 bit value.
        * @memberof util
        * @constructor
        * @param {number} lo Low bits
@@ -1557,7 +1530,7 @@ declare module protobuf {
       class LongBits {
           /**
            * Constructs new long bits.
-           * @class Helper class for working with the low and high bits of a 64 bit value.
+           * @classdesc Helper class for working with the low and high bits of a 64 bit value.
            * @memberof util
            * @constructor
            * @param {number} lo Low bits
@@ -1629,6 +1602,12 @@ declare module protobuf {
            * @returns {util.LongBits} `this`
            */
           zzDecode(): util.LongBits;
+   
+          /**
+           * Calculates the length of this longbits when encoded as a varint.
+           * @returns {number} Length
+           */
+          length(): number;
    
       }
    
@@ -1764,7 +1743,7 @@ declare module protobuf {
    /**
     * Constructs a new writer.
     * When called as a function, returns an appropriate writer for the current environment.
-    * @class Wire format writer using `Uint8Array` if available, otherwise `Array`.
+    * @classdesc Wire format writer using `Uint8Array` if available, otherwise `Array`.
     * @exports Writer
     * @constructor
     */
@@ -1772,69 +1751,44 @@ declare module protobuf {
       /**
        * Constructs a new writer.
        * When called as a function, returns an appropriate writer for the current environment.
-       * @class Wire format writer using `Uint8Array` if available, otherwise `Array`.
+       * @classdesc Wire format writer using `Uint8Array` if available, otherwise `Array`.
        * @exports Writer
        * @constructor
        */
       constructor();
    
       /**
-       * Default buffer size.
-       * @type {number}
+       * Operations head.
+       * @type {Op}
        */
-      static BUFFER_SIZE: number;
+      head: Op;
    
       /**
-       * Current buffer.
-       * @type {?number[]}
+       * Operations tail
+       * @type {Op}
        */
-      buf: number[];
+      tail: Op;
    
       /**
-       * Current buffer position.
-       * @type {number}
-       */
-      pos: number;
-   
-      /**
-       * Current buffer length.
+       * Current length.
        * @type {number}
        */
       len: number;
    
       /**
-       * Completed buffers.
-       * @type {number[][]}
+       * State stack.
+       * @type {State[]}
        */
-      bufs: number[][];
+      stack: State[];
    
       /**
-       * Forked states stack.
-       * @type {number[][][]}
-       * @private
-       */
-      private _stack: number[][][];
-   
-      /**
-       * Sets up the Writer class before first use.
-       * Done automatically when the first buffer is allocated.
-       * @returns {Function} `Writer`
-       */
-      static setup(): (() => any);
-   
-      /**
-       * Allocates a chunk of memory.
-       * @param {number} size Buffer size
-       * @returns {number[]} Allocated buffer
-       */
-      static alloc(size: number): number[];
-   
-      /**
-       * Allocates more memory on the specified writer.
-       * @param {number} writeLength Write length requested
+       * Pushes a new operation to the queue.
+       * @param {function} fn Function to apply
+       * @param {number} len Value length
+       * @param {number} val Value
        * @returns {Writer} `this`
        */
-      expand(writeLength: number): Writer;
+      push(fn: (() => any), len: number, val: number): Writer;
    
       /**
        * Writes a tag.
@@ -1969,6 +1923,12 @@ declare module protobuf {
       reset(): Writer;
    
       /**
+       * Resets to the last state and appends the fork state's current write length as a varint followed by its operations.
+       * @returns {Writer} `this`
+       */
+      ldelim(): Writer;
+   
+      /**
        * Finishes the current sequence of write operations and frees all resources.
        * @returns {number[]} Finished buffer
        */
@@ -1978,7 +1938,7 @@ declare module protobuf {
    
    /**
     * Constructs a new buffer writer.
-    * @class Wire format writer using node buffers.
+    * @classdesc Wire format writer using node buffers.
     * @exports BufferWriter
     * @extends Writer
     * @constructor
@@ -1986,7 +1946,7 @@ declare module protobuf {
    class BufferWriter extends Writer {
       /**
        * Constructs a new buffer writer.
-       * @class Wire format writer using node buffers.
+       * @classdesc Wire format writer using node buffers.
        * @exports BufferWriter
        * @extends Writer
        * @constructor

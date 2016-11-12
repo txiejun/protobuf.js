@@ -2,7 +2,7 @@ module.exports = LongBits;
 
 /**
  * Constructs new long bits.
- * @class Helper class for working with the low and high bits of a 64 bit value.
+ * @classdesc Helper class for working with the low and high bits of a 64 bit value.
  * @memberof util
  * @constructor
  * @param {number} lo Low bits
@@ -36,6 +36,7 @@ var zero = new LongBits(0, 0);
 
 zero.toNumber = function() { return 0; };
 zero.zzEncode = zero.zzDecode = function() { return this; };
+zero.length = function() { return 1; }
 
 /**
  * Constructs new long bits from the specified number.
@@ -144,4 +145,28 @@ LongBitsPrototype.zzDecode = function zzDecode() {
     this.lo  = ((this.lo >>> 1 | (this.hi & 1) << 31) ^ mask) >>> 0;
     this.hi  = ( this.hi >>> 1                        ^ mask) >>> 0;
     return this;
+};
+
+/**
+ * Calculates the length of this longbits when encoded as a varint.
+ * @returns {number} Length
+ */
+LongBitsPrototype.length = function length() {
+    var part0 =  this.lo;
+    var part1 = ((this.hi & 15) << 4 | this.lo >>> 28) >>> 0;
+    var part2 =  this.hi >>> 24;
+    if (part2 === 0) {
+        if (part1 === 0) {
+            if (part0 < 1 << 14)
+                return part0 < 1 << 7 ? 1 : 2;
+            else
+                return part0 < 1 << 21 ? 3 : 4;
+        } else {
+            if (part1 < 1 << 14)
+                return part1 < 1 << 7 ? 5 : 6;
+            else
+                return part1 < 1 << 21 ? 7 : 8;
+        }
+    } else
+        return part2 < 1 << 7 ? 9 : 10;
 };

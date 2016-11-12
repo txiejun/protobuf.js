@@ -11,7 +11,7 @@ var _TypeError = util._TypeError;
 
 /**
  * Constructs a new oneof.
- * @class Reflected oneof.
+ * @classdesc Reflected oneof.
  * @extends ReflectionObject
  * @constructor
  * @param {string} name Oneof name

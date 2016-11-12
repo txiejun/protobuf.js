@@ -22,7 +22,9 @@ protobuf.load(require.resolve("./bench.proto"), function(err, root) {
         
         function summarize(name, start, length) {
             var time = Date.now() - start;
-            var sb = [ pad(name, 24, 1), " : ", pad(time + "ms", 10), "   ", pad(length + " bytes", 15) ];
+            var sb = [ pad(name, 24, 1), " : ", pad(time + "ms", 10) ];
+            if (length !== undefined)
+                sb.push("   ", pad(length + " bytes", 15));
             console.log(sb.join(''));
         }
 
@@ -58,7 +60,7 @@ protobuf.load(require.resolve("./bench.proto"), function(err, root) {
             len = 0;
             var reader = protobuf.Reader(buf);
             for (var i = 0; i < times; ++i) {
-                var msg = Test.decode_(reader.reset(buf), Object.create(Test.prototype), buf.length);
+                var msg = Test.decode_(reader.reset(buf), new Test.ctor(), buf.length);
                 len += buf.length;
             }
             summarize("decode protobuf." + "js r/w", start, len);
@@ -83,11 +85,27 @@ protobuf.load(require.resolve("./bench.proto"), function(err, root) {
             console.log();
         }
 
+        function bench_json_nb(name, JSON) {
+            var start = Date.now(),
+                str;
+            for (var i = 0; i < times; ++i) {
+                str = JSON.stringify(data);
+            }
+            summarize("encode JSON s/p " + name, start);
+            start = Date.now();
+            for (var i = 0; i < times; ++i) {
+                JSON.parse(str);
+            }
+            summarize("decode JSON s/p " + name, start);
+            console.log();
+        }
+
         bench_protobuf();
         bench_protobuf_rw();
         if (process.argv.length < 4) {
             bench_json("native", JSON);
-            bench_json("polyfill", JSONPoly);
+            bench_json_nb("native", JSON);
+            // bench_json("polyfill", JSONPoly);
         }
 
         console.log("--- warmed up ---\n");
@@ -95,7 +113,8 @@ protobuf.load(require.resolve("./bench.proto"), function(err, root) {
         bench_protobuf_rw();
         if (process.argv.length < 4) {
             bench_json("native", JSON);
-            bench_json("polyfill", JSONPoly);
+            bench_json_nb("native", JSON);
+            // bench_json("polyfill", JSONPoly);
         }
 
     } catch (e) {

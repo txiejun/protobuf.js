@@ -13,7 +13,7 @@ function indexOutOfRange(reader, writeLength) {
 /**
  * Constructs a new reader using the specified buffer.
  * When called as a function, returns an appropriate reader for the specified buffer.
- * @class Wire format reader using `Uint8Array` if available, otherwise `Array`.
+ * @classdesc Wire format reader using `Uint8Array` if available, otherwise `Array`.
  * @constructor
  * @param {number[]} buffer Buffer to read from
  */
@@ -264,7 +264,7 @@ ReaderPrototype.fixed64 = function read_fixed64() {
 };
 
 /**
- * Reads zig-zag encoded 64 bits as a Long.
+ * Reads zig-zag encoded fixed 64 bits as a Long.
  * @returns {Long|number} Value read
  */
 ReaderPrototype.sfixed64 = function read_sfixed64() {
@@ -343,7 +343,7 @@ ReaderPrototype.string = function read_string() {
 };
 
 /**
- * Skips the specified number of bytes if provided, otherwise skips a varint.
+ * Skips the specified number of bytes if specified, otherwise skips a varint.
  * @param {number} [length] Length if known, otherwise a varint is assumed
  * @returns {Reader} `this`
  */
@@ -434,7 +434,7 @@ var initBufferReader = function() {
 
 /**
  * Constructs a new buffer reader.
- * @class Wire format reader using node buffers.
+ * @classdesc Wire format reader using node buffers.
  * @extends Reader
  * @constructor
  * @param {Buffer} buffer Buffer to read from
@@ -476,13 +476,11 @@ BufferReaderPrototype.double = function read_double_buffer() {
 
 /**
  * Reads a string.
- * @param {number} [length] Optional number of bytes to read, if known beforehand
  * @returns {string} Value read
  */
-BufferReaderPrototype.string = function read_string_buffer(length) {
-    if (length === undefined)
-        length = this.int32() >>> 0;
-    var start = this.pos,
+BufferReaderPrototype.string = function read_string_buffer() {
+    var length = this.int32() >>> 0,
+        start = this.pos,
         end   = this.pos + length;
     if (end > this.len)
         throw RangeError(indexOutOfRange(this, length));

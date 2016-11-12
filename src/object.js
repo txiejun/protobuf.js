@@ -9,7 +9,7 @@ var _TypeError = util._TypeError;
 
 /**
  * Constructs a new reflection object.
- * @class Base class of all reflection objects.
+ * @classdesc Base class of all reflection objects.
  * @constructor
  * @param {string} name Object name
  * @param {Object} [options] Declared options

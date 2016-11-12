@@ -10,7 +10,7 @@ var _TypeError = util._TypeError;
 
 /**
  * Constructs a new enum.
- * @class Reflected enum.
+ * @classdesc Reflected enum.
  * @extends ReflectionObject
  * @constructor
  * @param {string} name Unique name within its namespace

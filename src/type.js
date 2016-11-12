@@ -21,7 +21,7 @@ var Enum      = require("./enum"),
 
 /**
  * Constructs a new message type.
- * @class Reflected message type.
+ * @classdesc Reflected message type.
  * @extends Namespace
  * @constructor
  * @param {string} name Message name
@@ -83,11 +83,11 @@ function Type(name, options) {
     this._prototype = null;
 
     /**
-     * Registered constructor.
+     * Cached constructor.
      * @type {?Function}
      * @private
      */
-    this._constructor = null;
+    this._ctor = null;
 }
 
 Object.defineProperties(TypePrototype, {
@@ -140,14 +140,31 @@ Object.defineProperties(TypePrototype, {
     },
 
     /**
-     * Runtime prototype of this message.
-     * @name Type#prototype
+     * The registered constructor, if any registered, otherwise a generic constructor.
+     * @name Type#ctor
      * @type {Prototype}
-     * @readonly
      */
-    prototype: {
+    ctor: {
         get: function() {
-            return this._prototype || (this._prototype = inherits.defineProperties(new Prototype(), this));
+            if (this._ctor)
+                return this._ctor;
+            var ctor;
+            if (codegen.supported)
+                ctor = codegen("p")("$p.call(this,p)").eof(this.fullName + "$ctor", {
+                    $p: Prototype
+                });
+            else
+                ctor = function GenericMessage(properties) {
+                    Prototype.call(this, properties);
+                };
+            ctor.prototype = inherits(ctor, this);
+            this._ctor = ctor;
+            return ctor;
+        },
+        set: function(ctor) {
+            if (ctor && !(ctor.prototype instanceof Prototype))
+                throw util._TypeError("ctor", "a constructor inheriting from Prototype");
+            this._ctor = ctor;
         }
     }
 });
@@ -160,7 +177,7 @@ Object.defineProperties(TypePrototype, {
  * @ignore
  */
 function clearCache(type) {
-    type._fieldsById = type._fieldsArray = type._oneofsArray = type._prototype = null;
+    type._fieldsById = type._fieldsArray = type._oneofsArray = type._prototype = type._ctor = null;
     delete type.encode_;
     delete type.decode_;
     return type;
@@ -281,51 +298,24 @@ TypePrototype.remove = function remove(object) {
 };
 
 /**
- * Registers the specified constructor with this type.
- * @param {?Function} constructor Constructor to use for message instances or `null` to unregister  the current constructor
- * @returns {Type} `this`
- */
-TypePrototype.register = function register(constructor) {
-    if (constructor !== null && typeof constructor !== 'function')
-        throw util._TypeError("constructor", "a function or null");
-    this._constructor = constructor;
-    return this;
-};
-
-/**
  * Creates a new message of this type using the specified properties.
  * @param {Object} [properties] Properties to set
- * @param {?Function} [constructor] Optional constructor to use or null to use the internal prototype.
- * If a constructor, it should extend {@link Prototype}.
+ * @param {?Function} [ctor] Constructor to use.
+ * Defaults to use the internal constuctor.
  * @returns {Prototype} Message instance
  */
-TypePrototype.create = function create(properties, constructor) {
+TypePrototype.create = function create(properties, ctor) {
     if (typeof properties === 'function') {
-        constructor = properties;
+        ctor = properties;
         properties = undefined;
     } else if (properties /* already */ instanceof Prototype)
         return properties;
-    if (!constructor)
-        constructor = this._constructor;
-    if (constructor)
-        return new constructor(properties);
-    var message = Object.create(this.prototype);
-    if (properties) {
-        var keys = Object.keys(properties);
-        for (var i = 0, k = keys.length, key; i < k; ++i)
-            message[key = keys[i]] = properties[key];
-    }
-    return message;
-};
-
-/**
- * Creates a new message of this type by using the registered constructor or internal prototype.
- * @returns {Prototype} Message instance
- */
-TypePrototype.create_ = function create_internal() {
-    return this._constructor
-        ? new this._constructor()
-        : Object.create(this.prototype);
+    if (ctor) {
+        if (!(ctor.prototype instanceof Prototype))
+            throw util._TypeError("ctor", "a constructor inheriting from Prototype");
+    } else
+        ctor = this.ctor;
+    return new ctor(properties);
 };
 
 /**
@@ -360,37 +350,23 @@ TypePrototype.encode_ = function encode_internal(message, writer) {
  * @returns {Writer} writer
  */
 TypePrototype.encodeDelimited = function encodeDelimited(message, writer) {
-    return this.encodeDelimited_(message, writer || Writer());
-};
-
-/**
- * Encodes a message of this type preceeded by its byte length as a varint.
- * This method differs from {@link Type#encodeDelimited} in that it expects already type checked and known to be present arguments.
- * @param {Prototype|Object} message Message instance or plain object
- * @param {Writer} writer Writer to encode to
- * @returns {Writer} writer
- */
-TypePrototype.encodeDelimited_ = function encodeDelimited_internal(message, writer) {
-    return writer.bytes(this.encode_(message, writer.fork()).finish());
+    if (writer)
+        writer.fork();
+    else
+        writer = Writer();
+    return writer.bytes(this.encode_(message, writer).finish());
 };
 
 /**
  * Decodes a message of this type.
  * @param {Reader|number[]} readerOrBuffer Reader or buffer to decode from
- * @param {Function} [constructor] Optional constructor of the created message, see {@link Type#create}
  * @param {number} [length] Length of the message, if known beforehand
  * @returns {Prototype} Decoded message
  */
-TypePrototype.decode = function decode(readerOrBuffer, constructor, length) {
-    if (typeof constructor === 'number') {
-        length = constructor;
-        constructor = this._constructor;
-    } else if (!constructor)
-        constructor = this._constructor;
+TypePrototype.decode = function decode(readerOrBuffer, length) {
     var reader  = readerOrBuffer instanceof Reader ? readerOrBuffer : Reader(readerOrBuffer),
-        message = this._constructor ? new this._constructor() : Object.create(this.prototype),
         limit   = length === undefined ? reader.len : reader.pos + length;
-    return this.decode_(reader, message, limit);
+    return this.decode_(reader, new this.ctor(), limit);
 };
 
 /**
@@ -413,21 +389,9 @@ TypePrototype.decode_ = function decode_internal(reader, message, limit) {
 /**
  * Decodes a message of this type preceeded by its byte length as a varint.
  * @param {Reader|number[]} readerOrBuffer Reader or buffer to decode from
- * @param {Function} [constructor] Optional constructor of the created message, see {@link Type#create}
  * @returns {Prototype} Decoded message
  */
-TypePrototype.decodeDelimited = function decodeDelimited(readerOrBuffer, constructor) {
+TypePrototype.decodeDelimited = function decodeDelimited(readerOrBuffer) {
     var reader = readerOrBuffer instanceof Reader ? readerOrBuffer : Reader(readerOrBuffer);
-    return this.decode(reader, constructor, reader.uint32());
-};
-
-/**
- * Decodes a message of this type preceeded by its byte length as a varint.
- * This method differs from {@link Type#decodeDelimited} in that it expects already type checked and known to be present arguments.
- * @param {Reader} reader Reader to decode from
- * @param {Prototype} message Message instance to populate
- * @returns {Prototype} Populated message instance
- */
-TypePrototype.decodeDelimited_ = function decodeDelimited_internal(reader, message) {
-    return this.decode_(reader, message, reader.uint32() + reader.pos);
+    return this.decode(reader, reader.uint32());
 };

@@ -47,13 +47,14 @@ function inspect(object, indent) {
 var root = new Root(),
     gp = root.lookup("google.protobuf");
 
-gp.add(
-    new protobuf.Service("Something")
-    .add(new protobuf.Method("Get", "rpc", "Any", "Any"))
-);
-
-console.log(inspect(gp));
-
-console.log(gp.object.Something);
-console.log(gp.object.Something === gp.object.Something);
-console.log(gp.object === gp.object);
+protobuf.load(require.resolve("./simple.proto"), function(err, root) {
+    try {
+        if (err)
+            throw err;
+        var Test = root.object.Test;
+        var writer = Test.encode({ a: "hi", b: { a: "le" }, c: 1 });
+        console.log(require("util").inspect(writer, { depth: 15 }));
+    } catch (err) {
+        console.log(err);
+    }
+});

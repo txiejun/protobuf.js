@@ -1,0 +1,10 @@
+syntax = "proto3";
+
+message Test {
+    string a = 1;
+    Sub b = 2;
+    uint32 c = 3;
+    message Sub {
+        string a = 2;
+    }
+}

@@ -14,7 +14,7 @@ var _TypeError = util._TypeError;
 
 /**
  * Constructs a new message field. Note that {@link MapField|map fields} have their own class.
- * @class Reflected message field.
+ * @classdesc Reflected message field.
  * @extends ReflectionObject
  * @constructor
  * @param {string} name Unique name within its namespace

@@ -5,8 +5,8 @@
         "int32" : 20161110,
         "innerInner" : {
             "long" : {
-                "low": 1051,
-                "high": 151234,
+                "low": 0,
+                "high": 0,
                 "unsigned": false
             },
             "enum" : 1,
