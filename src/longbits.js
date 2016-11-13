@@ -153,7 +153,7 @@ LongBitsPrototype.zzDecode = function zzDecode() {
  */
 LongBitsPrototype.length = function length() {
     var part0 =  this.lo,
-        part1 = (this.lo >>> 28 | (this.hi & 15) << 28) >>> 0,
+        part1 = (this.lo >>> 28 | this.hi << 4) >>> 0,
         part2 =  this.hi >>> 24;
     if (part2 === 0) {
         if (part1 === 0)

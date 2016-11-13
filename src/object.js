@@ -296,7 +296,7 @@ ReflectionObjectPrototype.setOptions = function setOptions(options) {
 
 /**
  * Converts this instance to its string representation.
- * @returns {string} Constructor name plus full name
+ * @returns {string} Constructor name, space, full name
  */
 ReflectionObjectPrototype.toString = function toString() {
     return this.constructor.name + " " + this.fullName;

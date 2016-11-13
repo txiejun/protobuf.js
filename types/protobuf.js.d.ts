@@ -1,6 +1,6 @@
 /*
  * protobuf.js v6.0.0-dev TypeScript definitions
- * Generated Sun, 13 Nov 2016 03:36:48 UTC
+ * Generated Sun, 13 Nov 2016 07:01:46 UTC
  */
 declare module protobuf {
 
@@ -807,7 +807,7 @@ declare module protobuf {
    
       /**
        * Converts this instance to its string representation.
-       * @returns {string} Constructor name plus full name
+       * @returns {string} Constructor name, space, full name
        */
       toString(): string;
    
@@ -1466,7 +1466,7 @@ declare module protobuf {
        * Basic type defaults.
        * @type {Object.<string,*>}
        */
-      var default: { [k: string]: any };
+      var defaults: { [k: string]: any };
    
       /**
        * Basic long type wire types.
@@ -1494,23 +1494,9 @@ declare module protobuf {
     */
    module util {
       /**
-       * Whether code generation is supported by the environment.
-       * @memberof util
-       * @type {boolean}
-       */
-      var codegen.supported: boolean;
-   
-      /**
-       * When set to true, codegen will log generated code to console.
-       * Useful for debugging.
-       * @memberof util
-       * @type {boolean}
-       */
-      var codegen.verbose: boolean;
-   
-      /**
        * Appends a printf-like formatted line to the generated source. Returned when calling {@link util.codegen}.
-       * @typedef util.CodegenAppender
+       * @typedef CodegenAppender
+       * @memberof util
        * @type {function}
        * @param {string} format A printf-like format string
        * @param {...*} params Format replacements
@@ -1523,7 +1509,8 @@ declare module protobuf {
    
       /**
        * Ends generation and builds the function.
-       * @typedef util.CodegenEnder
+       * @typedef CodegenEnder
+       * @memberof util
        * @type {function}
        * @param {string} [name] Function name, defaults to generate an anonymous function
        * @param {Object|Array} [scope] Function scope
@@ -1533,7 +1520,8 @@ declare module protobuf {
    
       /**
        * Stringifies the so far generated function source.
-       * @typedef util.CodegenStringer
+       * @typedef CodegenStringer
+       * @memberof util
        * @type {function}
        * @param {string} [name] Function name, defaults to generate an anonymous function
        * @returns {string} Function source using tabs for indentation
@@ -1545,6 +1533,8 @@ declare module protobuf {
        * @memberof util
        * @param {...string} params Function parameter names
        * @returns {util.CodegenAppender} Printf-like appender function
+       * @property {boolean} supported Whether code generation is supported by the environment.
+       * @property {boolean} verbose When set to true, codegen will log generated code to console. Useful for debugging.
        */
       function codegen(params: string): util.CodegenAppender;
    

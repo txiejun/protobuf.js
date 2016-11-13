@@ -55,7 +55,7 @@ types.basic = bake([
  * Basic type defaults.
  * @type {Object.<string,*>}
  */
-types.default = bake([
+types.defaults = bake([
     /* double   */ 0,
     /* float    */ 0,
     /* int32    */ 0,

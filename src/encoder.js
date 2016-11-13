@@ -56,12 +56,12 @@ EncoderPrototype.encode = function encode(message, writer) { // codegen referenc
 
             // Packed repeated
             if (field.packed && types.packed[type] !== undefined) {
-                writer.fork();
-                while (i < k)
-                    writer[type](values[i++]);
-                var buffer = writer.finish();
-                if (buffer.length)
-                    writer.tag(field.id, 2).bytes(buffer);
+                if (k) {
+                    writer.tag(field.id, 2).fork();
+                    while (i < k)
+                        writer[type](values[i++]);
+                    writer.ldelim();
+                }
 
             // Non-packed
             } else {
@@ -123,18 +123,18 @@ EncoderPrototype.generate = function generate() {
 
         // Repeated fields
         } else if (field.repeated) { gen
-
+    
     ("var vs=m%s,i=0,k=vs.length", prop);
 
             // Packed repeated
             if (field.packed && types.packed[type] !== undefined) { gen
 
-    ("w.fork()")
-    ("while(i<k)")
-        ("w.%s(vs[i++])", type)
-    ("var b=w.finish()")
-    ("if(b.length)")
-        ("w.tag(%d,2).bytes(b)", field.id);
+    ("if(k>0){")
+        ("w.tag(%d,2).fork()", field.id)
+        ("while(i<k)")
+            ("w.%s(vs[i++])", type)
+        ("w.ldelim()")
+    ("}");
 
             // Non-packed
             } else { gen

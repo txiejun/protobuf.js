@@ -21,12 +21,6 @@ function State(writer) {
     this.len   = writer.len;
 }
 
-State.prototype.apply = function apply(writer) {
-    writer._head = this._head;
-    writer._tail = this._tail;
-    writer.len   = this.len;
-};
-
 /**
  * Constructs a new writer.
  * When called as a function, returns an appropriate writer for the current environment.
@@ -149,14 +143,13 @@ WriterPrototype.sint32 = function write_sint32(value) {
 };
 
 function writeVarint64(buf, pos, bits) {
-    var lo = bits.lo,
-        hi = bits.hi;
-    while (hi || lo > 127) {
-        buf[pos++] = lo & 127 | 128;
-        lo = (lo >>> 7 | hi << 25) >>> 0;
-        hi >>>= 7;
+    // tends to deoptimize. stays optimized when using bits directly.
+    while (bits.hi || bits.lo > 127) {
+        buf[pos++] = bits.lo & 127 | 128;
+        bits.lo = (bits.lo >>> 7 | bits.hi << 25) >>> 0;
+        bits.hi >>>= 7;
     }
-    buf[pos] = lo;
+    buf[pos++] = bits.lo;
 }
 
 /**
@@ -376,9 +369,12 @@ WriterPrototype.fork = function fork() {
  * @returns {Writer} `this`
  */
 WriterPrototype.reset = function reset() {
-    if (this._stack.length)
-        this._stack.pop().apply(this);
-    else {
+    if (this._stack.length) {
+        var state = this._stack.pop();
+        this._head = state._head;
+        this._tail = state._tail;
+        this.len   = state.len;
+    } else {
         this._head = this._tail = new Op(noop, 0, 0);
         this.len = 0;
     }
@@ -409,8 +405,8 @@ var ArrayImpl =  typeof Uint8Array !== 'undefined' ? Uint8Array : Array;
  */
 WriterPrototype.finish = function finish() {
     var head = this._head.next, // skip noop
-        buf = new ArrayImpl(this.len),
-        pos = 0;
+        buf  = new ArrayImpl(this.len),
+        pos  = 0;
     this.reset();
     while (head) {
         head.fn(buf, pos, head.val, head.len);
@@ -499,9 +495,9 @@ BufferWriterPrototype.string = function write_string_buffer(value) {
  */
 BufferWriterPrototype.finish = function finish_buffer() {
     var head = this._head.next, // skip noop
-        buf = new util.Buffer(this.len);
+        buf  = new util.Buffer(this.len),
+        pos  = 0;
     this.reset();
-    var pos = 0;
     while (head) {
         head.fn(buf, pos, head.val, head.len);
         pos += head.len;

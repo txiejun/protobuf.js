@@ -1,6 +1,6 @@
 /*!
  * protobuf.js v6.0.0-dev (c) 2016 Daniel Wirtz
- * Compiled Sun, 13 Nov 2016 03:36:39 UTC
+ * Compiled Sun, 13 Nov 2016 07:03:25 UTC
  * Licensed under the Apache License, Version 2.0
  * see: https://github.com/dcodeIO/protobuf.js for details
  */
@@ -128,24 +128,9 @@ exports.write = function writeIEEE754(buffer, value, offset, isBE, mLen, nBytes)
 module.exports = codegen;
 
 /**
- * Whether code generation is supported by the environment.
- * @memberof util
- * @type {boolean}
- */
-codegen.supported = false;
-try { codegen.supported = codegen("a","b")("return a-b").eof()(2,1) === 1; } catch (e) {} // eslint-disable-line no-empty
-
-/**
- * When set to true, codegen will log generated code to console.
- * Useful for debugging.
- * @memberof util
- * @type {boolean}
- */
-codegen.verbose = false;
-
-/**
  * Appends a printf-like formatted line to the generated source. Returned when calling {@link util.codegen}.
- * @typedef util.CodegenAppender
+ * @typedef CodegenAppender
+ * @memberof util
  * @type {function}
  * @param {string} format A printf-like format string
  * @param {...*} params Format replacements
@@ -157,7 +142,8 @@ codegen.verbose = false;
 
 /**
  * Ends generation and builds the function.
- * @typedef util.CodegenEnder
+ * @typedef CodegenEnder
+ * @memberof util
  * @type {function}
  * @param {string} [name] Function name, defaults to generate an anonymous function
  * @param {Object|Array} [scope] Function scope
@@ -166,7 +152,8 @@ codegen.verbose = false;
 
 /**
  * Stringifies the so far generated function source.
- * @typedef util.CodegenStringer
+ * @typedef CodegenStringer
+ * @memberof util
  * @type {function}
  * @param {string} [name] Function name, defaults to generate an anonymous function
  * @returns {string} Function source using tabs for indentation
@@ -177,10 +164,12 @@ codegen.verbose = false;
  * @memberof util
  * @param {...string} params Function parameter names
  * @returns {util.CodegenAppender} Printf-like appender function
+ * @property {boolean} supported Whether code generation is supported by the environment.
+ * @property {boolean} verbose When set to true, codegen will log generated code to console. Useful for debugging.
  */
 function codegen(/* varargs */) {
     var args   = Array.prototype.slice.call(arguments),
-        src    = ['"use strict";'],
+        src    = ['\t"use strict";'],
         indent = 1;
 
     // util.CodegenAppender
@@ -241,6 +230,11 @@ function codegen(/* varargs */) {
 
     return gen;
 }
+
+codegen.supported = false;
+try { codegen.supported = codegen("a","b")("return a-b").eof()(2,1) === 1; } catch (e) {} // eslint-disable-line no-empty
+
+codegen.verbose = false;
 
 },{}],3:[function(require,module,exports){
 module.exports = Decoder;
@@ -489,12 +483,12 @@ EncoderPrototype.encode = function encode(message, writer) { // codegen referenc
 
             // Packed repeated
             if (field.packed && types.packed[type] !== undefined) {
-                writer.fork();
-                while (i < k)
-                    writer[type](values[i++]);
-                var buffer = writer.finish();
-                if (buffer.length)
-                    writer.tag(field.id, 2).bytes(buffer);
+                if (k) {
+                    writer.tag(field.id, 2).fork();
+                    while (i < k)
+                        writer[type](values[i++]);
+                    writer.ldelim();
+                }
 
             // Non-packed
             } else {
@@ -556,18 +550,18 @@ EncoderPrototype.generate = function generate() {
 
         // Repeated fields
         } else if (field.repeated) { gen
-
+    
     ("var vs=m%s,i=0,k=vs.length", prop);
 
             // Packed repeated
             if (field.packed && types.packed[type] !== undefined) { gen
 
-    ("w.fork()")
-    ("while(i<k)")
-        ("w.%s(vs[i++])", type)
-    ("var b=w.finish()")
-    ("if(b.length)")
-        ("w.tag(%d,2).bytes(b)", field.id);
+    ("if(k>0){")
+        ("w.tag(%d,2).fork()", field.id)
+        ("while(i<k)")
+            ("w.%s(vs[i++])", type)
+        ("w.ldelim()")
+    ("}");
 
             // Non-packed
             } else { gen
@@ -914,7 +908,7 @@ FieldPrototype.resolve = function resolve() {
     if (this.resolved)
         return this;
 
-    var typeDefault = types.default[this.type];
+    var typeDefault = types.defaults[this.type];
 
     // if not a basic type, resolve it
     if (typeDefault === undefined) {
@@ -1305,7 +1299,7 @@ LongBitsPrototype.zzDecode = function zzDecode() {
  */
 LongBitsPrototype.length = function length() {
     var part0 =  this.lo,
-        part1 = (this.lo >>> 28 | (this.hi & 15) << 28) >>> 0,
+        part1 = (this.lo >>> 28 | this.hi << 4) >>> 0,
         part2 =  this.hi >>> 24;
     if (part2 === 0) {
         if (part1 === 0)
@@ -1323,6 +1317,8 @@ LongBitsPrototype.length = function length() {
 module.exports = MapField;
 
 var Field = require(6);
+/** @alias Field.prototype */
+var FieldPrototype = Field.prototype;
 /** @alias MapField.prototype */
 var MapFieldPrototype = Field.extend(MapField, [ "keyType" ]);
 
@@ -1398,7 +1394,7 @@ MapFieldPrototype.resolve = function resolve() {
         this.resolvedKeyType = resolved;
     }
 
-    return Field.prototype.resolve.call(this);
+    return FieldPrototype.resolve.call(this);
 };
 
 },{"21":21,"22":22,"5":5,"6":6}],10:[function(require,module,exports){
@@ -1712,7 +1708,9 @@ NamespacePrototype.addJSON = function addJSON(json) {
  * @returns {?ReflectionObject} The reflection object or `null` if it doesn't exist
  */
 NamespacePrototype.get = function get(name) {
-    return this.nested && this.nested[name] || null;
+    if (this.nested === undefined) // prevents deopt
+        return null;
+    return this.nested[name] || null;
 };
 
 /**
@@ -2160,7 +2158,7 @@ ReflectionObjectPrototype.setOptions = function setOptions(options) {
 
 /**
  * Converts this instance to its string representation.
- * @returns {string} Constructor name plus full name
+ * @returns {string} Constructor name, space, full name
  */
 ReflectionObjectPrototype.toString = function toString() {
     return this.constructor.name + " " + this.fullName;
@@ -4616,7 +4614,7 @@ types.basic = bake([
  * Basic type defaults.
  * @type {Object.<string,*>}
  */
-types.default = bake([
+types.defaults = bake([
     /* double   */ 0,
     /* float    */ 0,
     /* int32    */ 0,
@@ -4959,12 +4957,6 @@ function State(writer) {
     this.len   = writer.len;
 }
 
-State.prototype.apply = function apply(writer) {
-    writer._head = this._head;
-    writer._tail = this._tail;
-    writer.len   = this.len;
-};
-
 /**
  * Constructs a new writer.
  * When called as a function, returns an appropriate writer for the current environment.
@@ -5087,14 +5079,13 @@ WriterPrototype.sint32 = function write_sint32(value) {
 };
 
 function writeVarint64(buf, pos, bits) {
-    var lo = bits.lo,
-        hi = bits.hi;
-    while (hi || lo > 127) {
-        buf[pos++] = lo & 127 | 128;
-        lo = (lo >>> 7 | hi << 25) >>> 0;
-        hi >>>= 7;
+    // tends to deoptimize. stays optimized when using bits directly.
+    while (bits.hi || bits.lo > 127) {
+        buf[pos++] = bits.lo & 127 | 128;
+        bits.lo = (bits.lo >>> 7 | bits.hi << 25) >>> 0;
+        bits.hi >>>= 7;
     }
-    buf[pos] = lo;
+    buf[pos++] = bits.lo;
 }
 
 /**
@@ -5314,9 +5305,12 @@ WriterPrototype.fork = function fork() {
  * @returns {Writer} `this`
  */
 WriterPrototype.reset = function reset() {
-    if (this._stack.length)
-        this._stack.pop().apply(this);
-    else {
+    if (this._stack.length) {
+        var state = this._stack.pop();
+        this._head = state._head;
+        this._tail = state._tail;
+        this.len   = state.len;
+    } else {
         this._head = this._tail = new Op(noop, 0, 0);
         this.len = 0;
     }
@@ -5347,8 +5341,8 @@ var ArrayImpl =  typeof Uint8Array !== 'undefined' ? Uint8Array : Array;
  */
 WriterPrototype.finish = function finish() {
     var head = this._head.next, // skip noop
-        buf = new ArrayImpl(this.len),
-        pos = 0;
+        buf  = new ArrayImpl(this.len),
+        pos  = 0;
     this.reset();
     while (head) {
         head.fn(buf, pos, head.val, head.len);
@@ -5437,9 +5431,9 @@ BufferWriterPrototype.string = function write_string_buffer(value) {
  */
 BufferWriterPrototype.finish = function finish_buffer() {
     var head = this._head.next, // skip noop
-        buf = new util.Buffer(this.len);
+        buf  = new util.Buffer(this.len),
+        pos  = 0;
     this.reset();
-    var pos = 0;
     while (head) {
         head.fn(buf, pos, head.val, head.len);
         pos += head.len;

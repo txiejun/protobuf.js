@@ -198,7 +198,7 @@ FieldPrototype.resolve = function resolve() {
     if (this.resolved)
         return this;
 
-    var typeDefault = types.default[this.type];
+    var typeDefault = types.defaults[this.type];
 
     // if not a basic type, resolve it
     if (typeDefault === undefined) {

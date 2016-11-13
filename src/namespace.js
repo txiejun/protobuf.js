@@ -140,7 +140,9 @@ NamespacePrototype.addJSON = function addJSON(json) {
  * @returns {?ReflectionObject} The reflection object or `null` if it doesn't exist
  */
 NamespacePrototype.get = function get(name) {
-    return this.nested && this.nested[name] || null;
+    if (this.nested === undefined) // prevents deopt
+        return null;
+    return this.nested[name] || null;
 };
 
 /**

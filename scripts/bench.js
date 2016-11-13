@@ -3,7 +3,7 @@ var path     = require("path"),
     JSONPoly = require("./lib/jsonpoly"),
     data     = require("./bench.json");
 
-var times = process.argv.length > 2 ? parseInt(process.argv[2], 10) : 100000;
+var times = process.argv.length > 2 ? parseInt(process.argv[2], 10) : 500000;
 
 protobuf.load(require.resolve("./bench.proto"), function(err, root) {
     if (err)
@@ -16,15 +16,16 @@ protobuf.load(require.resolve("./bench.proto"), function(err, root) {
         Test.decode(Test.encode(data).finish());
         protobuf.util.codegen.verbose = false;
 
-        console.log("\nThis benchmark measures message to buffer respectively buffer to message performance.");
         console.log("usage: " + path.basename(process.argv[1]) + " [iterations="+times+"] [protobufOnly]\n");
         console.log("encoding/decoding " + times + " iterations ...\n");
         
-        function summarize(name, start, length) {
+        function summarize(name, start, length, extra) {
             var time = Date.now() - start;
-            var sb = [ pad(name, 24, 1), " : ", pad(time + "ms", 10) ];
+            var sb = [ pad(name, 36, 1), " : ", pad(time + "ms", 10) ];
             if (length !== undefined)
                 sb.push("   ", pad(length + " bytes", 15));
+            if (extra !== undefined)
+                sb.push("   ", extra);
             console.log(sb.join(''));
         }
 
@@ -35,14 +36,14 @@ protobuf.load(require.resolve("./bench.proto"), function(err, root) {
                 var buf = Test.encode(data).finish();
                 len += buf.length;
             }
-            summarize("encode protobuf." + "js", start, len);
+            summarize("[encode] protobuf.js to buffer", start, len);
             start = Date.now();
             len = 0;
             for (var i = 0; i < times; ++i) {
                 var msg = Test.decode(buf);
                 len += buf.length;
             }
-            summarize("decode protobuf." + "js", start, len);
+            summarize("[decode] protobuf.js from buffer", start, len);
             console.log();
         }
 
@@ -55,7 +56,7 @@ protobuf.load(require.resolve("./bench.proto"), function(err, root) {
                 buf = Test.encode_(data, writer).finish();
                 len += buf.length;
             }
-            summarize("encode protobuf." + "js r/w", start, len);
+            summarize("[encode] protobuf.js reusing writer", start, len, "why is this slower?");
             start = Date.now();
             len = 0;
             var reader = protobuf.Reader(buf);
@@ -63,7 +64,7 @@ protobuf.load(require.resolve("./bench.proto"), function(err, root) {
                 var msg = Test.decode_(reader.reset(buf), new Test.ctor(), buf.length);
                 len += buf.length;
             }
-            summarize("decode protobuf." + "js r/w", start, len);
+            summarize("[decode] protobuf.js reusing reader", start, len);
             console.log();
         }
 
@@ -74,14 +75,14 @@ protobuf.load(require.resolve("./bench.proto"), function(err, root) {
                 var buf = Buffer.from(JSON.stringify(data), "utf8");
                 len += buf.length;
             }
-            summarize("encode JSON " + name, start, len);
+            summarize("[encode] JSON " + name + " to buffer", start, len);
             start = Date.now();
             len = 0;
             for (var i = 0; i < times; ++i) {
                 var msg = JSON.parse(buf.toString("utf8"));
                 len += buf.length;
             }
-            summarize("decode JSON " + name, start, len);
+            summarize("[decode] JSON " + name + " from buffer", start, len);
             console.log();
         }
 
@@ -91,12 +92,12 @@ protobuf.load(require.resolve("./bench.proto"), function(err, root) {
             for (var i = 0; i < times; ++i) {
                 str = JSON.stringify(data);
             }
-            summarize("encode JSON s/p " + name, start);
+            summarize("[encode] JSON " + name + " to string", start);
             start = Date.now();
             for (var i = 0; i < times; ++i) {
                 JSON.parse(str);
             }
-            summarize("decode JSON s/p " + name, start);
+            summarize("[decode] JSON " + name + " from string", start);
             console.log();
         }
 

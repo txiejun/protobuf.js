@@ -1,6 +1,8 @@
 module.exports = MapField;
 
 var Field = require("./field");
+/** @alias Field.prototype */
+var FieldPrototype = Field.prototype;
 /** @alias MapField.prototype */
 var MapFieldPrototype = Field.extend(MapField, [ "keyType" ]);
 
@@ -76,5 +78,5 @@ MapFieldPrototype.resolve = function resolve() {
         this.resolvedKeyType = resolved;
     }
 
-    return Field.prototype.resolve.call(this);
+    return FieldPrototype.resolve.call(this);
 };

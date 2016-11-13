@@ -1,24 +1,9 @@
 module.exports = codegen;
 
 /**
- * Whether code generation is supported by the environment.
- * @memberof util
- * @type {boolean}
- */
-codegen.supported = false;
-try { codegen.supported = codegen("a","b")("return a-b").eof()(2,1) === 1; } catch (e) {} // eslint-disable-line no-empty
-
-/**
- * When set to true, codegen will log generated code to console.
- * Useful for debugging.
- * @memberof util
- * @type {boolean}
- */
-codegen.verbose = false;
-
-/**
  * Appends a printf-like formatted line to the generated source. Returned when calling {@link util.codegen}.
- * @typedef util.CodegenAppender
+ * @typedef CodegenAppender
+ * @memberof util
  * @type {function}
  * @param {string} format A printf-like format string
  * @param {...*} params Format replacements
@@ -30,7 +15,8 @@ codegen.verbose = false;
 
 /**
  * Ends generation and builds the function.
- * @typedef util.CodegenEnder
+ * @typedef CodegenEnder
+ * @memberof util
  * @type {function}
  * @param {string} [name] Function name, defaults to generate an anonymous function
  * @param {Object|Array} [scope] Function scope
@@ -39,7 +25,8 @@ codegen.verbose = false;
 
 /**
  * Stringifies the so far generated function source.
- * @typedef util.CodegenStringer
+ * @typedef CodegenStringer
+ * @memberof util
  * @type {function}
  * @param {string} [name] Function name, defaults to generate an anonymous function
  * @returns {string} Function source using tabs for indentation
@@ -50,10 +37,12 @@ codegen.verbose = false;
  * @memberof util
  * @param {...string} params Function parameter names
  * @returns {util.CodegenAppender} Printf-like appender function
+ * @property {boolean} supported Whether code generation is supported by the environment.
+ * @property {boolean} verbose When set to true, codegen will log generated code to console. Useful for debugging.
  */
 function codegen(/* varargs */) {
     var args   = Array.prototype.slice.call(arguments),
-        src    = ['"use strict";'],
+        src    = ['\t"use strict";'],
         indent = 1;
 
     // util.CodegenAppender
@@ -114,3 +103,8 @@ function codegen(/* varargs */) {
 
     return gen;
 }
+
+codegen.supported = false;
+try { codegen.supported = codegen("a","b")("return a-b").eof()(2,1) === 1; } catch (e) {} // eslint-disable-line no-empty
+
+codegen.verbose = false;
