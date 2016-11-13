@@ -68,7 +68,7 @@ MapFieldPrototype.resolve = function resolve() {
         return this;
     
     // Besides a value type, map fields have a key type to resolve
-    var keyWireType = types.mapKeyWireTypes[this.keyType];
+    var keyWireType = types.mapKey[this.keyType];
     if (keyWireType === undefined) {
         var resolved = this.parent.lookup(this.keyType);
         if (!(resolved instanceof Enum))

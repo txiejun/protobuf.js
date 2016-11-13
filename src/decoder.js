@@ -31,7 +31,7 @@ DecoderPrototype.decode = function decode(reader, message, limit) { // codegen r
         var tag      = reader.tag(),
             field    = fieldsById[tag.id],
             type     = field.resolvedType instanceof Enum ? "uint32" : field.type,
-            wireType = types.wireTypes[type];
+            wireType = types.basic[type];
         
         // Known fields
         if (field) {
@@ -66,7 +66,7 @@ DecoderPrototype.decode = function decode(reader, message, limit) { // codegen r
                     length   = values.length;
 
                 // Packed
-                if (field.packed && types.packableWireTypes[type] !== undefined && tag.wireType === 2) {
+                if (field.packed && types.packed[type] !== undefined && tag.wireType === 2) {
                     var plimit = reader.uint32() + reader.pos;
                     while (reader.pos < plimit)
                         values[length++] = reader[type]();
@@ -109,8 +109,8 @@ DecoderPrototype.generate = function generate() {
     for (var i = 0; i < fieldsCount; ++i) {
         var field    = fieldsArray[i].resolve(),
             type     = field.resolvedType instanceof Enum ? "uint32" : field.type,
-            wireType = types.wireTypes[type],
-            packType = types.packableWireTypes[type],
+            wireType = types.basic[type],
+            packType = types.packed[type],
             prop     = util.safeProp(field.name);
         gen
             ("case %d:", field.id);

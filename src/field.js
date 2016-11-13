@@ -112,7 +112,7 @@ function Field(name, id, type, rule, extend, options) {
      * Whether this field's value is a long.
      * @type {boolean}
      */
-    this.long = types.longWireTypes[type] !== undefined;
+    this.long = types.long[type] !== undefined;
 
     /**
      * Resolved type if not a basic type.
@@ -198,7 +198,7 @@ FieldPrototype.resolve = function resolve() {
     if (this.resolved)
         return this;
 
-    var typeDefault = types.defaults[this.type];
+    var typeDefault = types.default[this.type];
 
     // if not a basic type, resolve it
     if (typeDefault === undefined) {
@@ -238,7 +238,7 @@ FieldPrototype.jsonConvert = function(value, options) {
     if (options) {
         if (this.resolvedType instanceof Enum && options.enum === String)
             return this.resolvedType.valuesById[value];
-        else if (types.longWireTypes[this.type] !== undefined && options.long)
+        else if (types.long[this.type] !== undefined && options.long)
             return options.long === Number
                 ? typeof value === 'number'
                 ? value

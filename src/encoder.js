@@ -31,12 +31,12 @@ EncoderPrototype.encode = function encode(message, writer) { // codegen referenc
     for (var fi = 0; fi < fieldsCount; ++fi) {
         var field    = fieldsArray[fi].resolve(),
             type     = field.resolvedType instanceof Enum ? "uint32" : field.type,
-            wireType = types.wireTypes[type];
+            wireType = types.basic[type];
 
         // Map fields
         if (field.map) {
             var keyType     = field.resolvedKeyType /* only valid is enum */ ? "uint32" : field.keyType,
-                keyWireType = types.mapKeyWireTypes[keyType];
+                keyWireType = types.mapKey[keyType];
             var value, keys;
             if ((value = message[field.name]) && (keys = Object.keys(value)).length) {
                 writer.tag(field.id, 2).fork();
@@ -55,7 +55,7 @@ EncoderPrototype.encode = function encode(message, writer) { // codegen referenc
             var values = message[field.name], i = 0, k = values.length;
 
             // Packed repeated
-            if (field.packed && types.packableWireTypes[type] !== undefined) {
+            if (field.packed && types.packed[type] !== undefined) {
                 writer.fork();
                 while (i < k)
                     writer[type](values[i++]);
@@ -98,13 +98,13 @@ EncoderPrototype.generate = function generate() {
     for (var i = 0; i < fieldsCount; ++i) {
         var field = fieldsArray[i].resolve();
         var type = field.resolvedType instanceof Enum ? "uint32" : field.type,
-            wireType = types.wireTypes[type],
+            wireType = types.basic[type],
             prop = util.safeProp(field.name);
         
         // Map fields
         if (field.map) {
             var keyType = field.resolvedKeyType /* only valid is enum */ ? "uint32" : field.keyType,
-                keyWireType = types.mapKeyWireTypes[keyType];
+                keyWireType = types.mapKey[keyType];
             gen
 
     ("var o=m%s,ks", prop)
@@ -127,7 +127,7 @@ EncoderPrototype.generate = function generate() {
     ("var vs=m%s,i=0,k=vs.length", prop);
 
             // Packed repeated
-            if (field.packed && types.packableWireTypes[type] !== undefined) { gen
+            if (field.packed && types.packed[type] !== undefined) { gen
 
     ("w.fork()")
     ("while(i<k)")

@@ -16,6 +16,10 @@ var delimRe        = /[\s{}=;:\[\],'"\(\)<>]/g,
  * @property {function(string, boolean=):boolean} skip Skips a token, returns its presence and advances or, if non-optional and not present, throws
  */
 
+var s_nl = "\n",
+    s_sl = '/',
+    s_as = '*';
+
 /**
  * Tokenizes the given .proto source and returns an object with useful utility functions.
  * @param {string} source Source contents
@@ -87,34 +91,34 @@ function tokenize(source) {
                 return null;
             repeat = false;
             while (/\s/.test(curr = charAt(offset))) {
-                if (curr === '\n')
+                if (curr === s_nl)
                     ++line;
                 if (++offset === length)
                     return null;
             }
-            if (charAt(offset) === '/') {
+            if (charAt(offset) === s_sl) {
                 if (++offset === length)
                     throw illegal("comment");
-                if (charAt(offset) === '/') { // Line
-                    while (charAt(++offset) !== '\n')
+                if (charAt(offset) === s_sl) { // Line
+                    while (charAt(++offset) !== s_nl)
                         if (offset === length)
                             return null;
                     ++offset;
                     ++line;
                     repeat = true;
-                } else if ((curr = charAt(offset)) === '*') { /* Block */
+                } else if ((curr = charAt(offset)) === s_as) { /* Block */
                     do {
-                        if (curr === '\n')
+                        if (curr === s_nl)
                             ++line;
                         if (++offset === length)
                             return null;
                         prev = curr;
                         curr = charAt(offset);
-                    } while (prev !== '*' || curr !== '/');
+                    } while (prev !== s_as || curr !== s_sl);
                     ++offset;
                     repeat = true;
                 } else
-                    return '/';
+                    return s_sl;
             }
         } while (repeat);
 

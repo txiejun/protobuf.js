@@ -1,6 +1,6 @@
 /*
  * protobuf.js v6.0.0-dev TypeScript definitions
- * Generated Sat, 12 Nov 2016 23:34:13 UTC
+ * Generated Sun, 13 Nov 2016 03:36:48 UTC
  */
 declare module protobuf {
 
@@ -1460,31 +1460,31 @@ declare module protobuf {
        * Basic type wire types.
        * @type {Object.<string,number>}
        */
-      var wireTypes: { [k: string]: number };
-   
-      /**
-       * Basic long type wire types.
-       * @type {Object.<string,number>}
-       */
-      var longWireTypes: { [k: string]: number };
+      var basic: { [k: string]: number };
    
       /**
        * Basic type defaults.
        * @type {Object.<string,*>}
        */
-      var defaults: { [k: string]: any };
+      var default: { [k: string]: any };
+   
+      /**
+       * Basic long type wire types.
+       * @type {Object.<string,number>}
+       */
+      var long: { [k: string]: number };
    
       /**
        * Allowed types for map keys with their associated wire type.
        * @type {Object.<string,number>}
        */
-      var mapKeyWireTypes: { [k: string]: number };
+      var mapKey: { [k: string]: number };
    
       /**
        * Allowed types for packed repeated fields with their associated wire type.
        * @type {Object.<string,number>}
        */
-      var packableWireTypes: { [k: string]: number };
+      var packed: { [k: string]: number };
    
    }
    

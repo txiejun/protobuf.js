@@ -1,6 +1,6 @@
 /*!
  * protobuf.js v6.0.0-dev (c) 2016 Daniel Wirtz
- * Compiled Sun, 13 Nov 2016 02:16:41 UTC
+ * Compiled Sun, 13 Nov 2016 03:36:39 UTC
  * Licensed under the Apache License, Version 2.0
  * see: https://github.com/dcodeIO/protobuf.js for details
  */
@@ -276,7 +276,7 @@ DecoderPrototype.decode = function decode(reader, message, limit) { // codegen r
         var tag      = reader.tag(),
             field    = fieldsById[tag.id],
             type     = field.resolvedType instanceof Enum ? "uint32" : field.type,
-            wireType = types.wireTypes[type];
+            wireType = types.basic[type];
         
         // Known fields
         if (field) {
@@ -311,7 +311,7 @@ DecoderPrototype.decode = function decode(reader, message, limit) { // codegen r
                     length   = values.length;
 
                 // Packed
-                if (field.packed && types.packableWireTypes[type] !== undefined && tag.wireType === 2) {
+                if (field.packed && types.packed[type] !== undefined && tag.wireType === 2) {
                     var plimit = reader.uint32() + reader.pos;
                     while (reader.pos < plimit)
                         values[length++] = reader[type]();
@@ -354,8 +354,8 @@ DecoderPrototype.generate = function generate() {
     for (var i = 0; i < fieldsCount; ++i) {
         var field    = fieldsArray[i].resolve(),
             type     = field.resolvedType instanceof Enum ? "uint32" : field.type,
-            wireType = types.wireTypes[type],
-            packType = types.packableWireTypes[type],
+            wireType = types.basic[type],
+            packType = types.packed[type],
             prop     = util.safeProp(field.name);
         gen
             ("case %d:", field.id);
@@ -464,12 +464,12 @@ EncoderPrototype.encode = function encode(message, writer) { // codegen referenc
     for (var fi = 0; fi < fieldsCount; ++fi) {
         var field    = fieldsArray[fi].resolve(),
             type     = field.resolvedType instanceof Enum ? "uint32" : field.type,
-            wireType = types.wireTypes[type];
+            wireType = types.basic[type];
 
         // Map fields
         if (field.map) {
             var keyType     = field.resolvedKeyType /* only valid is enum */ ? "uint32" : field.keyType,
-                keyWireType = types.mapKeyWireTypes[keyType];
+                keyWireType = types.mapKey[keyType];
             var value, keys;
             if ((value = message[field.name]) && (keys = Object.keys(value)).length) {
                 writer.tag(field.id, 2).fork();
@@ -488,7 +488,7 @@ EncoderPrototype.encode = function encode(message, writer) { // codegen referenc
             var values = message[field.name], i = 0, k = values.length;
 
             // Packed repeated
-            if (field.packed && types.packableWireTypes[type] !== undefined) {
+            if (field.packed && types.packed[type] !== undefined) {
                 writer.fork();
                 while (i < k)
                     writer[type](values[i++]);
@@ -531,13 +531,13 @@ EncoderPrototype.generate = function generate() {
     for (var i = 0; i < fieldsCount; ++i) {
         var field = fieldsArray[i].resolve();
         var type = field.resolvedType instanceof Enum ? "uint32" : field.type,
-            wireType = types.wireTypes[type],
+            wireType = types.basic[type],
             prop = util.safeProp(field.name);
         
         // Map fields
         if (field.map) {
             var keyType = field.resolvedKeyType /* only valid is enum */ ? "uint32" : field.keyType,
-                keyWireType = types.mapKeyWireTypes[keyType];
+                keyWireType = types.mapKey[keyType];
             gen
 
     ("var o=m%s,ks", prop)
@@ -560,7 +560,7 @@ EncoderPrototype.generate = function generate() {
     ("var vs=m%s,i=0,k=vs.length", prop);
 
             // Packed repeated
-            if (field.packed && types.packableWireTypes[type] !== undefined) { gen
+            if (field.packed && types.packed[type] !== undefined) { gen
 
     ("w.fork()")
     ("while(i<k)")
@@ -828,7 +828,7 @@ function Field(name, id, type, rule, extend, options) {
      * Whether this field's value is a long.
      * @type {boolean}
      */
-    this.long = types.longWireTypes[type] !== undefined;
+    this.long = types.long[type] !== undefined;
 
     /**
      * Resolved type if not a basic type.
@@ -914,7 +914,7 @@ FieldPrototype.resolve = function resolve() {
     if (this.resolved)
         return this;
 
-    var typeDefault = types.defaults[this.type];
+    var typeDefault = types.default[this.type];
 
     // if not a basic type, resolve it
     if (typeDefault === undefined) {
@@ -954,7 +954,7 @@ FieldPrototype.jsonConvert = function(value, options) {
     if (options) {
         if (this.resolvedType instanceof Enum && options.enum === String)
             return this.resolvedType.valuesById[value];
-        else if (types.longWireTypes[this.type] !== undefined && options.long)
+        else if (types.long[this.type] !== undefined && options.long)
             return options.long === Number
                 ? typeof value === 'number'
                 ? value
@@ -1390,7 +1390,7 @@ MapFieldPrototype.resolve = function resolve() {
         return this;
     
     // Besides a value type, map fields have a key type to resolve
-    var keyWireType = types.mapKeyWireTypes[this.keyType];
+    var keyWireType = types.mapKey[this.keyType];
     if (keyWireType === undefined) {
         var resolved = this.parent.lookup(this.keyType);
         if (!(resolved instanceof Enum))
@@ -2329,6 +2329,13 @@ var s_required = "required",
     s_option   = "option",
     s_name     = "name",
     s_type     = "type";
+var s_open     = "{",
+    s_close    = "}",
+    s_bopen    = '(',
+    s_bclose   = ')',
+    s_semi     = ";",
+    s_dq       = '"',
+    s_sq       = "'";
 
 /**
  * Result object returned from {@link parse}.
@@ -2382,27 +2389,27 @@ function parse(source, root, visible) {
     var ptr = root;
 
     function illegal(token, name) {
-        return Error("illegal " + (name || "token") + " '" + token + "' (line " + tn.line() + ")");
+        return Error("illegal " + (name || "token") + " '" + token + "' (line " + tn.line() + s_bclose);
     }
 
     function readString() {
         var values = [],
             token;
         do {
-            if ((token = next()) !== '"' && token !== "'")
+            if ((token = next()) !== s_dq && token !== s_sq)
                 throw illegal(token);
             values.push(next());
             skip(token);
             token = peek();
-        } while (token === '"' || token === "'");
+        } while (token === s_dq || token === s_sq);
         return values.join('');
     }
 
     function readValue(acceptTypeRef) {
         var token = next();
         switch (lower(token)) {
-            case "'":
-            case '"':
+            case s_sq:
+            case s_dq:
                 push(token);
                 return readString();
             case "true":
@@ -2424,7 +2431,7 @@ function parse(source, root, visible) {
         var end = start;
         if (skip("to", true))
             end = parseId(next());
-        skip(";");
+        skip(s_semi);
         return [ start, end ];
     }
 
@@ -2469,12 +2476,12 @@ function parse(source, root, visible) {
 
     function parsePackage() {
         if (pkg !== undefined)
-            throw illegal(" package");
+            throw illegal("package");
         pkg = next();
         if (!typeRefRe.test(pkg))
             throw illegal(pkg, s_name);
         ptr = ptr.define(pkg);
-        skip(";");
+        skip(s_semi);
     }
 
     function parseImport() {
@@ -2493,17 +2500,18 @@ function parse(source, root, visible) {
         if (!whichImports)
             whichImports = imports || (imports = []);
         token = readString();
-        skip(";");
+        skip(s_semi);
         whichImports.push(token);
     }
 
     function parseSyntax() {
         skip("=");
         syntax = lower(readString());
-        if ([ "proto2", "proto3" ].indexOf(syntax) < 0)
+        var p3;
+        if ([ "proto2", p3 = "proto3" ].indexOf(syntax) < 0)
             throw illegal(syntax, "syntax");
-        isProto3 = syntax === "proto3";
-        skip(";");
+        isProto3 = syntax === p3;
+        skip(s_semi);
     }
 
     function parseCommon(parent, token) {
@@ -2511,7 +2519,7 @@ function parse(source, root, visible) {
 
             case s_option:
                 parseOption(parent, token);
-                skip(";");
+                skip(s_semi);
                 return true;
 
             case "message":
@@ -2538,8 +2546,8 @@ function parse(source, root, visible) {
         if (!nameRe.test(name))
             throw illegal(name, "type name");
         var type = new Type(name);
-        if (skip("{", true)) {
-            while ((token = next()) !== '}') {
+        if (skip(s_open, true)) {
+            while ((token = next()) !== s_close) {
                 var tokenLower = lower(token);
                 if (parseCommon(type, token))
                     continue;
@@ -2569,9 +2577,9 @@ function parse(source, root, visible) {
                         break;
                 }
             }
-            skip(";", true);
+            skip(s_semi, true);
         } else
-            skip(";");
+            skip(s_semi);
         if (!isProto3)
             type.setOption("packed", false, /* ifNotSet */ true);
         type.visible = visible;
@@ -2595,7 +2603,7 @@ function parse(source, root, visible) {
             throw illegal(token);
         skip("<");
         var keyType = next();
-        if (types.mapKeyWireTypes[keyType] === undefined)
+        if (types.mapKey[keyType] === undefined)
             throw illegal(keyType, s_type);
         skip(",");
         var valueType = next();
@@ -2613,17 +2621,17 @@ function parse(source, root, visible) {
         if (!nameRe.test(name))
             throw illegal(name, s_name);
         var oneof = new OneOf(name);
-        if (skip("{", true)) {
-            while ((token = next()) !== '}') {
+        if (skip(s_open, true)) {
+            while ((token = next()) !== s_close) {
                 if (token === s_option) {
                     parseOption(oneof, token);
-                    skip(";");
+                    skip(s_semi);
                 } else
                     parseField(oneof, s_optional);
             }
-            skip(";", true);
+            skip(s_semi, true);
         } else
-            skip(";");
+            skip(s_semi);
         parent.add(oneof);
     }
 
@@ -2633,16 +2641,16 @@ function parse(source, root, visible) {
             throw illegal(name, s_name);
         var values = {};
         var enm = new Enum(name, values);
-        if (skip("{", true)) {
-            while ((token = next()) !== "}") {
+        if (skip(s_open, true)) {
+            while ((token = next()) !== s_close) {
                 if (lower(token) === s_option)
                     parseOption(enm);
                 else
                     parseEnumField(enm, token);
             }
-            skip(";", true);
+            skip(s_semi, true);
         } else
-            skip(";");
+            skip(s_semi);
         parent.add(enm);
     }
 
@@ -2656,13 +2664,13 @@ function parse(source, root, visible) {
     }
 
     function parseOption(parent, token) {
-        var custom = skip('(', true);
+        var custom = skip(s_bopen, true);
         var name = next();
         if (!typeRefRe.test(name))
             throw illegal(name, s_name);
         if (custom) {
-            skip(')');
-            name = '(' + name + ')';
+            skip(s_bclose);
+            name = s_bopen + name + s_bclose;
             token = peek();
             if (fqTypeRefRe.test(token)) {
                 name += token;
@@ -2674,8 +2682,8 @@ function parse(source, root, visible) {
     }
 
     function parseOptionValue(parent, name) {
-        if (skip('{', true)) {
-            while ((token = next()) !== '}') {
+        if (skip(s_open, true)) {
+            while ((token = next()) !== s_close) {
                 if (!nameRe.test(token))
                     throw illegal(token, s_name);
                 name = name + "." + token;
@@ -2684,7 +2692,7 @@ function parse(source, root, visible) {
                 else
                     parseOptionValue(parent, name);
             }
-            skip(";", true);
+            skip(s_semi, true);
         } else
             setOption(parent, name, readValue(true));
         // Does not enforce a delimiter to be universal
@@ -2704,7 +2712,7 @@ function parse(source, root, visible) {
             } while (skip(",", true));
             skip("]");
         }
-        skip(";");
+        skip(s_semi);
         return parent;
     }
 
@@ -2714,13 +2722,13 @@ function parse(source, root, visible) {
             throw illegal(token, "service name");
         var name = token;
         var service = new Service(name);
-        if (skip("{", true)) {
-            while ((token = next()) !== '}') {
+        if (skip(s_open, true)) {
+            while ((token = next()) !== s_close) {
                 var tokenLower = lower(token);
                 switch (tokenLower) {
                     case s_option:
                         parseOption(service, tokenLower);
-                        skip(";");
+                        skip(s_semi);
                         break;
                     case "rpc":
                         parseMethod(service, tokenLower);
@@ -2729,9 +2737,9 @@ function parse(source, root, visible) {
                         throw illegal(token);
                 }
             }
-            skip(";", true);
+            skip(s_semi, true);
         } else
-            skip(";");
+            skip(s_semi);
         parent.add(service);
     }
 
@@ -2742,35 +2750,36 @@ function parse(source, root, visible) {
             throw illegal(name, s_name);
         var requestType, requestStream,
             responseType, responseStream;
-        skip("(");
-        if (skip("stream", true))
+        skip(s_bopen);
+        var st;
+        if (skip(st = "stream", true))
             requestStream = true;
         if (!typeRefRe.test(token = next()))
             throw illegal(token);
         requestType = token;
-        skip(")"); skip("returns"); skip("(");
-        if (skip("stream", true))
+        skip(s_bclose); skip("returns"); skip(s_bopen);
+        if (skip(st, true))
             responseStream = true;
         if (!typeRefRe.test(token = next()))
             throw illegal(token);
         responseType = token;
-        skip(")");
+        skip(s_bclose);
         var method = new Method(name, type, requestType, responseType, requestStream, responseStream);
-        if (skip("{", true)) {
-            while ((token = next()) !== '}') {
+        if (skip(s_open, true)) {
+            while ((token = next()) !== s_close) {
                 var tokenLower = lower(token);
                 switch (tokenLower) {
                     case s_option:
                         parseOption(method, tokenLower);
-                        skip(";");
+                        skip(s_semi);
                         break;
                     default:
                         throw illegal(token);
                 }
             }
-            skip(";", true);
+            skip(s_semi, true);
         } else
-            skip(";");
+            skip(s_semi);
         parent.add(method);
     }
 
@@ -2778,8 +2787,8 @@ function parse(source, root, visible) {
         var reference = next();
         if (!typeRefRe.test(reference))
             throw illegal(reference, "reference");
-        if (skip("{", true)) {
-            while ((token = next()) !== '}') {
+        if (skip(s_open, true)) {
+            while ((token = next()) !== s_close) {
                 var tokenLower = lower(token);
                 switch (tokenLower) {
                     case s_required:
@@ -2795,9 +2804,9 @@ function parse(source, root, visible) {
                         break;
                 }
             }
-            skip(";", true);
+            skip(s_semi, true);
         } else
-            skip(";");
+            skip(s_semi);
     }
 
     var token;
@@ -4003,6 +4012,10 @@ var delimRe        = /[\s{}=;:\[\],'"\(\)<>]/g,
  * @property {function(string, boolean=):boolean} skip Skips a token, returns its presence and advances or, if non-optional and not present, throws
  */
 
+var s_nl = "\n",
+    s_sl = '/',
+    s_as = '*';
+
 /**
  * Tokenizes the given .proto source and returns an object with useful utility functions.
  * @param {string} source Source contents
@@ -4074,34 +4087,34 @@ function tokenize(source) {
                 return null;
             repeat = false;
             while (/\s/.test(curr = charAt(offset))) {
-                if (curr === '\n')
+                if (curr === s_nl)
                     ++line;
                 if (++offset === length)
                     return null;
             }
-            if (charAt(offset) === '/') {
+            if (charAt(offset) === s_sl) {
                 if (++offset === length)
                     throw illegal("comment");
-                if (charAt(offset) === '/') { // Line
-                    while (charAt(++offset) !== '\n')
+                if (charAt(offset) === s_sl) { // Line
+                    while (charAt(++offset) !== s_nl)
                         if (offset === length)
                             return null;
                     ++offset;
                     ++line;
                     repeat = true;
-                } else if ((curr = charAt(offset)) === '*') { /* Block */
+                } else if ((curr = charAt(offset)) === s_as) { /* Block */
                     do {
-                        if (curr === '\n')
+                        if (curr === s_nl)
                             ++line;
                         if (++offset === length)
                             return null;
                         prev = curr;
                         curr = charAt(offset);
-                    } while (prev !== '*' || curr !== '/');
+                    } while (prev !== s_as || curr !== s_sl);
                     ++offset;
                     repeat = true;
                 } else
-                    return '/';
+                    return s_sl;
             }
         } while (repeat);
 
@@ -4546,117 +4559,129 @@ TypePrototype.decodeDelimited = function decodeDelimited(readerOrBuffer) {
 };
 
 },{"11":11,"13":13,"15":15,"16":16,"18":18,"2":2,"22":22,"23":23,"3":3,"4":4,"5":5,"6":6,"7":7}],21:[function(require,module,exports){
-// NOTE: These types are structured in a way that makes looking up wire types and similar fast,
-// but not necessarily comfortable. Do not modify them unless you know exactly what you are doing.
-
 /**
  * Common type constants.
  * @namespace
  */
 var types = module.exports = {};
 
+var s = [
+    "double",   // 0
+    "float",    // 1
+    "int32",    // 2
+    "uint32",   // 3
+    "sint32",   // 4
+    "fixed32",  // 5
+    "sfixed32", // 6
+    "int64",    // 7
+    "uint64",   // 8
+    "sint64",   // 9
+    "fixed64",  // 10
+    "sfixed64", // 11
+    "bool",     // 12
+    "string",   // 13
+    "bytes"     // 14
+];
+
+function bake(values, offset) {
+    var i = 0, o = {};
+    offset |= 0;
+    while (i < values.length) o[s[i + offset]] = values[i++];
+    return o;
+}
+
 /**
  * Basic type wire types.
  * @type {Object.<string,number>}
  */
-types.wireTypes = {
-
-    double   : 1,
-    float    : 5,
-    int32    : 0,
-    uint32   : 0,
-    sint32   : 0,
-    int64    : 0,
-    uint64   : 0,
-    sint64   : 0,
-    fixed32  : 5,
-    sfixed32 : 5,
-    fixed64  : 1,
-    sfixed64 : 1,
-    bool     : 0,
-    string   : 2,
-    bytes    : 2
-    
-};
-
-/**
- * Basic long type wire types.
- * @type {Object.<string,number>}
- */
-types.longWireTypes = {
-
-    int64    : 0,
-    uint64   : 0,
-    sint64   : 0,
-    fixed64  : 1,
-    sfixed64 : 1
-
-};
+types.basic = bake([
+    /* double   */ 1,
+    /* float    */ 5,
+    /* int32    */ 0,
+    /* uint32   */ 0,
+    /* sint32   */ 0,
+    /* fixed32  */ 5,
+    /* sfixed32 */ 5,
+    /* int64    */ 0,
+    /* uint64   */ 0,
+    /* sint64   */ 0,
+    /* fixed64  */ 1,
+    /* sfixed64 */ 1,
+    /* bool     */ 0,
+    /* string   */ 2,
+    /* bytes    */ 2
+]);
 
 /**
  * Basic type defaults.
  * @type {Object.<string,*>}
  */
-types.defaults = {
+types.default = bake([
+    /* double   */ 0,
+    /* float    */ 0,
+    /* int32    */ 0,
+    /* uint32   */ 0,
+    /* sint32   */ 0,
+    /* fixed32  */ 0,
+    /* sfixed32 */ 0,
+    /* int64    */ 0,
+    /* uint64   */ 0,
+    /* sint64   */ 0,
+    /* fixed64  */ 0,
+    /* sfixed64 */ 0,
+    /* bool     */ false,
+    /* string   */ "",
+    /* bytes    */ null
+]);
 
-    double   : 0,
-    float    : 0,
-    int32    : 0,
-    uint32   : 0,
-    sint32   : 0,
-    int64    : 0,
-    uint64   : 0,
-    sint64   : 0,
-    fixed32  : 0,
-    sfixed32 : 0,
-    fixed64  : 0,
-    sfixed64 : 0,
-    bool     : false,
-    string   : "",
-    bytes    : null
-
-};
+/**
+ * Basic long type wire types.
+ * @type {Object.<string,number>}
+ */
+types.long = bake([
+    /* int64    */ 0,
+    /* uint64   */ 0,
+    /* sint64   */ 0,
+    /* fixed64  */ 1,
+    /* sfixed64 */ 1
+], 7);
 
 /**
  * Allowed types for map keys with their associated wire type.
  * @type {Object.<string,number>}
  */
-types.mapKeyWireTypes = {
-
-    int32    : 0,
-    uint32   : 0,
-    sint32   : 0,
-    int64    : 0,
-    uint64   : 0,
-    sint64   : 0,
-    fixed32  : 5,
-    sfixed32 : 5,
-    fixed64  : 1,
-    sfixed64 : 1,
-    bool     : 0,
-    string   : 2
-
-};
+types.mapKey = bake([
+    /* int32    */ 0,
+    /* uint32   */ 0,
+    /* sint32   */ 0,
+    /* fixed32  */ 5,
+    /* sfixed32 */ 5,
+    /* int64    */ 0,
+    /* uint64   */ 0,
+    /* sint64   */ 0,
+    /* fixed64  */ 1,
+    /* sfixed64 */ 1,
+    /* bool     */ 0,
+    /* string   */ 2
+], 2);
 
 /**
  * Allowed types for packed repeated fields with their associated wire type.
  * @type {Object.<string,number>}
  */
-types.packableWireTypes = {
-
-    int32    : 0,
-    uint32   : 0,
-    sint32   : 0,
-    int64    : 0,
-    uint64   : 0,
-    sint64   : 0,
-    fixed32  : 5,
-    sfixed32 : 5,
-    fixed64  : 1,
-    sfixed64 : 1,
-    bool     : 0
-
-};
+types.packed = bake([
+    /* int32    */ 0,
+    /* uint32   */ 0,
+    /* sint32   */ 0,
+    /* fixed32  */ 5,
+    /* sfixed32 */ 5,
+    /* int64    */ 0,
+    /* uint64   */ 0,
+    /* sint64   */ 0,
+    /* fixed64  */ 1,
+    /* sfixed64 */ 1,
+    /* bool     */ 0
+], 2);
 
 },{}],22:[function(require,module,exports){
 /**
@@ -5423,7 +5448,7 @@ BufferWriterPrototype.finish = function finish_buffer() {
     return buf;
 };
 
-},{"1":1,"22":22,"8":8}],"protobuf":[function(require,module,exports){
+},{"1":1,"22":22,"8":8}],"protobufjs":[function(require,module,exports){
 (function (global){
 var protobuf = global.protobuf = exports;
 
@@ -5483,7 +5508,7 @@ protobuf.util             = util;
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"10":10,"11":11,"12":12,"14":14,"15":15,"16":16,"17":17,"18":18,"19":19,"20":20,"21":21,"22":22,"23":23,"3":3,"4":4,"5":5,"6":6,"7":7,"9":9}]},{},["protobuf"])
+},{"10":10,"11":11,"12":12,"14":14,"15":15,"16":16,"17":17,"18":18,"19":19,"20":20,"21":21,"22":22,"23":23,"3":3,"4":4,"5":5,"6":6,"7":7,"9":9}]},{},["protobufjs"])
 
 
 //# sourceMappingURL=protobuf.js.map
