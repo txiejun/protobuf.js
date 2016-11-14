@@ -50,21 +50,20 @@ EncoderPrototype.encode = function encode_fallback(message, writer) { // codegen
     /* eslint-disable block-scoped-var, no-redeclare */
     if (!writer)
         writer = Writer();
-    var fieldsArray = this.fieldsArray;
-    for (var fi = 0; fi < fieldsArray.length; ++fi) {
-        var field    = fieldsArray[fi].resolve(),
+    var fields = this.fieldsArray, fi = 0;
+    while (fi < fields.length) {
+        var field    = fields[fi++].resolve(),
             type     = field.resolvedType instanceof Enum ? "uint32" : field.type,
             wireType = types.basic[type];
 
         // Map fields
         if (field.map) {
-            var keyType     = field.resolvedKeyType /* only valid is enum */ ? "uint32" : field.keyType,
-                keyWireType = types.mapKey[keyType];
+            var keyType = field.resolvedKeyType /* only valid is enum */ ? "uint32" : field.keyType;
             var value, keys;
             if ((value = message[field.name]) && (keys = Object.keys(value)).length) {
                 writer.fork();
                 for (var i = 0; i < keys.length; ++i) {
-                    writer.tag(1, keyWireType)[keyType](keys[i]);
+                    writer.tag(1, types.mapKey[keyType])[keyType](keys[i]);
                     if (wireType !== undefined)
                         writer.tag(2, wireType)[type](value[keys[i]]);
                     else
@@ -97,14 +96,13 @@ EncoderPrototype.encode = function encode_fallback(message, writer) { // codegen
 
         // Non-repeated
         } else {
-            var value    = message[field.name], 
-                required = field.required;
-            if (required || value !== undefined && value !== field.defaultValue) { // eslint-disable-line eqeqeq
+            var value = message[field.name];
+            if (field.required || value !== undefined && value !== field.defaultValue) { // eslint-disable-line eqeqeq
                 if (wireType !== undefined)
                     writer.tag(field.id, wireType)[type](value);
                 else {
                     field.resolvedType.encode(value, writer.fork());
-                    if (writer.len || required)
+                    if (writer.len || field.required)
                         writer.ldelim(field.id);
                     else
                         writer.reset();
@@ -122,19 +120,19 @@ EncoderPrototype.encode = function encode_fallback(message, writer) { // codegen
  */
 EncoderPrototype.generate = function generate() {
     /* eslint-disable no-unexpected-multiline */
-    var fieldsArray = this.type.fieldsArray;
+    var fields = this.type.fieldsArray;
     var gen = util.codegen("m", "w")
     ("w||(w=Writer())");
 
-    for (var i = 0; i < fieldsArray.length; ++i) {
-        var field = fieldsArray[i].resolve();
-        var type = field.resolvedType instanceof Enum ? "uint32" : field.type,
+    for (var i = 0; i < fields.length; ++i) {
+        var field    = fields[i].resolve(),
+            type     = field.resolvedType instanceof Enum ? "uint32" : field.type,
             wireType = types.basic[type],
-            prop = util.safeProp(field.name);
+            prop     = util.safeProp(field.name);
         
         // Map fields
         if (field.map) {
-            var keyType = field.resolvedKeyType /* only valid is enum */ ? "uint32" : field.keyType,
+            var keyType     = field.resolvedKeyType /* only valid is enum */ ? "uint32" : field.keyType,
                 keyWireType = types.mapKey[keyType];
             gen
 
@@ -143,10 +141,15 @@ EncoderPrototype.generate = function generate() {
         ("var i=0,ks=Object.keys(m%s)", prop)
         ("while(i<ks.length){")
             ("w.tag(1,%d).%s(ks[i])", keyWireType, keyType);
+
             if (wireType !== undefined) gen
+
             ("w.tag(2,%d).%s(m%s[ks[i++]])", wireType, type, prop);
+
             else gen
+            
             ("types[%d].encode(m%s[ks[i++]],w.tag(2,2).fork()).ldelim()", i, prop);
+
             gen
         ("}")
         ("w.len&&w.ldelim(%d)||w.reset()", field.id)
@@ -180,21 +183,29 @@ EncoderPrototype.generate = function generate() {
         // Non-repeated
         } else {
             if (!field.required) gen
+
     ("if(m%s!==undefined&&m%s!==%j)", prop, prop, field.defaultValue); 
+
             if (wireType !== undefined) gen
+
         ("w.tag(%d,%d).%s(m%s)", field.id, wireType, type, prop);
+
             else if (field.required) gen
+            
         ("types[%d].encode(m%s,w.tag(%d,2).fork()).ldelim()", i, prop, field.id);
+        
             else gen
+
         ("types[%d].encode(m%s,w.fork()).len&&w.ldelim(%d)||w.reset()", i, prop, field.id);
     
         }
     }
     return gen
     ("return w")
+
     .eof(this.type.fullName + "$encode", {
-        Writer: Writer,
-        types: fieldsArray.map(function(fld) { return fld.resolvedType; })
+        Writer : Writer,
+        types  : fields.map(function(fld) { return fld.resolvedType; })
     });
     /* eslint-enable no-unexpected-multiline */
 };
