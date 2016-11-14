@@ -118,7 +118,7 @@ function inherits(clazz, type, options) {
              * @name Class.verify
              * @function
              * @param {Prototype|Object} message Message or plain object to verify
-             * @returns {boolean} `true` if valid
+             * @returns {?string} `null` if valid, otherwise the reason why it is not
              */
             verify: {
                 value: function verify(message) {

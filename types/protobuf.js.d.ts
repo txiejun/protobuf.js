@@ -1,6 +1,6 @@
 /*
  * protobuf.js v6.0.0-dev TypeScript definitions
- * Generated Mon, 14 Nov 2016 00:21:26 UTC
+ * Generated Mon, 14 Nov 2016 00:43:24 UTC
  */
 declare module protobuf {
 
@@ -402,9 +402,9 @@ declare module protobuf {
        * @name Class.verify
        * @function
        * @param {Prototype|Object} message Message or plain object to verify
-       * @returns {boolean} `true` if valid
+       * @returns {?string} `null` if valid, otherwise the reason why it is not
        */
-      static verify(message: (Prototype|Object)): boolean;
+      static verify(message: (Prototype|Object)): string;
    
    }
    
@@ -1488,9 +1488,9 @@ declare module protobuf {
       /**
        * Verifies that enum values are valid and that any required fields are present.
        * @param {Prototype|Object} message Message to verify
-       * @returns {boolean} `true` if valid
+       * @returns {?string} `null` if valid, otherwise the reason why it is not
        */
-      verify(message: (Prototype|Object)): boolean;
+      verify(message: (Prototype|Object)): string;
    
    }
    
@@ -1826,9 +1826,9 @@ declare module protobuf {
       /**
        * Verifies a runtime message of this verifier's message type.
        * @param {Prototype|Object} message Runtime message or plain object to verify
-       * @returns {boolean} `true` if valid, otherwise `false`
+       * @returns {?string} `null` if valid, otherwise the reason why it is not
        */
-      verify(message: (Prototype|Object)): boolean;
+      verify(message: (Prototype|Object)): string;
    
       /**
        * Generates a verifier specific to this verifier's message type.

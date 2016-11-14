@@ -1,6 +1,6 @@
 /*!
  * protobuf.js v6.0.0-dev (c) 2016 Daniel Wirtz
- * Compiled Mon, 14 Nov 2016 00:21:18 UTC
+ * Compiled Mon, 14 Nov 2016 00:42:11 UTC
  * Licensed under the Apache License, Version 2.0
  * see: https://github.com/dcodeIO/protobuf.js for details
  */
@@ -1112,7 +1112,7 @@ function inherits(clazz, type, options) {
              * @name Class.verify
              * @function
              * @param {Prototype|Object} message Message or plain object to verify
-             * @returns {boolean} `true` if valid
+             * @returns {?string} `null` if valid, otherwise the reason why it is not
              */
             verify: {
                 value: function verify(message) {
@@ -4632,7 +4632,7 @@ TypePrototype.decodeDelimited = function decodeDelimited(readerOrBuffer) {
 /**
  * Verifies that enum values are valid and that any required fields are present.
  * @param {Prototype|Object} message Message to verify
- * @returns {boolean} `true` if valid
+ * @returns {?string} `null` if valid, otherwise the reason why it is not
  */
 TypePrototype.verify = function verify(message) {
     var verifier = new Verifier(this);
@@ -5047,23 +5047,25 @@ var VerifierPrototype = Verifier.prototype;
 /**
  * Verifies a runtime message of this verifier's message type.
  * @param {Prototype|Object} message Runtime message or plain object to verify
- * @returns {boolean} `true` if valid, otherwise `false`
+ * @returns {?string} `null` if valid, otherwise the reason why it is not
  */
 VerifierPrototype.verify = function verify_fallback(message) {
-    var fields = this.type.fieldsArray, i = 0, k = fields.length;
+    var fields = this.type.fieldsArray, i = 0, k = fields.length,
+        reason;
     while (i < k) {
         var field = fields[i++].resolve(),
             value = message[field.name];
         if (value === undefined || value === null) {
             if (field.required)
-                return false;
+                return "missing required field " + field.name + " in " + this.type.fullName;
         } else if (field.resolvedType instanceof Enum && field.resolvedType.valuesById[value] === undefined)
-            return false;
-        else if (field.resolvedType instanceof Type)
-            if (!field.resolvedType.verify(value))
-                return false;
+            return "invalid enum value " + field.name + " = " + value + " in " + this.fullName;
+        else if (field.resolvedType instanceof Type) {
+            if ((reason = field.resolvedType.verify(value)) !== null)
+                return reason;
+        }
     }
-    return true;
+    return null;
 };
 
 /**
@@ -5074,34 +5076,38 @@ VerifierPrototype.generate = function generate() {
     /* eslint-disable no-unexpected-multiline */
     var fields = this.type.fieldsArray;
     var gen = util.codegen("m");
+    var hasReasonVar = false;
+
     for (var i = 0, k = fields.length; i < k; ++i) {
         var field = fields[i].resolve(),
             prop  = util.safeProp(field.name);
         if (field.required) { gen
 
             ("if(m%s===undefined||m%s===null)", prop, prop)
-                ("return false");
+                ("return 'missing required field %s in %s'", field.name, this.type.fullName);
 
         } else if (field.resolvedType instanceof Enum) {
             var values = util.toArray(field.resolvedType.values); gen
 
             ("switch(m%s){", prop)
                 ("default:")
-                    ("return false");
+                    ("return 'invalid enum value %s = '+m%s+' in %s'", field.name, prop, this.type.fullName);
 
             for (var j = 0, l = values.length; j < l; ++j) gen
                 ("case %d:", values[j]); gen
             ("}");
 
-        } else if (field.resolvedType instanceof Type) { gen
-
-            ("if(!$t[%d].verify(m%s))", i, prop)
-                ("return false");
-
+        } else if (field.resolvedType instanceof Type) {
+            if (!hasReasonVar) { gen
+                ("var r");
+                hasReasonVar = true;
+            } gen
+            ("if((r=$t[%d].verify(m%s))!==null)", i, prop)
+                ("return r");
         }
 
     }
-    return gen("return true").eof(this.type.fullName + "$verify", {
+    return gen("return null").eof(this.type.fullName + "$verify", {
         $t: fields.map(function(fld) { return fld.resolvedType; })
     });
     /* eslint-enable no-unexpected-multiline */

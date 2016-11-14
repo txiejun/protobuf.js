@@ -400,7 +400,7 @@ TypePrototype.decodeDelimited = function decodeDelimited(readerOrBuffer) {
 /**
  * Verifies that enum values are valid and that any required fields are present.
  * @param {Prototype|Object} message Message to verify
- * @returns {boolean} `true` if valid
+ * @returns {?string} `null` if valid, otherwise the reason why it is not
  */
 TypePrototype.verify = function verify(message) {
     var verifier = new Verifier(this);
