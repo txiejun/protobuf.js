@@ -38,10 +38,11 @@ protobuf.Decoder          = require("./decoder");
 protobuf.ReflectionObject = require("./object");
 protobuf.Namespace        = require("./namespace");
 protobuf.Root             = require("./root");
+protobuf.Enum             = require("./enum");
 protobuf.Type             = require("./type");
 protobuf.Field            = require("./field");
+protobuf.OneOf            = require("./oneof");
 protobuf.MapField         = require("./mapfield");
-protobuf.Enum             = require("./enum");
 protobuf.Service          = require("./service");
 protobuf.Method           = require("./method");
 

@@ -31,7 +31,6 @@ function bundle(compress) {
         debug: true
     })
     return bundler
-    .require(basedir, { expose: "protobufjs" })
     .external("long")
     .external("buffer")
     .exclude("process")

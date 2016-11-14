@@ -1,14 +1,14 @@
 var protobuf = require("../..");
 
-module.exports = proto_source;
+module.exports = json_source;
 
 /**
- * .proto source.
- * @param {string[]} files Input files
+ * .json source.
+ * @param {string[]} files Files to load
  * @param {!Object} options Source options
  * @param {function(?Error, Root=)} callback Callback function
  */
-function proto_source(files, options, callback) {
+function json_source(files, options, callback) {
     protobuf.load(files, function(err, root) {
         callback(err, root);
     });
