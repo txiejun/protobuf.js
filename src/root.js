@@ -271,6 +271,16 @@ function importGoogleTypes(root, visible) {
 Root.importGoogleTypes = importGoogleTypes;
 
 /**
+ * Resolves the path of an imported file, relative to the importing origin.
+ * This method exists so you can override it with your own logic in case your imports are scattered over multiple directories.
+ * @function
+ * @param {string} origin The file name of the importing file
+ * @param {string} target The file name being imported
+ * @returns {string} Resolved path to `target`
+ */
+RootPrototype.resolvePath = util.resolvePath;
+
+/**
  * Loads one or multiple .proto or preprocessed .json files into this root namespace.
  * @param {string|string[]} filename Names of one or multiple files to load
  * @param {function(?Error, Root=)} [callback] Node-style callback function
@@ -301,15 +311,15 @@ RootPrototype.load = function load(filename, callback) {
                 var parsed = require("./parse")(source, self, visible);
                 if (parsed.publicImports)
                     parsed.publicImports.forEach(function(file) {
-                        fetch(util.resolvePath(origin, file), visible, false);
+                        fetch(self.resolvePath(origin, file), visible, false);
                     });
                 if (parsed.imports)
                     parsed.imports.forEach(function(file) {
-                        fetch(util.resolvePath(origin, file), false, false);
+                        fetch(self.resolvePath(origin, file), false, false);
                     });
                 if (parsed.weakImports)
                     parsed.weakImports.forEach(function(file) {
-                        fetch(util.resolvePath(origin, file), false, true);
+                        fetch(self.resolvePath(origin, file), false, true);
                     });
             }
         } catch (err) {

@@ -13,9 +13,10 @@ exports.main = function(args) {
     var argv = minimist(args.slice(2), {
         alias: {
             source: "s",
-            target: "t"
+            target: "t",
+            path  : "p"
         },
-        string: [ "source", "target" ],
+        string: [ "source", "target", "path" ],
         default: {
             source: "proto",
             target: "json"
@@ -36,10 +37,21 @@ exports.main = function(args) {
         return 1;
     }
 
-    source(files, {}, function(err, root) {
+    var root = new protobuf.Root();
+
+    root.resolvePath = function pbjsResolvePath(origin, target) {
+        // argv.path
+        // TODO: Resolve include paths here
+        return protobuf.util.resolvePath(origin, target);
+    };
+
+    var sourceOptions = {},
+        targetOptions = {};
+
+    source(root, files, sourceOptions, function(err, root) {
         if (err)
             throw err;
-        target(root, {}, function(err, output) {
+        target(root, targetOptions, function(err, output) {
             if (err)
                 throw err;
             process.stdout.write(output, "utf8");

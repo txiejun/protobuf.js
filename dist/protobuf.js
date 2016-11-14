@@ -1,6 +1,6 @@
 /*!
  * protobuf.js v6.0.0-dev (c) 2016 Daniel Wirtz
- * Compiled Mon, 14 Nov 2016 11:57:49 UTC
+ * Compiled Mon, 14 Nov 2016 14:22:39 UTC
  * Licensed under the Apache License, Version 2.0
  * see: https://github.com/dcodeIO/protobuf.js for details
  */
@@ -5827,10 +5827,11 @@ protobuf.Decoder          = require(3);
 protobuf.ReflectionObject = require(12);
 protobuf.Namespace        = require(11);
 protobuf.Root             = require(17);
+protobuf.Enum             = require(5);
 protobuf.Type             = require(20);
 protobuf.Field            = require(6);
+protobuf.OneOf            = require(13);
 protobuf.MapField         = require(9);
-protobuf.Enum             = require(5);
 protobuf.Service          = require(18);
 protobuf.Method           = require(10);
 
@@ -5844,7 +5845,7 @@ protobuf.util             = util;
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"10":10,"11":11,"12":12,"14":14,"15":15,"16":16,"17":17,"18":18,"19":19,"20":20,"21":21,"22":22,"24":24,"3":3,"4":4,"5":5,"6":6,"7":7,"9":9}]},{},[25])
+},{"10":10,"11":11,"12":12,"13":13,"14":14,"15":15,"16":16,"17":17,"18":18,"19":19,"20":20,"21":21,"22":22,"24":24,"3":3,"4":4,"5":5,"6":6,"7":7,"9":9}]},{},[25])
 
 
 //# sourceMappingURL=protobuf.js.map

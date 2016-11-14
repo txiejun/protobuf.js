@@ -22,9 +22,9 @@ var firstField = false;
 function proto_target(root, options, callback) {
     process.nextTick(function() {
         try {
+            out.push('syntax = "proto3";');
             root.resolveAll();
             root.nestedArray.forEach(build);
-            out = ['syntax = "proto3";'].concat(out);
             callback(null, out.join('\n'));
         } catch (err) {
             callback(err);
@@ -109,7 +109,7 @@ function buildField(field) {
     }
     var sb = [];
     if (field.map)
-        sb.push("map<" + field.keyType + "," + field.type + ">");
+        sb.push("map<" + field.keyType + ", " + field.type + ">");
     else if (field.repeated)
         sb.push("repeated", field.type);
     else
