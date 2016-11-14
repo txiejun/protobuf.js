@@ -2,12 +2,12 @@ var benchmark = require("benchmark"),
     suite     = new benchmark.Suite(),
     chalk     = require("chalk"),
     data      = require("./bench.json");
+var protobuf = require("../src/index");
 
-var protobuf = require("../src/index").load(require.resolve("./bench.proto"), function(err, root) {
-    if (err)
-        throw err;
+protobuf.load(require.resolve("./bench.proto")).then(function(root) {
     var Test = root.lookup("Test");
 
+    protobuf.util.codegen.verbose = true;
     var buf = Test.encode(data).finish(),
         dec = Test.decode(buf);
 

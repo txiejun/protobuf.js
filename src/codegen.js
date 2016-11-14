@@ -131,6 +131,3 @@ codegen.supported = false;
 try { codegen.supported = codegen("a","b")("return a-b").eof()(2,1) === 1; } catch (e) {} // eslint-disable-line no-empty
 
 codegen.verbose = false;
-
-codegen.vartype = "var";
-try { eval("let a=1;"); codegen.vartype = "let"; } catch (e) {} // eslint-disable-line no-empty

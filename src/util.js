@@ -91,16 +91,20 @@ util._TypeError = function(name, description) {
  * @memberof util
  * @param {function(Error, ...*)} fn Function to call
  * @param {Object} ctx Function context
+ * @param {...*} params Function arguments
  * @returns {Promise<*>} Promisified function
  */
 function asPromise(fn, ctx/*, varargs */) {
+    var args = [];
+    for (var i = 2; i < arguments.length; ++i)
+        args.push(arguments[i]);
     return new Promise(function(resolve, reject) {
-        fn.apply(ctx, Array.prototype.slice.call(arguments, 2).concat([
+        fn.apply(ctx, args.concat(
             function(err/*, varargs */) {
                 if (err) reject(err);
                 else resolve.apply(null, Array.prototype.slice.call(arguments, 1));
             }
-        ]));
+        ));
     });
 }
 

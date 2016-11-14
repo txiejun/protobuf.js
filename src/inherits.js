@@ -2,8 +2,6 @@ module.exports = inherits;
 
 var Prototype = require("./prototype"),
     Type      = require("./type"),
-    Reader    = require("./reader"),
-    Writer    = require("./writer"),
     util      = require("./util");
 
 var _TypeError = util._TypeError;

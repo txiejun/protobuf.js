@@ -1,6 +1,6 @@
 /*!
  * protobuf.js v6.0.0-dev (c) 2016 Daniel Wirtz
- * Compiled Mon, 14 Nov 2016 03:14:53 UTC
+ * Compiled Mon, 14 Nov 2016 04:02:42 UTC
  * Licensed under the Apache License, Version 2.0
  * see: https://github.com/dcodeIO/protobuf.js for details
  */
@@ -258,9 +258,6 @@ codegen.supported = false;
 try { codegen.supported = codegen("a","b")("return a-b").eof()(2,1) === 1; } catch (e) {} // eslint-disable-line no-empty
 
 codegen.verbose = false;
-
-codegen.vartype = "var";
-try { eval("let a=1;"); codegen.vartype = "let"; } catch (e) {} // eslint-disable-line no-empty
 
 },{}],3:[function(require,module,exports){
 module.exports = Decoder;
@@ -564,28 +561,29 @@ EncoderPrototype.encode = function encode_fallback(message, writer) { // codegen
 
         // Repeated fields
         } else if (field.repeated) {
-            var values = message[field.name], i = 0, k = values.length;
+            var values = message[field.name];
+            if (values && values.length) {
+                var i = 0;
 
-            // Packed repeated
-            if (field.packed && types.packed[type] !== undefined) {
-                if (k) {
+                // Packed repeated
+                if (field.packed && types.packed[type] !== undefined) {
                     writer.tag(field.id, 2).fork();
-                    while (i < k)
+                    while (i < values.length)
                         writer[type](values[i++]);
                     writer.ldelim();
+
+                // Non-packed
+                } else {
+                    while (i < values.length)
+                        field.resolvedType.encode(values[i++], writer.tag(field.id, 2).fork()).ldelim();
                 }
 
-            // Non-packed
-            } else {
-                while (i < k)
-                    field.resolvedType.encode(values[i++], writer.tag(field.id, 2).fork()).ldelim();
             }
 
         // Non-repeated
         } else {
-            var value = message[field.name],
-                strict = typeof field.defaultValue === 'object' || field.long;
-            if (field.required || strict && value !== field.defaultValue || !strict && value != field.defaultValue) { // eslint-disable-line eqeqeq
+            var value = message[field.name];
+            if (field.required || value !== undefined && value !== field.defaultValue) { // eslint-disable-line eqeqeq
                 if (wireType !== undefined)
                     writer.tag(field.id, wireType)[type](value);
                 else
@@ -636,12 +634,12 @@ EncoderPrototype.generate = function generate() {
     ("}");
 
         // Repeated fields
-        } else if (field.repeated) { gen
+        } else if (field.repeated) {
 
             // Packed repeated
             if (field.packed && types.packed[type] !== undefined) { gen
 
-    ("if(m%s.length){", prop)
+    ("if(m%s&&m%s.length){", prop, prop)
         ("w.tag(%d,2).fork()", field.id)
         ("var i=0")
         ("while(i<m%s.length)", prop)
@@ -652,16 +650,18 @@ EncoderPrototype.generate = function generate() {
             // Non-packed
             } else { gen
 
-    ("var i=0")
-    ("while(i<m%s.length)", prop)
-        ("types[%d].encode(m%s[i++],w.tag(%d,2).fork()).ldelim()", i, prop, field.id);
+    ("if(m%s&&m%s.length){", prop, prop)
+        ("var i=0")
+        ("while(i<m%s.length)", prop)
+            ("types[%d].encode(m%s[i++],w.tag(%d,2).fork()).ldelim()", i, prop, field.id)
+    ("}");
 
             }
 
         // Non-repeated
         } else {
             if (!field.required) gen
-    ("if(m%s%s%j)", prop, typeof field.defaultValue === 'object' || field.long ? "!==" : "!=", field.defaultValue); 
+    ("if(m%s!==undefined&&m%s!==%j)", prop, prop, field.defaultValue); 
             if (wireType !== undefined) gen
         ("w.tag(%d,%d).%s(m%s)", field.id, wireType, type, prop);
             else gen
@@ -1051,8 +1051,6 @@ module.exports = inherits;
 
 var Prototype = require(15),
     Type      = require(20),
-    Reader    = require(16),
-    Writer    = require(24),
     util      = require(22);
 
 var _TypeError = util._TypeError;
@@ -1241,7 +1239,7 @@ inherits.defineProperties = function defineProperties(prototype, type) {
     return prototype;
 };
 
-},{"15":15,"16":16,"20":20,"22":22,"24":24}],8:[function(require,module,exports){
+},{"15":15,"20":20,"22":22}],8:[function(require,module,exports){
 module.exports = LongBits;
 
 /**
@@ -1636,7 +1634,7 @@ MethodPrototype.resolve = function resolve() {
  */
 MethodPrototype.call = function call(message, performRequest, callback, ctx) {
     if (!callback)
-        return util.asPromise(MethodPrototype.call, this, message, performRequest, undefined, ctx);
+        return util.asPromise(call, ctx, message, performRequest);
     if (!ctx)
         ctx = this;
     var requestBuffer;
@@ -3788,14 +3786,13 @@ Root.importGoogleTypes = importGoogleTypes;
  * Loads one or multiple .proto or preprocessed .json files into this root namespace.
  * @param {string|string[]} filename Names of one or multiple files to load
  * @param {function(?Error, Root=)} [callback] Node-style callback function
- * @param {Object} [ctx] Callback context
  * @returns {Promise<Root>|undefined} A promise if `callback` has been omitted
  * @throws {TypeError} If arguments are invalid
  */
-RootPrototype.load = function load(filename, callback, ctx) {
+RootPrototype.load = function load(filename, callback) {
     var self = this;
     if (!callback)
-        return util.asPromise(RootPrototype.load, this, filename);
+        return util.asPromise(load, self, filename);
 
     // Finishes loading by calling the callback (exactly once)
     function finish(err, root) {
@@ -3803,7 +3800,7 @@ RootPrototype.load = function load(filename, callback, ctx) {
             return;
         var cb = callback;
         callback = null;
-        cb.call(ctx || self, err, root);
+        cb(err, root);
     }
 
     // Processes a single file
@@ -3827,11 +3824,12 @@ RootPrototype.load = function load(filename, callback, ctx) {
                         fetch(util.resolvePath(origin, file), false, true);
                     });
             }
-            if (!queued)
-                finish(null, self);
         } catch (err) {
             finish(err);
+            return;
         }
+        if (!queued)
+            finish(null, self);
     }
 
     // Fetches a single file
@@ -4891,16 +4889,20 @@ util._TypeError = function(name, description) {
  * @memberof util
  * @param {function(Error, ...*)} fn Function to call
  * @param {Object} ctx Function context
+ * @param {...*} params Function arguments
  * @returns {Promise<*>} Promisified function
  */
 function asPromise(fn, ctx/*, varargs */) {
+    var args = [];
+    for (var i = 2; i < arguments.length; ++i)
+        args.push(arguments[i]);
     return new Promise(function(resolve, reject) {
-        fn.apply(ctx, Array.prototype.slice.call(arguments, 2).concat([
+        fn.apply(ctx, args.concat(
             function(err/*, varargs */) {
                 if (err) reject(err);
                 else resolve.apply(null, Array.prototype.slice.call(arguments, 1));
             }
-        ]));
+        ));
     });
 }
 
@@ -5725,18 +5727,16 @@ var util = require(22);
  * @param {string|string[]} filename One or multiple files to load
  * @param {Root} [root] Root namespace, defaults to create a new one if omitted.
  * @param {function(?Error, Root=)} [callback] Callback function
- * @param {Object} [ctx] Callback context
  * @returns {Promise<Root>|Object} A promise if callback has been omitted, otherwise the protobuf namespace
  * @throws {TypeError} If arguments are invalid
  */
-function load(filename, root, callback, ctx) {
+function load(filename, root, callback) {
     if (typeof root === 'function') {
-        ctx = callback;
         callback = root;
         root = new protobuf.Root();
     } else if (!root)
         root = new protobuf.Root();
-    return root.load(filename, callback, ctx) || protobuf;
+    return root.load(filename, callback) || protobuf;
 }
 
 protobuf.load = load;

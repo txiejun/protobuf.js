@@ -138,7 +138,7 @@ MethodPrototype.resolve = function resolve() {
  */
 MethodPrototype.call = function call(message, performRequest, callback, ctx) {
     if (!callback)
-        return util.asPromise(MethodPrototype.call, this, message, performRequest, undefined, ctx);
+        return util.asPromise(call, ctx, message, performRequest);
     if (!ctx)
         ctx = this;
     var requestBuffer;

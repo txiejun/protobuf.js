@@ -273,14 +273,13 @@ Root.importGoogleTypes = importGoogleTypes;
  * Loads one or multiple .proto or preprocessed .json files into this root namespace.
  * @param {string|string[]} filename Names of one or multiple files to load
  * @param {function(?Error, Root=)} [callback] Node-style callback function
- * @param {Object} [ctx] Callback context
  * @returns {Promise<Root>|undefined} A promise if `callback` has been omitted
  * @throws {TypeError} If arguments are invalid
  */
-RootPrototype.load = function load(filename, callback, ctx) {
+RootPrototype.load = function load(filename, callback) {
     var self = this;
     if (!callback)
-        return util.asPromise(RootPrototype.load, this, filename);
+        return util.asPromise(load, self, filename);
 
     // Finishes loading by calling the callback (exactly once)
     function finish(err, root) {
@@ -288,7 +287,7 @@ RootPrototype.load = function load(filename, callback, ctx) {
             return;
         var cb = callback;
         callback = null;
-        cb.call(ctx || self, err, root);
+        cb(err, root);
     }
 
     // Processes a single file
@@ -312,11 +311,12 @@ RootPrototype.load = function load(filename, callback, ctx) {
                         fetch(util.resolvePath(origin, file), false, true);
                     });
             }
-            if (!queued)
-                finish(null, self);
         } catch (err) {
             finish(err);
+            return;
         }
+        if (!queued)
+            finish(null, self);
     }
 
     // Fetches a single file

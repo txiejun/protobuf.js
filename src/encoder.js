@@ -76,28 +76,29 @@ EncoderPrototype.encode = function encode_fallback(message, writer) { // codegen
 
         // Repeated fields
         } else if (field.repeated) {
-            var values = message[field.name], i = 0, k = values.length;
+            var values = message[field.name];
+            if (values && values.length) {
+                var i = 0;
 
-            // Packed repeated
-            if (field.packed && types.packed[type] !== undefined) {
-                if (k) {
+                // Packed repeated
+                if (field.packed && types.packed[type] !== undefined) {
                     writer.tag(field.id, 2).fork();
-                    while (i < k)
+                    while (i < values.length)
                         writer[type](values[i++]);
                     writer.ldelim();
+
+                // Non-packed
+                } else {
+                    while (i < values.length)
+                        field.resolvedType.encode(values[i++], writer.tag(field.id, 2).fork()).ldelim();
                 }
 
-            // Non-packed
-            } else {
-                while (i < k)
-                    field.resolvedType.encode(values[i++], writer.tag(field.id, 2).fork()).ldelim();
             }
 
         // Non-repeated
         } else {
-            var value = message[field.name],
-                strict = typeof field.defaultValue === 'object' || field.long;
-            if (field.required || strict && value !== field.defaultValue || !strict && value != field.defaultValue) { // eslint-disable-line eqeqeq
+            var value = message[field.name];
+            if (field.required || value !== undefined && value !== field.defaultValue) { // eslint-disable-line eqeqeq
                 if (wireType !== undefined)
                     writer.tag(field.id, wireType)[type](value);
                 else
@@ -148,12 +149,12 @@ EncoderPrototype.generate = function generate() {
     ("}");
 
         // Repeated fields
-        } else if (field.repeated) { gen
+        } else if (field.repeated) {
 
             // Packed repeated
             if (field.packed && types.packed[type] !== undefined) { gen
 
-    ("if(m%s.length){", prop)
+    ("if(m%s&&m%s.length){", prop, prop)
         ("w.tag(%d,2).fork()", field.id)
         ("var i=0")
         ("while(i<m%s.length)", prop)
@@ -164,16 +165,18 @@ EncoderPrototype.generate = function generate() {
             // Non-packed
             } else { gen
 
-    ("var i=0")
-    ("while(i<m%s.length)", prop)
-        ("types[%d].encode(m%s[i++],w.tag(%d,2).fork()).ldelim()", i, prop, field.id);
+    ("if(m%s&&m%s.length){", prop, prop)
+        ("var i=0")
+        ("while(i<m%s.length)", prop)
+            ("types[%d].encode(m%s[i++],w.tag(%d,2).fork()).ldelim()", i, prop, field.id)
+    ("}");
 
             }
 
         // Non-repeated
         } else {
             if (!field.required) gen
-    ("if(m%s%s%j)", prop, typeof field.defaultValue === 'object' || field.long ? "!==" : "!=", field.defaultValue); 
+    ("if(m%s!==undefined&&m%s!==%j)", prop, prop, field.defaultValue); 
             if (wireType !== undefined) gen
         ("w.tag(%d,%d).%s(m%s)", field.id, wireType, type, prop);
             else gen

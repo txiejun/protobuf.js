@@ -7,18 +7,16 @@ var util = require("./util");
  * @param {string|string[]} filename One or multiple files to load
  * @param {Root} [root] Root namespace, defaults to create a new one if omitted.
  * @param {function(?Error, Root=)} [callback] Callback function
- * @param {Object} [ctx] Callback context
  * @returns {Promise<Root>|Object} A promise if callback has been omitted, otherwise the protobuf namespace
  * @throws {TypeError} If arguments are invalid
  */
-function load(filename, root, callback, ctx) {
+function load(filename, root, callback) {
     if (typeof root === 'function') {
-        ctx = callback;
         callback = root;
         root = new protobuf.Root();
     } else if (!root)
         root = new protobuf.Root();
-    return root.load(filename, callback, ctx) || protobuf;
+    return root.load(filename, callback) || protobuf;
 }
 
 protobuf.load = load;

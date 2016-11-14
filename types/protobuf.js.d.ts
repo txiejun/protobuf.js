@@ -1,6 +1,6 @@
 /*
  * protobuf.js v6.0.0-dev TypeScript definitions
- * Generated Mon, 14 Nov 2016 00:43:24 UTC
+ * Generated Mon, 14 Nov 2016 04:02:47 UTC
  */
 declare module protobuf {
 
@@ -26,13 +26,27 @@ declare module protobuf {
       type: Type;
    
       /**
+       * Fields of this decoder's message type by id for lookups.
+       * @name Decoder#fieldsById
+       * @type {Object.<number,Field>}
+       * @readonly
+       */
+      fieldsById: { [k: number]: Field };
+   
+      /**
+       * With this decoder's message type registered constructor, if any registered, otherwise a generic constructor.
+       * @name Decoder#ctor
+       * @type {Prototype}
+       */
+      ctor: Prototype;
+   
+      /**
        * Decodes a message of this decoder's message type.
        * @param {Reader} reader Reader to decode from
-       * @param {Prototype} message Runtime message to populate
-       * @param {number} limit Maximum read offset
+       * @param {number} [length] Length of the message, if known beforehand
        * @returns {Prototype} Populated runtime message
        */
-      decode(reader: Reader, message: Prototype, limit: number): Prototype;
+      decode(reader: Reader, length?: number): Prototype;
    
       /**
        * Generates a decoder specific to this decoder's message type.
@@ -64,12 +78,20 @@ declare module protobuf {
       type: Type;
    
       /**
+       * Fields of this encoder's message type as an array for iteration.
+       * @name Encoder#fieldsArray
+       * @type {Field[]}
+       * @readonly
+       */
+      fieldsArray: Field[];
+   
+      /**
        * Encodes a message of this encoder's message type.
        * @param {Prototype|Object} message Runtime message or plain object to encode
-       * @param {Writer} writer Writer to encode to
+       * @param {Writer} [writer] Writer to encode to
        * @returns {Writer} writer
        */
-      encode(message: (Prototype|Object), writer: Writer): Writer;
+      encode(message: (Prototype|Object), writer?: Writer): Writer;
    
       /**
        * Generates an encoder specific to this encoder's message type.
@@ -312,11 +334,10 @@ declare module protobuf {
     * @param {string|string[]} filename One or multiple files to load
     * @param {Root} [root] Root namespace, defaults to create a new one if omitted.
     * @param {function(?Error, Root=)} [callback] Callback function
-    * @param {Object} [ctx] Callback context
     * @returns {Promise<Root>|Object} A promise if callback has been omitted, otherwise the protobuf namespace
     * @throws {TypeError} If arguments are invalid
     */
-   function load(filename: (string|string[]), root?: Root, callback?: (() => any), ctx?: Object): (Promise<Root>|Object);
+   function load(filename: (string|string[]), root?: Root, callback?: (() => any)): (Promise<Root>|Object);
    
    /**
     * Options passed to {@link inherits}, modifying its behavior.
@@ -1215,11 +1236,10 @@ declare module protobuf {
        * Loads one or multiple .proto or preprocessed .json files into this root namespace.
        * @param {string|string[]} filename Names of one or multiple files to load
        * @param {function(?Error, Root=)} [callback] Node-style callback function
-       * @param {Object} [ctx] Callback context
        * @returns {Promise<Root>|undefined} A promise if `callback` has been omitted
        * @throws {TypeError} If arguments are invalid
        */
-      load(filename: (string|string[]), callback?: (() => any), ctx?: Object): (Promise<Root>|undefined);
+      load(filename: (string|string[]), callback?: (() => any)): (Promise<Root>|undefined);
    
       /**
        * Called when any object is added to this root or its sub-namespaces.
@@ -1443,15 +1463,6 @@ declare module protobuf {
       encode(message: (Prototype|Object), writer?: Writer): Writer;
    
       /**
-       * Encodes a message of this type.
-       * This method differs from {@link Type#encode} in that it expects already type checked and known to be present arguments.
-       * @param {Prototype|Object} message Message instance or plain object
-       * @param {Writer} [writer] Writer to encode to
-       * @returns {Writer} writer
-       */
-      encode_(message: (Prototype|Object), writer?: Writer): Writer;
-   
-      /**
        * Encodes a message of this type preceeded by its byte length as a varint.
        * @param {Prototype|Object} message Message instance or plain object
        * @param {Writer} [writer] Writer to encode to
@@ -1466,17 +1477,6 @@ declare module protobuf {
        * @returns {Prototype} Decoded message
        */
       decode(readerOrBuffer: (Reader|number[]), length?: number): Prototype;
-   
-      /**
-       * Decodes a message of this type.
-       * This method differs from {@link Type#decode} in that it expects already type checked and known to be present arguments.
-       * @function
-       * @param {Reader} reader Reader to decode from
-       * @param {Prototype} message Message instance to populate
-       * @param {number} limit Maximum read offset
-       * @returns {Prototype} Populated message instance
-       */
-      decode_(reader: Reader, message: Prototype, limit: number): Prototype;
    
       /**
        * Decodes a message of this type preceeded by its byte length as a varint.
@@ -1731,9 +1731,10 @@ declare module protobuf {
        * @memberof util
        * @param {function(Error, ...*)} fn Function to call
        * @param {Object} ctx Function context
+       * @param {...*} params Function arguments
        * @returns {Promise<*>} Promisified function
        */
-      function asPromise(fn: (() => any), ctx: Object): Promise<any>;
+      function asPromise(fn: (() => any), ctx: Object, params: any): Promise<any>;
    
       /**
        * Fetches the contents of a file.
@@ -1884,10 +1885,9 @@ declare module protobuf {
            * @param {number[]} buf Buffer to write to
            * @param {number} pos Position to write at
            * @param {*} val Value to write
-           * @param {number} len Value byte length
            * @returns {undefined}
            */
-          static Fn(buf: number[], pos: number, val: any, len: number): undefined;
+          static Fn(buf: number[], pos: number, val: any): undefined;
    
           /**
            * Function to call.
