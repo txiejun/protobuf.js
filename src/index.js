@@ -1,3 +1,4 @@
+"use strict";
 var protobuf = global.protobuf = exports;
 
 var util = require("./util");

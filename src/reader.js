@@ -1,3 +1,4 @@
+"use strict";
 module.exports = Reader;
 
 Reader.BufferReader = BufferReader;

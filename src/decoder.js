@@ -1,3 +1,4 @@
+"use strict";
 module.exports = Decoder;
 
 var Enum   = require("./enum"),
@@ -78,38 +79,36 @@ DecoderPrototype.decode = function decode_fallback(reader, length) { // codegen 
                     map     = {};
                 if (length) {
                     length += reader.pos;
-                    var ks = [], values = [], ki = 0, vi = 0;
+                    var ks = [], vs = [];
                     while (reader.pos < length) {
                         if (reader.tag().id === 1)
-                            ks[ki++] = reader[keyType]();
+                            ks[ks.length] = reader[keyType]();
                         else if (types.basic[type] !== undefined)
-                            values[vi++] = reader[type]();
+                            vs[vs.length] = reader[type]();
                         else
-                            values[vi++] = field.resolvedType.decode(reader, reader.uint32());
+                            vs[vs.length] = field.resolvedType.decode(reader, reader.uint32());
                     }
-                    var key;
-                    for (ki = 0; ki < vi; ++ki)
-                        map[typeof (key = ks[ki]) === 'object' ? util.toHash(key) : key] = values[ki];
+                    for (var i = 0; i < ks.length; ++i)
+                        map[typeof ks[i] === 'object' ? util.toHash(ks[i]) : ks[i]] = vs[i];
                 }
                 message[field.name] = map;
 
             // Repeated fields
             } else if (field.repeated) {
 
-                var values   = message[field.name] || (message[field.name] = []),
-                    length   = values.length;
+                var values = message[field.name] || (message[field.name] = []);
 
                 // Packed
                 if (field.packed && types.packed[type] !== undefined && tag.wireType === 2) {
                     var plimit = reader.uint32() + reader.pos;
                     while (reader.pos < plimit)
-                        values[length++] = reader[type]();
+                        values[values.length] = reader[type]();
 
                 // Non-packed
                 } else if (types.basic[type] !== undefined)
-                    values[length++] = reader[type]();
+                    values[values.length] = reader[type]();
                 else
-                    values[length++] = field.resolvedType.decode(reader, reader.uint32());
+                    values[values.length] = field.resolvedType.decode(reader, reader.uint32());
 
             // Non-repeated
             } else if (types.basic[type] !== undefined)
@@ -155,45 +154,44 @@ DecoderPrototype.generate = function generate() {
                 ("var n=r.uint32(),o={}")
                 ("if(n){")
                     ("n+=r.pos")
-                    ("var ks=[],vs=[],ki=0,vi=0")
+                    ("var k=[],v=[]")
                     ("while(r.pos<n){")
                         ("if(r.tag().id===1)")
-                            ("ks[ki++]=r.%s()", keyType);
+                            ("k[k.length]=r.%s()", keyType);
                         if (types.basic[type] !== undefined) gen
                         ("else")
-                            ("vs[vi++]=r.%s()", type);
+                            ("v[v.length]=r.%s()", type);
                         else gen
                         ("else")
-                            ("vs[vi++]=types[%d].decode(r,r.uint32())", i, i);
+                            ("v[v.length]=types[%d].decode(r,r.uint32())", i, i);
                     gen
                     ("}")
-                    ("var k")
-                    ("for (ki=0;ki<vi;++ki)")
-                        ("o[typeof(k=ks[ki])==='object'?util.toHash(k):k]=vs[ki]")
+                    ("for(var i=0;i<k.length;++i)")
+                        ("o[typeof(k[i])==='object'?util.toHash(k[i]):k[i]]=v[i]")
                 ("}")
                 ("m%s=o", prop);
 
         } else if (field.repeated) { gen
 
-                ("var vs=m%s||(m%s=[]),n=vs.length", prop, prop);
+                ("m%s||(m%s=[])", prop, prop);
 
             if (field.packed && types.packed[type] !== undefined) { gen
 
                 ("if(t.wireType===2){")
                     ("var e=r.uint32()+r.pos")
                     ("while(r.pos<e)")
-                        ("vs[n++]=r.%s()", type)
+                        ("m%s[m%s.length]=r.%s()", prop, prop, type)
                 ("}else");
 
             }
 
             if (types.basic[type] !== undefined) gen
 
-                    ("vs[n++]=r.%s()", type);
+                    ("m%s[m%s.length]=r.%s()", prop, prop, type);
 
             else gen
 
-                    ("vs[n++]=types[%d].decode(r,r.uint32())", i, i);
+                    ("m%s[m%s.length]=types[%d].decode(r,r.uint32())", prop, prop, i, i);
 
         } else if (types.basic[type] !== undefined) { gen
 

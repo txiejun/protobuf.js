@@ -1,3 +1,4 @@
+"use strict";
 module.exports = Encoder;
 
 var Enum   = require("./enum"),
@@ -49,10 +50,8 @@ EncoderPrototype.encode = function encode_fallback(message, writer) { // codegen
     /* eslint-disable block-scoped-var, no-redeclare */
     if (!writer)
         writer = Writer();
-    var fieldsArray = this.fieldsArray,
-        fieldsCount = fieldsArray.length;
-
-    for (var fi = 0; fi < fieldsCount; ++fi) {
+    var fieldsArray = this.fieldsArray;
+    for (var fi = 0; fi < fieldsArray.length; ++fi) {
         var field    = fieldsArray[fi].resolve(),
             type     = field.resolvedType instanceof Enum ? "uint32" : field.type,
             wireType = types.basic[type];
@@ -63,46 +62,48 @@ EncoderPrototype.encode = function encode_fallback(message, writer) { // codegen
                 keyWireType = types.mapKey[keyType];
             var value, keys;
             if ((value = message[field.name]) && (keys = Object.keys(value)).length) {
-                writer.tag(field.id, 2).fork();
-                for (var i = 0, k = keys.length, key; i < k; ++i) {
-                    writer.tag(1, keyWireType)[keyType](key = keys[i]);
+                writer.fork(field.id);
+                for (var i = 0; i < keys.length; ++i) {
+                    writer.tag(1, keyWireType)[keyType](keys[i]);
                     if (wireType !== undefined)
-                        writer.tag(2, wireType)[type](value[key]);
+                        writer.tag(2, wireType)[type](value[keys[i]]);
                     else
-                        field.resolvedType.encode(value[key], writer.tag(2, 2).fork()).ldelim();
+                        field.resolvedType.encode(value[keys[i]], writer.fork(2)).ldelim(true);
                 }
-                writer.ldelim();
+                writer.ldelim(false);
             }
 
         // Repeated fields
         } else if (field.repeated) {
             var values = message[field.name];
             if (values && values.length) {
-                var i = 0;
 
                 // Packed repeated
                 if (field.packed && types.packed[type] !== undefined) {
-                    writer.tag(field.id, 2).fork();
+                    writer.fork(field.id);
+                    var i = 0;
                     while (i < values.length)
                         writer[type](values[i++]);
                     writer.ldelim();
 
                 // Non-packed
                 } else {
+                    var i = 0;
                     while (i < values.length)
-                        field.resolvedType.encode(values[i++], writer.tag(field.id, 2).fork()).ldelim();
+                        field.resolvedType.encode(values[i++], writer.fork(field.id)).ldelim(true);
                 }
 
             }
 
         // Non-repeated
         } else {
-            var value = message[field.name];
-            if (field.required || value !== undefined && value !== field.defaultValue) { // eslint-disable-line eqeqeq
+            var value    = message[field.name], 
+                required = field.required;
+            if (required || value !== undefined && value !== field.defaultValue) { // eslint-disable-line eqeqeq
                 if (wireType !== undefined)
                     writer.tag(field.id, wireType)[type](value);
                 else
-                    field.resolvedType.encode(value, writer.tag(field.id, 2).fork()).ldelim();
+                    field.resolvedType.encode(value, writer.fork(field.id)).ldelim(required);
             }
         }
     }
@@ -116,12 +117,11 @@ EncoderPrototype.encode = function encode_fallback(message, writer) { // codegen
  */
 EncoderPrototype.generate = function generate() {
     /* eslint-disable no-unexpected-multiline */
-    var fieldsArray = this.type.fieldsArray,
-        fieldsCount = fieldsArray.length;
+    var fieldsArray = this.type.fieldsArray;
     var gen = util.codegen("m", "w")
     ("w||(w=Writer())");
 
-    for (var i = 0; i < fieldsCount; ++i) {
+    for (var i = 0; i < fieldsArray.length; ++i) {
         var field = fieldsArray[i].resolve();
         var type = field.resolvedType instanceof Enum ? "uint32" : field.type,
             wireType = types.basic[type],
@@ -133,16 +133,15 @@ EncoderPrototype.generate = function generate() {
                 keyWireType = types.mapKey[keyType];
             gen
 
-    ("var ks")
-    ("if(m%s&&(ks=Object.keys(m%s)).length){", prop, prop)
-        ("w.tag(%d,2).fork()", field.id)
-        ("var i=0")
+    ("if(m%s){", prop)
+        ("w.fork(%d)", field.id)
+        ("var i=0,ks=Object.keys(m%s)", prop)
         ("while(i<ks.length){")
             ("w.tag(1,%d).%s(ks[i])", keyWireType, keyType);
             if (wireType !== undefined) gen
             ("w.tag(2,%d).%s(m%s[ks[i++]])", wireType, type, prop);
             else gen
-            ("types[%d].encode(m%s[ks[i++]],w.tag(2,2).fork()).ldelim()", i, prop);
+            ("types[%d].encode(m%s[ks[i++]],w.fork(2)).ldelim(true)", i, prop);
             gen
         ("}")
         ("w.ldelim()")
@@ -154,8 +153,8 @@ EncoderPrototype.generate = function generate() {
             // Packed repeated
             if (field.packed && types.packed[type] !== undefined) { gen
 
-    ("if(m%s&&m%s.length){", prop, prop)
-        ("w.tag(%d,2).fork()", field.id)
+    ("if(m%s){", prop)
+        ("w.fork(%d)", field.id)
         ("var i=0")
         ("while(i<m%s.length)", prop)
             ("w.%s(m%s[i++])", type, prop)
@@ -165,10 +164,10 @@ EncoderPrototype.generate = function generate() {
             // Non-packed
             } else { gen
 
-    ("if(m%s&&m%s.length){", prop, prop)
+    ("if(m%s){", prop)
         ("var i=0")
         ("while(i<m%s.length)", prop)
-            ("types[%d].encode(m%s[i++],w.tag(%d,2).fork()).ldelim()", i, prop, field.id)
+            ("types[%d].encode(m%s[i++],w.fork(%d)).ldelim(true)", i, prop, field.id)
     ("}");
 
             }
@@ -180,7 +179,7 @@ EncoderPrototype.generate = function generate() {
             if (wireType !== undefined) gen
         ("w.tag(%d,%d).%s(m%s)", field.id, wireType, type, prop);
             else gen
-        ("types[%d].encode(m%s,w.tag(%d,2).fork()).ldelim()", i, prop, field.id);
+        ("types[%d].encode(m%s,w.fork(%d)).ldelim(%j)", i, prop, field.id, field.required);
     
         }
     }

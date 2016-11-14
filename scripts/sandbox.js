@@ -23,39 +23,26 @@ function inspect(object, indent) {
             sb.push(indent + chalk.gray("oneof : ") + object.oneof);
     }
     sb.push("");
-    if (object.each) {
-        if (object.fields)
-            object.each(function(field) {
-                sb.push(inspect(field, indent + "  "));
-            }, object, object.fields);
-        if (object.oneofs)
-            object.each(function(oneof) {
-                sb.push(inspect(oneof, indent + "  "));
-            }, object, object.oneofs);
-        if (object.methods)
-            object.each(function(service) {
-                sb.push(inspect(service, indent + "  "));
-            }, object, object.methods);
-        if (object.nested)
-            object.each(function(nested) {
-                sb.push(inspect(nested, indent + "  "));
-            });
-    }
+    if (object.fieldsArray)
+        object.fieldsArray.forEach(function(field) {
+            sb.push(inspect(field, indent + "  "));
+        });
+    if (object.oneofsArray)
+        object.oneofsArray.forEach(function(oneof) {
+            sb.push(inspect(oneof, indent + "  "));
+        });
+    if (object.methodsArray)
+        object.methodsArray.forEach(function(service) {
+            sb.push(inspect(service, indent + "  "));
+        });
+    if (object.nestedArray)
+        object.nestedArray.forEach(function(nested) {
+            sb.push(inspect(nested, indent + "  "));
+        });
     return sb.join("\n");
 }
 
 var root = new Root(),
     gp = root.lookup("google.protobuf");
 
-protobuf.load(require.resolve("./simple.proto"), function(err, root) {
-    try {
-        if (err)
-            throw err;
-        var Test = root.object.Test;
-        console.log(root.object);
-        var writer = Test.encode({ a: "hi", b: { a: "le" }, c: 1 });
-        console.log(require("util").inspect(writer, { depth: 15 }));
-    } catch (err) {
-        console.log(err);
-    }
-});
+console.log(inspect(gp));

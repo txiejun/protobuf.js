@@ -1,3 +1,4 @@
+"use strict";
 module.exports = parse;
 
 var tokenize = require("./tokenize"),

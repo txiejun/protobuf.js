@@ -1,3 +1,4 @@
+"use strict";
 module.exports = Namespace;
 
 var ReflectionObject = require("./object");

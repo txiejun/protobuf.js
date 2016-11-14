@@ -1,3 +1,4 @@
+"use strict";
 module.exports = ReflectionObject;
 
 ReflectionObject.extend = extend;

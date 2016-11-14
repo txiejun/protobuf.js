@@ -1,5 +1,5 @@
+"use strict";
 /* eslint-disable default-case, callback-return */
-
 module.exports = tokenize;
 
 var delimRe        = /[\s{}=;:\[\],'"\(\)<>]/g,

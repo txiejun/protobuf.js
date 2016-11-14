@@ -1,3 +1,4 @@
+"use strict";
 module.exports = Service;
 
 var Namespace = require("./namespace");

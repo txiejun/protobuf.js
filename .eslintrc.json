@@ -9,11 +9,7 @@
         "Promise": true
     },
     "parserOptions": {
-        "ecmaVersion": 5,
-        "sourceType": "module",
-        "ecmaFeatures": {
-            "impliedStrict": true
-        }
+        "ecmaVersion": 5
     },
     "extends": "eslint:recommended",
     "rules": {

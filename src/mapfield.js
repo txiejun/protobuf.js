@@ -1,3 +1,4 @@
+"use strict";
 module.exports = MapField;
 
 var Field = require("./field");

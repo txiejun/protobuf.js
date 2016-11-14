@@ -1,3 +1,4 @@
+"use strict";
 module.exports = Verifier;
 
 var Enum = require("./enum"),

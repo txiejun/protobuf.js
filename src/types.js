@@ -1,3 +1,5 @@
+"use strict";
+
 /**
  * Common type constants.
  * @namespace

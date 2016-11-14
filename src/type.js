@@ -1,3 +1,4 @@
+"use strict";
 module.exports = Type; 
 
 var Namespace = require("./namespace");
@@ -14,7 +15,6 @@ var Enum      = require("./enum"),
     inherits  = require("./inherits"),
     util      = require("./util"),
     Reader    = require("./reader"),
-    Writer    = require("./writer"),
     Encoder   = require("./encoder"),
     Decoder   = require("./decoder"),
     Verifier  = require("./verifier"),
@@ -342,9 +342,7 @@ TypePrototype.encode = function encode(message, writer) {
  * @returns {Writer} writer
  */
 TypePrototype.encodeDelimited = function encodeDelimited(message, writer) {
-    if (!writer)
-        writer = Writer();
-    return this.encode(message, writer.fork()).ldelim();
+    return this.encode(message, writer).ldelim(true);
 };
 
 /**

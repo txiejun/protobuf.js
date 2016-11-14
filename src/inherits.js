@@ -1,3 +1,4 @@
+"use strict";
 module.exports = inherits;
 
 var Prototype = require("./prototype"),

@@ -1,3 +1,4 @@
+"use strict";
 module.exports = Writer;
 
 Writer.BufferWriter = BufferWriter;
@@ -83,6 +84,12 @@ function State(writer) {
      * @type {number}
      */
     this.len = writer.len;
+
+    /**
+     * Current remembered id.
+     * @type {number}
+     */
+    this.id = writer.id;
 }
 
 Writer.State = State;
@@ -121,9 +128,14 @@ function Writer() {
     /**
      * State stack.
      * @type {State[]}
-     * @private
      */
     this.stack = [];
+
+    /**
+     * Remembered id.
+     * @type {mumber}
+     */
+    this.id = -1;
 
     // When a value is written, the writer calculates its byte length and puts it into a linked
     // list of operations to perform when finish() is called. This both allows us to allocate
@@ -415,12 +427,14 @@ WriterPrototype.string = function write_string(value) {
  * Forks this writer's state by pushing it to a stack and reusing the remaining buffer
  * for a new set of write operations. A call to {@link Writer#reset} or {@link Writer#finish}
  * resets the writer to the previous state.
+ * @param {number} id Id to remember until {@link Writer#ldelim} is called.
  * @returns {Writer} `this`
  */
-WriterPrototype.fork = function fork() {
+WriterPrototype.fork = function fork(id) {
     this.stack.push(new State(this));
     this.head = this.tail = new Op(noop, 0, 0);
     this.len = 0;
+    this.id  = id;
     return this;
 };
 
@@ -435,26 +449,34 @@ WriterPrototype.reset = function reset() {
         this.head = state.head;
         this.tail = state.tail;
         this.len  = state.len;
+        this.id   = state.id;
     } else {
         this.head = this.tail = new Op(noop, 0, 0);
-        this.len = 0;
+        this.len  = 0;
+        this.id   = -1;
     }
     return this;
 };
 
 /**
  * Resets to the last state and appends the fork state's current write length as a varint followed by its operations.
+ * @param {boolean} required Whether the forked payload is required even when empty.
  * @returns {Writer} `this` 
  */
-WriterPrototype.ldelim = function ldelim() {
+WriterPrototype.ldelim = function ldelim(required) {
     var head = this.head,
         tail = this.tail,
-        len  = this.len;
+        len  = this.len,
+        id   = this.id;
     this.reset();
-    this.uint32(len);
-    this.tail.next = head.next; // skip noop
-    this.tail = tail;
-    this.len += len;
+    if (len || required) {
+        if (id !== -1)
+            this.tag(id, 2);
+        this.uint32(len);
+        this.tail.next = head.next; // skip noop
+        this.tail = tail;
+        this.len += len;
+    }
     return this;
 };
 

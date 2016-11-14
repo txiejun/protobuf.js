@@ -1,3 +1,4 @@
+"use strict";
 module.exports = Enum;
 
 var ReflectionObject = require("./object");

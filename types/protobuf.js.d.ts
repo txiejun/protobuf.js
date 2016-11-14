@@ -1,6 +1,6 @@
 /*
  * protobuf.js v6.0.0-dev TypeScript definitions
- * Generated Mon, 14 Nov 2016 04:02:47 UTC
+ * Generated Mon, 14 Nov 2016 06:54:08 UTC
  */
 declare module protobuf {
 
@@ -560,10 +560,9 @@ declare module protobuf {
        * @param {Prototype|Object} message Request message
        * @param {function(number[], function(?Error, (number[])=))} performRequest A function performing the request on binary level, taking a buffer and a node-style callback for the response buffer as its parameters.
        * @param {function(Error, Prototype=)} [callback] Node-style callback function
-       * @param {Object} [ctx] Callback context
        * @returns {Promise<Prototype>|undefined} A promise if `callback` has been omitted
        */
-      call(message: (Prototype|Object), performRequest: (() => any), callback?: (() => any), ctx?: Object): (Promise<Prototype>|undefined);
+      call(message: (Prototype|Object), performRequest: (() => any), callback?: (() => any)): (Promise<Prototype>|undefined);
    
    }
    
@@ -1950,6 +1949,12 @@ declare module protobuf {
            */
           len: number;
    
+          /**
+           * Current remembered id.
+           * @type {number}
+           */
+          id: number;
+   
       }
    
       /**
@@ -1973,9 +1978,14 @@ declare module protobuf {
       /**
        * State stack.
        * @type {State[]}
-       * @private
        */
-      private stack: State[];
+      stack: State[];
+   
+      /**
+       * Remembered id.
+       * @type {mumber}
+       */
+      id: mumber;
    
       /**
        * Pushes a new operation to the queue.
@@ -2107,9 +2117,10 @@ declare module protobuf {
        * Forks this writer's state by pushing it to a stack and reusing the remaining buffer
        * for a new set of write operations. A call to {@link Writer#reset} or {@link Writer#finish}
        * resets the writer to the previous state.
+       * @param {number} id Id to remember until {@link Writer#ldelim} is called.
        * @returns {Writer} `this`
        */
-      fork(): Writer;
+      fork(id: number): Writer;
    
       /**
        * Resets this instance to the last state. If there is no last state, all references
@@ -2120,9 +2131,10 @@ declare module protobuf {
    
       /**
        * Resets to the last state and appends the fork state's current write length as a varint followed by its operations.
+       * @param {boolean} required Whether the forked payload is required even when empty.
        * @returns {Writer} `this`
        */
-      ldelim(): Writer;
+      ldelim(required: boolean): Writer;
    
       /**
        * Finishes the current sequence of write operations and frees all resources.

@@ -1,3 +1,4 @@
+"use strict";
 module.exports = Method;
 
 var ReflectionObject = require("./object");
@@ -133,20 +134,17 @@ MethodPrototype.resolve = function resolve() {
  * @param {Prototype|Object} message Request message
  * @param {function(number[], function(?Error, (number[])=))} performRequest A function performing the request on binary level, taking a buffer and a node-style callback for the response buffer as its parameters.
  * @param {function(Error, Prototype=)} [callback] Node-style callback function
- * @param {Object} [ctx] Callback context
  * @returns {Promise<Prototype>|undefined} A promise if `callback` has been omitted
  */
-MethodPrototype.call = function call(message, performRequest, callback, ctx) {
+MethodPrototype.call = function call(message, performRequest, callback) {
     if (!callback)
-        return util.asPromise(call, ctx, message, performRequest);
-    if (!ctx)
-        ctx = this;
+        return util.asPromise(call, this, message, performRequest);
     var requestBuffer;
     try {
         requestBuffer = this.resolve().resolvedRequestType.encode(message);
     } catch (e1) {
         setTimeout(function() {
-            callback.call(ctx, e1);
+            callback(e1);
         });
         return undefined;
     }
@@ -154,13 +152,13 @@ MethodPrototype.call = function call(message, performRequest, callback, ctx) {
     performRequest(requestBuffer, function(err, responseBuffer) {
         if (!err) {
             try {
-                callback.call(ctx, null, self.resolvedResponseType.decode(responseBuffer));
+                callback(null, self.resolvedResponseType.decode(responseBuffer));
                 return;
             } catch (e2) {
                 err = e2;
             }
         }
-        callback.call(ctx, err);
+        callback(err);
     });
     return undefined;
 };
