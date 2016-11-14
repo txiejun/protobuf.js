@@ -378,6 +378,7 @@ function handleExtension(field) {
     if (extendedType) {
         var sisterField = new Field(field.fullName, field.id, field.type, field.rule, undefined, field.options);
         sisterField.declaringField = field;
+        sisterField.visible = false;
         field.extensionField = sisterField;
         extendedType.add(sisterField);
         return true;

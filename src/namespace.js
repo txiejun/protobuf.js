@@ -115,6 +115,23 @@ Namespace.fromJSON = function fromJSON(name, json) {
 };
 
 /**
+ * @override
+ */
+NamespacePrototype.toJSON = function toJSON() {
+    var nestedVisible = {}, found = false;
+    this.nestedArray.forEach(function(obj) {
+        var json = obj.toJSON();
+        if (json) {
+            nestedVisible[obj.name] = json;
+            found = true;
+        }
+    });
+    return found
+        ? { nested: nestedVisible }
+        : undefined;
+};
+
+/**
  * Adds nested elements to this namespace from JSON.
  * @param {Object.<string,*>} json Nested JSON
  * @returns {Namespace} `this`
@@ -270,24 +287,4 @@ NamespacePrototype.lookup = function lookup(path, parentAlreadyChecked) {
     if (this.parent === null || parentAlreadyChecked)
         return null;
     return this.parent.lookup(path);
-};
-
-/**
- * @override
- */
-NamespacePrototype.toJSON = function toJSON() {
-    if (this.visible) return this.properties;
-
-    // Otherwise expose visible members only
-    var visibleMembers = {};
-    var hasVisibleMembers = false;
-    var nested = this.nestedArray, i = 0, k = nested.length, obj;
-    while (i < k) {
-        var json = (obj = nested[i++]).toJSON();
-        if (json) {
-            visibleMembers[obj.name] = json;
-            hasVisibleMembers = true;
-        }
-    }
-    return hasVisibleMembers ? { nested: visibleMembers } : undefined;
 };

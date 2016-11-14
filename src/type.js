@@ -241,6 +241,44 @@ Type.fromJSON = function fromJSON(name, json) {
 /**
  * @override
  */
+TypePrototype.toJSON = function toJSON() {
+
+    var fieldsVisible = {}, found = false;
+    this.fieldsArray.forEach(function(obj) {
+        if (obj.declaringField)
+            return;
+        var json = obj.toJSON();
+        if (json) {
+            fieldsVisible[obj.name] = json;
+            found = true;
+        }
+    });
+    if (!found) fieldsVisible = undefined;
+
+    var oneofsVisible = {}; found = 0;
+    this.oneofsArray.forEach(function(obj) {
+        var json = obj.toJSON();
+        if (json) {
+            oneofsVisible[obj.name] = json;
+            found = true;
+        }
+    });
+    if (!found) oneofsVisible = undefined;
+    
+    var superVisible = NamespacePrototype.toJSON.call(this);
+    if (!superVisible) {
+        if (!fieldsVisible && !oneofsVisible)
+            return undefined;
+        superVisible = {};
+    }
+    superVisible.fields = fieldsVisible;
+    superVisible.oneofs = oneofsVisible;
+    return superVisible;
+};
+
+/**
+ * @override
+ */
 TypePrototype.resolveAll = function resolve() {
     var fields = this.fieldsArray, i = 0, k = fields.length;
     while (i < k)

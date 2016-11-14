@@ -52,9 +52,9 @@ function build(object) {
         buildEnum(object);
     else if (object instanceof Type)
         buildType(object);
-    else if (object instanceof Field)
+    else if (object instanceof Field) {
         buildField(object);
-    else if (object instanceof OneOf)
+    } else if (object instanceof OneOf)
         buildOneOf(object);
     else if (object instanceof Service)
         buildService(object);
@@ -101,9 +101,12 @@ function buildType(type) {
 }
 
 function buildField(field) {
-    if (field.partOf)
+    if (field.partOf || field.declaringField)
         return;
-    if (firstField) {
+    if (field.extensionField) { // TODO: Consolidate
+        push("extend " + field.extend + " {");
+        ++indent;
+    } else if (firstField) {
         push("");
         firstField = false;
     }
@@ -118,6 +121,10 @@ function buildField(field) {
     if (field.repeated && !field.packed)
         sb.push("[packed=false]");
     push(sb.join(" ") + ";");
+    if (field.extensionField) {
+        --indent;
+        push("}");
+    }
 }
 
 function buildOneOf(oneof) {

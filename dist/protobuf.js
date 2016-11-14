@@ -1,6 +1,6 @@
 /*!
  * protobuf.js v6.0.0-dev (c) 2016 Daniel Wirtz
- * Compiled Mon, 14 Nov 2016 14:22:39 UTC
+ * Compiled Mon, 14 Nov 2016 17:09:44 UTC
  * Licensed under the Apache License, Version 2.0
  * see: https://github.com/dcodeIO/protobuf.js for details
  */
@@ -1797,6 +1797,23 @@ Namespace.fromJSON = function fromJSON(name, json) {
 };
 
 /**
+ * @override
+ */
+NamespacePrototype.toJSON = function toJSON() {
+    var nestedVisible = {}, found = false;
+    this.nestedArray.forEach(function(obj) {
+        var json = obj.toJSON();
+        if (json) {
+            nestedVisible[obj.name] = json;
+            found = true;
+        }
+    });
+    return found
+        ? { nested: nestedVisible }
+        : undefined;
+};
+
+/**
  * Adds nested elements to this namespace from JSON.
  * @param {Object.<string,*>} json Nested JSON
  * @returns {Namespace} `this`
@@ -1952,26 +1969,6 @@ NamespacePrototype.lookup = function lookup(path, parentAlreadyChecked) {
     if (this.parent === null || parentAlreadyChecked)
         return null;
     return this.parent.lookup(path);
-};
-
-/**
- * @override
- */
-NamespacePrototype.toJSON = function toJSON() {
-    if (this.visible) return this.properties;
-
-    // Otherwise expose visible members only
-    var visibleMembers = {};
-    var hasVisibleMembers = false;
-    var nested = this.nestedArray, i = 0, k = nested.length, obj;
-    while (i < k) {
-        var json = (obj = nested[i++]).toJSON();
-        if (json) {
-            visibleMembers[obj.name] = json;
-            hasVisibleMembers = true;
-        }
-    }
-    return hasVisibleMembers ? { nested: visibleMembers } : undefined;
 };
 
 },{"12":12,"18":18,"20":20,"22":22,"5":5,"6":6}],12:[function(require,module,exports){
@@ -2647,11 +2644,11 @@ function parse(source, root, visible) {
                 return true;
 
             case "service":
-                parseService(ptr, token);
+                parseService(parent, token);
                 return true;
 
             case "extend":
-                parseExtension(ptr, token);
+                parseExtension(parent, token);
                 return true;
         }
         return false;
@@ -3808,6 +3805,16 @@ function importGoogleTypes(root, visible) {
 Root.importGoogleTypes = importGoogleTypes;
 
 /**
+ * Resolves the path of an imported file, relative to the importing origin.
+ * This method exists so you can override it with your own logic in case your imports are scattered over multiple directories.
+ * @function
+ * @param {string} origin The file name of the importing file
+ * @param {string} target The file name being imported
+ * @returns {string} Resolved path to `target`
+ */
+RootPrototype.resolvePath = util.resolvePath;
+
+/**
  * Loads one or multiple .proto or preprocessed .json files into this root namespace.
  * @param {string|string[]} filename Names of one or multiple files to load
  * @param {function(?Error, Root=)} [callback] Node-style callback function
@@ -3838,15 +3845,15 @@ RootPrototype.load = function load(filename, callback) {
                 var parsed = require(14)(source, self, visible);
                 if (parsed.publicImports)
                     parsed.publicImports.forEach(function(file) {
-                        fetch(util.resolvePath(origin, file), visible, false);
+                        fetch(self.resolvePath(origin, file), visible, false);
                     });
                 if (parsed.imports)
                     parsed.imports.forEach(function(file) {
-                        fetch(util.resolvePath(origin, file), false, false);
+                        fetch(self.resolvePath(origin, file), false, false);
                     });
                 if (parsed.weakImports)
                     parsed.weakImports.forEach(function(file) {
-                        fetch(util.resolvePath(origin, file), false, true);
+                        fetch(self.resolvePath(origin, file), false, true);
                     });
             }
         } catch (err) {
@@ -3905,6 +3912,7 @@ function handleExtension(field) {
     if (extendedType) {
         var sisterField = new Field(field.fullName, field.id, field.type, field.rule, undefined, field.options);
         sisterField.declaringField = field;
+        sisterField.visible = false;
         field.extensionField = sisterField;
         extendedType.add(sisterField);
         return true;
@@ -4066,6 +4074,31 @@ Service.testJSON = function testJSON(json) {
  */
 Service.fromJSON = function fromJSON(name, json) {
     return new Service(name, json.options);
+};
+
+/**
+ * @override
+ */
+ServicePrototype.toJSON = function toJSON() {
+
+    var methodsVisible = {}, found = false;
+    this.methodsArray.forEach(function(obj) {
+        var json = obj.toJSON();
+        if (json) {
+            methodsVisible[obj.name] = json;
+            found = true;
+        }
+    });
+    if (!found) methodsVisible = undefined;
+    
+    var superVisible = NamespacePrototype.toJSON.call(this);
+    if (!superVisible) {
+        if (!methodsVisible)
+            return undefined;
+        superVisible = {};
+    }
+    superVisible.methods = methodsVisible;
+    return superVisible;
 };
 
 /**
@@ -4544,6 +4577,44 @@ Type.fromJSON = function fromJSON(name, json) {
             throw Error("invalid nested object in " + type + ": " + nestedName);
         });
     return type;
+};
+
+/**
+ * @override
+ */
+TypePrototype.toJSON = function toJSON() {
+
+    var fieldsVisible = {}, found = false;
+    this.fieldsArray.forEach(function(obj) {
+        if (obj.declaringField)
+            return;
+        var json = obj.toJSON();
+        if (json) {
+            fieldsVisible[obj.name] = json;
+            found = true;
+        }
+    });
+    if (!found) fieldsVisible = undefined;
+
+    var oneofsVisible = {}; found = 0;
+    this.oneofsArray.forEach(function(obj) {
+        var json = obj.toJSON();
+        if (json) {
+            oneofsVisible[obj.name] = json;
+            found = true;
+        }
+    });
+    if (!found) oneofsVisible = undefined;
+    
+    var superVisible = NamespacePrototype.toJSON.call(this);
+    if (!superVisible) {
+        if (!fieldsVisible && !oneofsVisible)
+            return undefined;
+        superVisible = {};
+    }
+    superVisible.fields = fieldsVisible;
+    superVisible.oneofs = oneofsVisible;
+    return superVisible;
 };
 
 /**

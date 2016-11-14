@@ -4,7 +4,7 @@ var protobuf = require(".."),
     util = protobuf.util;
 
 tap.test("bench.proto and bench.json", function(test) {
-    protobuf.load(require.resolve("../scripts/bench.proto"), function(err, root) {
+    protobuf.load(require.resolve("../bench/bench.proto"), function(err, root) {
         if (err)
             return test.threw(err);
         var Test = root.lookup("Test");
@@ -12,7 +12,7 @@ tap.test("bench.proto and bench.json", function(test) {
         test.test("within browsers", function(test) {
             util.Buffer = null;
             try {
-                var data = require("../scripts/bench.json");
+                var data = require("../bench/bench.json");
                 test.equal(Test.verify(data), null, "should verify our test data");
                 var writer = Test.encode(data);
                 test.ok(writer instanceof protobuf.Writer && !(writer instanceof protobuf.BufferWriter), "should use a Writer");

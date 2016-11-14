@@ -33,7 +33,7 @@ exports.main = function(args) {
             "  -t, --target    Specifies the target format. [" + Object.keys(targets).join(', ') + "]",
             "  -o, --out       Saves to a file instead of writing to stdout.",
             "",
-            "usage: " + chalk.bold.green(path.basename(process.argv[1])) + " [options] file1.proto file2.proto ..."
+            "usage: " + chalk.bold.green(path.basename(process.argv[1])) + " [options] file1.proto file2.json ..."
         ].join("\n"));
         return 1;
     }

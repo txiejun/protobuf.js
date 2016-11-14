@@ -228,11 +228,11 @@ function parse(source, root, visible) {
                 return true;
 
             case "service":
-                parseService(ptr, token);
+                parseService(parent, token);
                 return true;
 
             case "extend":
-                parseExtension(ptr, token);
+                parseExtension(parent, token);
                 return true;
         }
         return false;

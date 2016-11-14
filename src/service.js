@@ -96,6 +96,31 @@ Service.fromJSON = function fromJSON(name, json) {
 /**
  * @override
  */
+ServicePrototype.toJSON = function toJSON() {
+
+    var methodsVisible = {}, found = false;
+    this.methodsArray.forEach(function(obj) {
+        var json = obj.toJSON();
+        if (json) {
+            methodsVisible[obj.name] = json;
+            found = true;
+        }
+    });
+    if (!found) methodsVisible = undefined;
+    
+    var superVisible = NamespacePrototype.toJSON.call(this);
+    if (!superVisible) {
+        if (!methodsVisible)
+            return undefined;
+        superVisible = {};
+    }
+    superVisible.methods = methodsVisible;
+    return superVisible;
+};
+
+/**
+ * @override
+ */
 ServicePrototype.get = function get(name) {
     return NamespacePrototype.get.call(this, name) || this.methods[name] || null;
 };
