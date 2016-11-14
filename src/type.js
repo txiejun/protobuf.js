@@ -17,6 +17,7 @@ var Enum      = require("./enum"),
     Writer    = require("./writer"),
     Encoder   = require("./encoder"),
     Decoder   = require("./decoder"),
+    Verifier  = require("./verifier"),
     codegen   = require("./codegen");
 
 /**
@@ -67,6 +68,13 @@ function Type(name, options) {
      * @private
      */
     this._fieldsArray = null;
+
+    /**
+     * Cached required fields as an array.
+     * @type {?Field[]}
+     * @private
+     */
+    this._requiredFieldsArray = null;
 
     /**
      * Cached oneofs as an array.
@@ -121,6 +129,25 @@ Object.defineProperties(TypePrototype, {
     },
 
     /**
+     * Required fields of thiss message as an array for iteration.
+     * @name Type#requiredFieldsArray
+     * @type {Field[]}
+     * @readonly
+     */
+    requiredFieldsArray: {
+        get: function() {
+            if (this._requiredFieldsArray)
+                return this._requiredFieldsArray;
+            var fields   = this.fieldsArray,
+                required = this._requiredFieldsArray = [];
+            for (var i = 0, k = fields.length; i < k; ++i)
+                if (fields[i].required)
+                    required[required.length] = fields[i];
+            return required;
+        }
+    },
+
+    /**
      * Oneofs of this message as an array for iteration.
      * @name Type#oneofsArray
      * @type {OneOf[]}
@@ -163,7 +190,7 @@ Object.defineProperties(TypePrototype, {
 });
 
 function clearCache(type) {
-    type._fieldsById = type._fieldsArray = type._oneofsArray = type._ctor = null;
+    type._fieldsById = type._fieldsArray = type._requiredFieldsArray = type._oneofsArray = type._ctor = null;
     delete type.encode_;
     delete type.decode_;
     return type;
@@ -368,4 +395,17 @@ TypePrototype.decode_ = function decode_internal(reader, message, limit) {
 TypePrototype.decodeDelimited = function decodeDelimited(readerOrBuffer) {
     var reader = readerOrBuffer instanceof Reader ? readerOrBuffer : Reader(readerOrBuffer);
     return this.decode(reader, reader.uint32());
+};
+
+/**
+ * Verifies that enum values are valid and that any required fields are present.
+ * @param {Prototype|Object} message Message to verify
+ * @returns {boolean} `true` if valid
+ */
+TypePrototype.verify = function verify(message) {
+    var verifier = new Verifier(this);
+    this.verify = codegen.supported
+        ? verifier.generate()
+        : verifier.verify.bind(verifier);
+    return this.verify(message);
 };

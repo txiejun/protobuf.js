@@ -1,6 +1,6 @@
 /*
  * protobuf.js v6.0.0-dev TypeScript definitions
- * Generated Sun, 13 Nov 2016 07:01:46 UTC
+ * Generated Mon, 14 Nov 2016 00:21:26 UTC
  */
 declare module protobuf {
 
@@ -18,6 +18,12 @@ declare module protobuf {
        * @param {Type} type Message type
        */
       constructor(type: Type);
+   
+      /**
+       * Message type.
+       * @type {Type}
+       */
+      type: Type;
    
       /**
        * Decodes a message of this decoder's message type.
@@ -50,6 +56,12 @@ declare module protobuf {
        * @param {Type} type Message type
        */
       constructor(type: Type);
+   
+      /**
+       * Message type.
+       * @type {Type}
+       */
+      type: Type;
    
       /**
        * Encodes a message of this encoder's message type.
@@ -384,6 +396,15 @@ declare module protobuf {
        * @returns {Prototype} Decoded message
        */
       static decodeDelimited(buffer: number[]): Prototype;
+   
+      /**
+       * Verifies a message of this type.
+       * @name Class.verify
+       * @function
+       * @param {Prototype|Object} message Message or plain object to verify
+       * @returns {boolean} `true` if valid
+       */
+      static verify(message: (Prototype|Object)): boolean;
    
    }
    
@@ -887,7 +908,7 @@ declare module protobuf {
     * @property {string[]|undefined} imports Imports, if any
     * @property {string[]|undefined} publicImports Public imports, if any
     * @property {string[]|undefined} weakImports Weak imports, if any
-    * @property {string|undefined} syntax Syntax if specified (either `"proto2"` or `"proto3"`)
+    * @property {string|undefined} syntax Syntax, if specified (either `"proto2"` or `"proto3"`)
     * @property {Root} root Populated root instance
     */
    interface IParserResult {
@@ -1345,6 +1366,13 @@ declare module protobuf {
       private _fieldsArray: Field[];
    
       /**
+       * Cached required fields as an array.
+       * @type {?Field[]}
+       * @private
+       */
+      private _requiredFieldsArray: Field[];
+   
+      /**
        * Cached oneofs as an array.
        * @type {?OneOf[]}
        * @private
@@ -1373,6 +1401,14 @@ declare module protobuf {
        * @readonly
        */
       fieldsArray: Field[];
+   
+      /**
+       * Required fields of thiss message as an array for iteration.
+       * @name Type#requiredFieldsArray
+       * @type {Field[]}
+       * @readonly
+       */
+      requiredFieldsArray: Field[];
    
       /**
        * Oneofs of this message as an array for iteration.
@@ -1448,6 +1484,13 @@ declare module protobuf {
        * @returns {Prototype} Decoded message
        */
       decodeDelimited(readerOrBuffer: (Reader|number[])): Prototype;
+   
+      /**
+       * Verifies that enum values are valid and that any required fields are present.
+       * @param {Prototype|Object} message Message to verify
+       * @returns {boolean} `true` if valid
+       */
+      verify(message: (Prototype|Object)): boolean;
    
    }
    
@@ -1534,7 +1577,7 @@ declare module protobuf {
        * @param {...string} params Function parameter names
        * @returns {util.CodegenAppender} Printf-like appender function
        * @property {boolean} supported Whether code generation is supported by the environment.
-       * @property {boolean} verbose When set to true, codegen will log generated code to console. Useful for debugging.
+       * @property {boolean} verbose=false When set to true, codegen will log generated code to console. Useful for debugging.
        */
       function codegen(params: string): util.CodegenAppender;
    
@@ -1760,6 +1803,42 @@ declare module protobuf {
    }
    
    /**
+    * Constructs a new verifier for the specified message type.
+    * @classdesc Runtime message verifier using code generation on top of reflection
+    * @constructor
+    * @param {Type} type Message type
+    */
+   class Verifier {
+      /**
+       * Constructs a new verifier for the specified message type.
+       * @classdesc Runtime message verifier using code generation on top of reflection
+       * @constructor
+       * @param {Type} type Message type
+       */
+      constructor(type: Type);
+   
+      /**
+       * Message type.
+       * @type {Type}
+       */
+      type: Type;
+   
+      /**
+       * Verifies a runtime message of this verifier's message type.
+       * @param {Prototype|Object} message Runtime message or plain object to verify
+       * @returns {boolean} `true` if valid, otherwise `false`
+       */
+      verify(message: (Prototype|Object)): boolean;
+   
+      /**
+       * Generates a verifier specific to this verifier's message type.
+       * @returns {function} Verifier function with an identical signature to {@link Verifier#verify}
+       */
+      generate(): (() => any);
+   
+   }
+   
+   /**
     * Constructs a new writer.
     * When called as a function, returns an appropriate writer for the current environment.
     * @classdesc Wire format writer using `Uint8Array` if available, otherwise `Array`.
@@ -1777,6 +1856,103 @@ declare module protobuf {
       constructor();
    
       /**
+       * Constructs a new writer operation.
+       * @classdesc Scheduled writer operation.
+       * @memberof Writer
+       * @constructor
+       * @param {Writer.Op.Fn} fn Function to call
+       * @param {*} val Value to write
+       * @param {number} len Value byte length
+       */
+      class Op {
+          /**
+           * Constructs a new writer operation.
+           * @classdesc Scheduled writer operation.
+           * @memberof Writer
+           * @constructor
+           * @param {Writer.Op.Fn} fn Function to call
+           * @param {*} val Value to write
+           * @param {number} len Value byte length
+           */
+          constructor(fn: Writer.Op.Fn, val: any, len: number);
+   
+          /**
+           * Operation function.
+           * @typedef Fn
+           * @memberof Writer.Op
+           * @function
+           * @param {number[]} buf Buffer to write to
+           * @param {number} pos Position to write at
+           * @param {*} val Value to write
+           * @param {number} len Value byte length
+           * @returns {undefined}
+           */
+          static Fn(buf: number[], pos: number, val: any, len: number): undefined;
+   
+          /**
+           * Function to call.
+           * @type {Writer.Op.Fn}
+           */
+          fn: Writer.Op.Fn;
+   
+          /**
+           * Value to write.
+           * @type {*}
+           */
+          val: any;
+   
+          /**
+           * Value byte length.
+           * @type {number}
+           */
+          len: number;
+   
+          /**
+           * Next operation.
+           * @type {?Writer.Op}
+           */
+          next: Writer.Op;
+   
+      }
+   
+      /**
+       * Constructs a new writer state.
+       * @classdesc Copied writer state.
+       * @memberof Writer
+       * @constructor
+       * @param {Writer} writer Writer to copy state from
+       */
+      class State {
+          /**
+           * Constructs a new writer state.
+           * @classdesc Copied writer state.
+           * @memberof Writer
+           * @constructor
+           * @param {Writer} writer Writer to copy state from
+           */
+          constructor(writer: Writer);
+   
+          /**
+           * Current head.
+           * @type {Writer.Op}
+           */
+          head: Writer.Op;
+   
+          /**
+           * Current tail.
+           * @type {Writer.Op}
+           */
+          tail: Writer.Op;
+   
+          /**
+           * Current buffer length.
+           * @type {number}
+           */
+          len: number;
+   
+      }
+   
+      /**
        * Current length.
        * @type {number}
        */
@@ -1784,34 +1960,31 @@ declare module protobuf {
    
       /**
        * Operations head.
-       * @type {Op}
-       * @private
+       * @type {Writer.Op}
        */
-      private _head: Op;
+      head: Writer.Op;
    
       /**
        * Operations tail
-       * @type {Op}
-       * @private
+       * @type {Writer.Op}
        */
-      private _tail: Op;
+      tail: Writer.Op;
    
       /**
        * State stack.
        * @type {State[]}
        * @private
        */
-      private _stack: State[];
+      private stack: State[];
    
       /**
        * Pushes a new operation to the queue.
-       * @param {function} fn Function to apply
-       * @param {number} len Value length
-       * @param {number} val Value
+       * @param {Writer.Op.Fn} fn Function to call
+       * @param {number} len Value byte length
+       * @param {number} val Value to write
        * @returns {Writer} `this`
-       * @private
        */
-      private _push(fn: (() => any), len: number, val: number): Writer;
+      push(fn: Writer.Op.Fn, len: number, val: number): Writer;
    
       /**
        * Writes a tag.

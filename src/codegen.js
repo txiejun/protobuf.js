@@ -32,18 +32,26 @@ module.exports = codegen;
  * @returns {string} Function source using tabs for indentation
  */
 
+var blockOpenRe  = /[\{\[]$/,
+    blockCloseRe = /^[\}\]]/,
+    casingRe     = /[\:]$/,
+    branchRe     = /^\s*(?:if|else if|while|for)\b|\b(?:else)\s*$/,
+    breakRe      = /\b(?:break|continue);?$|^\s*return\b/;
+
 /**
  * Programmatically generates a function.
  * @memberof util
  * @param {...string} params Function parameter names
  * @returns {util.CodegenAppender} Printf-like appender function
  * @property {boolean} supported Whether code generation is supported by the environment.
- * @property {boolean} verbose When set to true, codegen will log generated code to console. Useful for debugging.
+ * @property {boolean} verbose=false When set to true, codegen will log generated code to console. Useful for debugging.
  */
 function codegen(/* varargs */) {
     var args   = Array.prototype.slice.call(arguments),
-        src    = ['\t"use strict";'],
-        indent = 1;
+        src    = ['\t"use strict";'];
+
+    var indent = 1,
+        inCase = false;
 
     // util.CodegenAppender
     function gen(format/*, varargs */) {
@@ -58,15 +66,30 @@ function codegen(/* varargs */) {
         var level = indent;
         if (src.length) {
             var prev = src[src.length - 1];
-            if (/[\{\[\:]$/.test(prev)) // block open before (increment and keep)
-                level = ++indent;
-            else if (/^\s*(?:if|else if|while|for)\b|\b(?:else)\s*$/.test(prev)) // branch without block before (increment once)
-                ++level;
-            else if (/\b(?:break|continue);?$/.test(prev)) // control flow before (decrement and keep)
-                level = --indent;
+
+            // block open or one time branches
+            if (blockOpenRe.test(prev))
+                level = ++indent; // keep
+            else if (branchRe.test(prev))
+                ++level; // once
             
-            if (/^[\}\]]/.test(line)) // block close on line (decrement and keep)
+            // casing
+            if (casingRe.test(prev) && !casingRe.test(line)) {
+                level = ++indent;
+                inCase = true;
+            } else if (inCase && breakRe.test(prev)) {
                 level = --indent;
+                inCase = false;
+            }
+
+            // block close
+            if (blockCloseRe.test(line)) {
+                level = --indent;
+                if (inCase) {
+                    level = --indent;
+                    inCase = false;
+                }
+            }
         }
         for (index = 0; index < level; ++index)
             line = "\t" + line;

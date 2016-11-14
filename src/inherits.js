@@ -111,6 +111,19 @@ function inherits(clazz, type, options) {
                     var reader = Reader(buffer);
                     return this.$type.decode_(reader, new this(), reader.uint32() + reader.pos);
                 }
+            },
+
+            /**
+             * Verifies a message of this type.
+             * @name Class.verify
+             * @function
+             * @param {Prototype|Object} message Message or plain object to verify
+             * @returns {boolean} `true` if valid
+             */
+            verify: {
+                value: function verify(message) {
+                    return this.$type.verify(message);
+                }
             }
 
         }, true);

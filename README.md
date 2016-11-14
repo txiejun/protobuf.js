@@ -180,6 +180,9 @@ The library exports a flat `protobuf` namespace with the following members, orde
 * **Decoder** [[source](https://github.com/dcodeIO/protobuf.js/blob/master/src/decoder.js)]<br />
   Wire format decoder using code generation on top of reflection.
 
+* **Verifier** [[source](https://github.com/dcodeIO/protobuf.js/blob/master/src/verifier.js)]<br />
+  Runtime message verifier using code generation on top of reflection.
+
 ### Reflection
 
 * **ReflectionObject** [[source](https://github.com/dcodeIO/protobuf.js/blob/master/src/object.js)]<br />

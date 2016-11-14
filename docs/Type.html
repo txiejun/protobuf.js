@@ -63,7 +63,7 @@
             
                 <li data-name="types.basic"><a href="types.html#.basic">basic</a></li>
             
-                <li data-name="types.default"><a href="types.html#.default">default</a></li>
+                <li data-name="types.defaults"><a href="types.html#.defaults">defaults</a></li>
             
                 <li data-name="types.long"><a href="types.html#.long">long</a></li>
             
@@ -95,10 +95,6 @@
             <span class="subtitle">Members</span>
             
                 <li data-name="util.Buffer"><a href="util.html#.Buffer">Buffer</a></li>
-            
-                <li data-name="util.codegen.supported"><a href="util.html#.codegen.supported">codegen.supported</a></li>
-            
-                <li data-name="util.codegen.verbose"><a href="util.html#.codegen.verbose">codegen.verbose</a></li>
             
                 <li data-name="util.Long"><a href="util.html#.Long">Long</a></li>
             
@@ -230,7 +226,11 @@
             
             <span class="subtitle">Members</span>
             
+                <li data-name="BufferWriter#head"><a href="BufferWriter.html#head">head</a></li>
+            
                 <li data-name="BufferWriter#len"><a href="BufferWriter.html#len">len</a></li>
+            
+                <li data-name="BufferWriter#tail"><a href="BufferWriter.html#tail">tail</a></li>
             
             </ul>
             <ul class="typedefs itemMembers">
@@ -261,6 +261,8 @@
                 <li data-name="BufferWriter#int64"><a href="BufferWriter.html#int64">int64</a></li>
             
                 <li data-name="BufferWriter#ldelim"><a href="BufferWriter.html#ldelim">ldelim</a></li>
+            
+                <li data-name="BufferWriter#push"><a href="BufferWriter.html#push">push</a></li>
             
                 <li data-name="BufferWriter#reset"><a href="BufferWriter.html#reset">reset</a></li>
             
@@ -315,6 +317,8 @@
             
                 <li data-name="Class.encodeDelimited"><a href="Class.html#.encodeDelimited">encodeDelimited</a></li>
             
+                <li data-name="Class.verify"><a href="Class.html#.verify">verify</a></li>
+            
                 <li data-name="Class#asJSON"><a href="Class.html#asJSON">asJSON</a></li>
             
             </ul>
@@ -329,6 +333,10 @@
                 
             </span>
             <ul class="members itemMembers">
+            
+            <span class="subtitle">Members</span>
+            
+                <li data-name="Decoder#type"><a href="Decoder.html#type">type</a></li>
             
             </ul>
             <ul class="typedefs itemMembers">
@@ -354,6 +362,10 @@
                 
             </span>
             <ul class="members itemMembers">
+            
+            <span class="subtitle">Members</span>
+            
+                <li data-name="Encoder#type"><a href="Encoder.html#type">type</a></li>
             
             </ul>
             <ul class="typedefs itemMembers">
@@ -1259,6 +1271,8 @@
             
                 <li data-name="Type#properties"><a href="Type.html#properties">properties</a></li>
             
+                <li data-name="Type#requiredFieldsArray"><a href="Type.html#requiredFieldsArray">requiredFieldsArray</a></li>
+            
                 <li data-name="Type#reserved"><a href="Type.html#reserved">reserved</a></li>
             
                 <li data-name="Type#resolved"><a href="Type.html#resolved">resolved</a></li>
@@ -1323,6 +1337,8 @@
             
                 <li data-name="Type#toString"><a href="Type.html#toString">toString</a></li>
             
+                <li data-name="Type#verify"><a href="Type.html#verify">verify</a></li>
+            
                 <li data-name="Type#visibility"><a href="Type.html#visibility">visibility</a></li>
             
             </ul>
@@ -1376,6 +1392,35 @@
             </ul>
         </li>
     
+        <li class="item" data-name="Verifier">
+            <span class="title">
+                <a href="Verifier.html">Verifier</a>
+                
+            </span>
+            <ul class="members itemMembers">
+            
+            <span class="subtitle">Members</span>
+            
+                <li data-name="Verifier#type"><a href="Verifier.html#type">type</a></li>
+            
+            </ul>
+            <ul class="typedefs itemMembers">
+            
+            </ul>
+            <ul class="methods itemMembers">
+            
+            <span class="subtitle">Methods</span>
+            
+                <li data-name="Verifier#generate"><a href="Verifier.html#generate">generate</a></li>
+            
+                <li data-name="Verifier#verify"><a href="Verifier.html#verify">verify</a></li>
+            
+            </ul>
+            <ul class="events itemMembers">
+            
+            </ul>
+        </li>
+    
         <li class="item" data-name="Writer">
             <span class="title">
                 <a href="Writer.html">Writer</a>
@@ -1385,7 +1430,11 @@
             
             <span class="subtitle">Members</span>
             
+                <li data-name="Writer#head"><a href="Writer.html#head">head</a></li>
+            
                 <li data-name="Writer#len"><a href="Writer.html#len">len</a></li>
+            
+                <li data-name="Writer#tail"><a href="Writer.html#tail">tail</a></li>
             
             </ul>
             <ul class="typedefs itemMembers">
@@ -1417,6 +1466,8 @@
             
                 <li data-name="Writer#ldelim"><a href="Writer.html#ldelim">ldelim</a></li>
             
+                <li data-name="Writer#push"><a href="Writer.html#push">push</a></li>
+            
                 <li data-name="Writer#reset"><a href="Writer.html#reset">reset</a></li>
             
                 <li data-name="Writer#sfixed32"><a href="Writer.html#sfixed32">sfixed32</a></li>
@@ -1434,6 +1485,66 @@
                 <li data-name="Writer#uint32"><a href="Writer.html#uint32">uint32</a></li>
             
                 <li data-name="Writer#uint64"><a href="Writer.html#uint64">uint64</a></li>
+            
+            </ul>
+            <ul class="events itemMembers">
+            
+            </ul>
+        </li>
+    
+        <li class="item" data-name="Writer.Op">
+            <span class="title">
+                <a href="Writer.Op.html">Writer.Op</a>
+                
+            </span>
+            <ul class="members itemMembers">
+            
+            <span class="subtitle">Members</span>
+            
+                <li data-name="Writer.Op#fn"><a href="Writer.Op.html#fn">fn</a></li>
+            
+                <li data-name="Writer.Op#len"><a href="Writer.Op.html#len">len</a></li>
+            
+                <li data-name="Writer.Op#next"><a href="Writer.Op.html#next">next</a></li>
+            
+                <li data-name="Writer.Op#val"><a href="Writer.Op.html#val">val</a></li>
+            
+            </ul>
+            <ul class="typedefs itemMembers">
+            
+            </ul>
+            <ul class="methods itemMembers">
+            
+            <span class="subtitle">Methods</span>
+            
+                <li data-name="Writer.Op.Fn"><a href="Writer.Op.html#.Fn">Fn</a></li>
+            
+            </ul>
+            <ul class="events itemMembers">
+            
+            </ul>
+        </li>
+    
+        <li class="item" data-name="Writer.State">
+            <span class="title">
+                <a href="Writer.State.html">Writer.State</a>
+                
+            </span>
+            <ul class="members itemMembers">
+            
+            <span class="subtitle">Members</span>
+            
+                <li data-name="Writer.State#head"><a href="Writer.State.html#head">head</a></li>
+            
+                <li data-name="Writer.State#len"><a href="Writer.State.html#len">len</a></li>
+            
+                <li data-name="Writer.State#tail"><a href="Writer.State.html#tail">tail</a></li>
+            
+            </ul>
+            <ul class="typedefs itemMembers">
+            
+            </ul>
+            <ul class="methods itemMembers">
             
             </ul>
             <ul class="events itemMembers">
@@ -1475,7 +1586,7 @@
     
         
         <div class="tag-source">
-            <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/type.js">type.js</a>, <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/type.js#L30">line 30</a>
+            <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/type.js">type.js</a>, <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/type.js#L31">line 31</a>
         </div>
         
     </div>
@@ -2361,6 +2472,51 @@
             
 <dt>
     <div class="nameContainer">
+        <h4 class="name" id="requiredFieldsArray">requiredFieldsArray <span class="type-signature ">readonly</span><span class="type-signature type">{ <a href="Field.html">Field</a>[] }</span></h4>
+    </div>
+    
+    
+</dt>
+<dd>
+    
+    <div class="description">
+        <p>Required fields of thiss message as an array for iteration.</p>
+    </div>
+    
+    
+    
+<dl class="details">
+    
+        
+    
+    
+    
+
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+</dl>
+
+    
+    
+</dd>
+
+        
+            
+<dt>
+    <div class="nameContainer">
         <h4 class="name" id="reserved">reserved <span class="type-signature type">{ number[][] }</span></h4>
     </div>
     
@@ -2554,7 +2710,7 @@
     
         
         <div class="tag-source">
-            <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/type.js">type.js</a>, <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/type.js#L189">line 189</a>
+            <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/type.js">type.js</a>, <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/type.js#L216">line 216</a>
         </div>
         
     </div>
@@ -2722,7 +2878,7 @@
     
         
         <div class="tag-source">
-            <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/type.js">type.js</a>, <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/type.js#L177">line 177</a>
+            <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/type.js">type.js</a>, <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/type.js#L204">line 204</a>
         </div>
         
     </div>
@@ -2869,7 +3025,7 @@
     
         
         <div class="tag-source">
-            <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/namespace.js">namespace.js</a>, <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/namespace.js#L151">line 151</a>
+            <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/namespace.js">namespace.js</a>, <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/namespace.js#L153">line 153</a>
         </div>
         
     </div>
@@ -3161,7 +3317,7 @@
     
         
         <div class="tag-source">
-            <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/type.js">type.js</a>, <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/type.js#L283">line 283</a>
+            <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/type.js">type.js</a>, <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/type.js#L310">line 310</a>
         </div>
         
     </div>
@@ -3345,7 +3501,7 @@
     
         
         <div class="tag-source">
-            <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/type.js">type.js</a>, <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/type.js#L340">line 340</a>
+            <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/type.js">type.js</a>, <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/type.js#L367">line 367</a>
         </div>
         
     </div>
@@ -3528,7 +3684,7 @@
     
         
         <div class="tag-source">
-            <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/type.js">type.js</a>, <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/type.js#L355">line 355</a>
+            <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/type.js">type.js</a>, <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/type.js#L382">line 382</a>
         </div>
         
     </div>
@@ -3719,7 +3875,7 @@
     
         
         <div class="tag-source">
-            <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/type.js">type.js</a>, <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/type.js#L368">line 368</a>
+            <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/type.js">type.js</a>, <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/type.js#L395">line 395</a>
         </div>
         
     </div>
@@ -3869,7 +4025,7 @@
     
         
         <div class="tag-source">
-            <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/namespace.js">namespace.js</a>, <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/namespace.js#L200">line 200</a>
+            <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/namespace.js">namespace.js</a>, <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/namespace.js#L202">line 202</a>
         </div>
         
     </div>
@@ -4100,7 +4256,7 @@
     
         
         <div class="tag-source">
-            <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/type.js">type.js</a>, <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/type.js#L303">line 303</a>
+            <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/type.js">type.js</a>, <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/type.js#L330">line 330</a>
         </div>
         
     </div>
@@ -4283,7 +4439,7 @@
     
         
         <div class="tag-source">
-            <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/type.js">type.js</a>, <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/type.js#L314">line 314</a>
+            <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/type.js">type.js</a>, <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/type.js#L341">line 341</a>
         </div>
         
     </div>
@@ -4466,7 +4622,7 @@
     
         
         <div class="tag-source">
-            <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/type.js">type.js</a>, <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/type.js#L328">line 328</a>
+            <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/type.js">type.js</a>, <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/type.js#L355">line 355</a>
         </div>
         
     </div>
@@ -4945,7 +5101,7 @@
     
         
         <div class="tag-source">
-            <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/namespace.js">namespace.js</a>, <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/namespace.js#L251">line 251</a>
+            <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/namespace.js">namespace.js</a>, <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/namespace.js#L253">line 253</a>
         </div>
         
     </div>
@@ -5424,7 +5580,7 @@
     
         
         <div class="tag-source">
-            <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/namespace.js">namespace.js</a>, <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/namespace.js#L181">line 181</a>
+            <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/namespace.js">namespace.js</a>, <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/namespace.js#L183">line 183</a>
         </div>
         
     </div>
@@ -5673,7 +5829,7 @@
     
         
         <div class="tag-source">
-            <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/namespace.js">namespace.js</a>, <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/namespace.js#L238">line 238</a>
+            <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/namespace.js">namespace.js</a>, <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/namespace.js#L240">line 240</a>
         </div>
         
     </div>
@@ -6319,7 +6475,155 @@
                         
                     
             </td>
-            <td class="description last">Constructor name plus full name</td>
+            <td class="description last">Constructor name, space, full name</td>
+        </tr>
+    
+    </tbody>
+</table>
+
+    
+    
+    
+</dd>
+
+        
+            
+<dt>
+    <div class="nameContainer">
+        <h4 class="name" id="verify">
+            
+            verify<span class="signature">(message)</span><span class="glyphicon glyphicon-circle-arrow-right"></span><span class="type-signature returnType">{ boolean }</span>
+        </h4>
+    
+        
+        <div class="tag-source">
+            <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/type.js">type.js</a>, <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/type.js#L405">line 405</a>
+        </div>
+        
+    </div>
+
+    
+</dt>
+<dd>
+    
+    
+    <div class="description">
+        <p>Verifies that enum values are valid and that any required fields are present.</p>
+    </div>
+    
+
+    
+    
+    
+    
+    
+        
+
+<table class="params">
+    <thead>
+	<tr>
+		
+		<th>Name</th>
+		
+		
+		<th>Type</th>
+		
+		
+		
+		<th class="last">Description</th>
+	</tr>
+	</thead>
+	
+	<tbody>
+	
+	
+        <tr>
+            
+                <td class="name"><code>message</code></td>
+            
+            
+            <td class="type">
+            
+                
+<span class="param-type"><a href="Prototype.html">Prototype</a></span>
+|
+
+<span class="param-type">Object</span>
+
+
+            
+            </td>
+            
+            
+            
+            <td class="description last">
+                
+                <p>Message to verify</p></td>
+        </tr>
+	
+	
+	</tbody>
+</table>
+    
+    
+    
+<dl class="details">
+    
+        
+    
+    
+    
+
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+</dl>
+
+    
+    
+
+    
+
+    
+    
+    
+    
+    
+    <h5>Returns:</h5>
+    
+
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Type</th>
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+    <tbody>
+    
+        <tr>
+            
+            <td class="type">
+            
+                        boolean
+                        
+                    
+            </td>
+            <td class="description last"><code>true</code> if valid</td>
         </tr>
     
     </tbody>

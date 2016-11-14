@@ -1,128 +1,93 @@
-var path     = require("path"),
-    protobuf = require(__dirname + "/../src/index"),
-    JSONPoly = require("./lib/jsonpoly"),
-    data     = require("./bench.json");
+var benchmark = require("benchmark"),
+    suite     = new benchmark.Suite(),
+    chalk     = require("chalk"),
+    data      = require("./bench.json");
 
-var times = process.argv.length > 2 ? parseInt(process.argv[2], 10) : 500000;
-
-protobuf.load(require.resolve("./bench.proto"), function(err, root) {
+var protobuf = require("../src/index").load(require.resolve("./bench.proto"), function(err, root) {
     if (err)
         throw err;
+    var Test = root.lookup("Test");
 
-    try {
-        // Set up our test message and print the generated code
-        var Test = root.lookup("Test");
-        protobuf.util.codegen.verbose = true;
-        Test.decode(Test.encode(data).finish());
-        protobuf.util.codegen.verbose = false;
+    var buf = Test.encode(data).finish(),
+        dec = Test.decode(buf);
 
-        console.log("usage: " + path.basename(process.argv[1]) + " [iterations="+times+"] [protobufOnly]\n");
-        console.log("encoding/decoding " + times + " iterations ...\n");
-        
-        function summarize(name, start, length, extra) {
-            var time = Date.now() - start;
-            var sb = [ pad(name, 36, 1), " : ", pad(time + "ms", 10) ];
-            if (length !== undefined)
-                sb.push("   ", pad(length + " bytes", 15));
-            if (extra !== undefined)
-                sb.push("   ", extra);
-            console.log(sb.join(''));
-        }
+    var str = JSON.stringify(data),
+        strbuf = Buffer.from(str, "utf8");
 
-        function bench_protobuf() {
-            var start = Date.now(),
-                len = 0;
-            for (var i = 0; i < times; ++i) {
-                var buf = Test.encode(data).finish();
-                len += buf.length;
-            }
-            summarize("[encode] protobuf.js to buffer", start, len);
-            start = Date.now();
-            len = 0;
-            for (var i = 0; i < times; ++i) {
-                var msg = Test.decode(buf);
-                len += buf.length;
-            }
-            summarize("[decode] protobuf.js from buffer", start, len);
-            console.log();
-        }
+    newSuite("encoding")
+    .add("Type.encode to buffer", function() {
+        Test.encode(data).finish();
+    })
+    .add("JSON.stringify to string", function() {
+        JSON.stringify(data);
+    })
+    .add("JSON.stringify to buffer", function() {
+        new Buffer(JSON.stringify(data), "utf8");
+    })
+    .run();
 
-        function bench_protobuf_rw() {
-            var start = Date.now(),
-                len = 0,
-                buf;
-            var writer = protobuf.Writer();
-            for (var i = 0; i < times; ++i) {
-                buf = Test.encode_(data, writer).finish();
-                len += buf.length;
-            }
-            summarize("[encode] protobuf.js reusing writer", start, len, "why is this slower?");
-            start = Date.now();
-            len = 0;
-            var reader = protobuf.Reader(buf);
-            for (var i = 0; i < times; ++i) {
-                var msg = Test.decode_(reader.reset(buf), new Test.ctor(), buf.length);
-                len += buf.length;
-            }
-            summarize("[decode] protobuf.js reusing reader", start, len);
-            console.log();
-        }
+    newSuite("decoding")
+    .add("Type.decode from buffer", function() {
+        Test.decode(buf);
+    })
+    .add("JSON.parse from string", function() {
+        JSON.parse(str);
+    })
+    .add("JSON.parse from buffer", function() {
+        JSON.parse(strbuf.toString("utf8"));
+    })
+    .run();
 
-        function bench_json(name, JSON) {
-            var start = Date.now(),
-                len = 0;
-            for (var i = 0; i < times; ++i) {
-                var buf = Buffer.from(JSON.stringify(data), "utf8");
-                len += buf.length;
-            }
-            summarize("[encode] JSON " + name + " to buffer", start, len);
-            start = Date.now();
-            len = 0;
-            for (var i = 0; i < times; ++i) {
-                var msg = JSON.parse(buf.toString("utf8"));
-                len += buf.length;
-            }
-            summarize("[decode] JSON " + name + " from buffer", start, len);
-            console.log();
-        }
-
-        function bench_json_nb(name, JSON) {
-            var start = Date.now(),
-                str;
-            for (var i = 0; i < times; ++i) {
-                str = JSON.stringify(data);
-            }
-            summarize("[encode] JSON " + name + " to string", start);
-            start = Date.now();
-            for (var i = 0; i < times; ++i) {
-                JSON.parse(str);
-            }
-            summarize("[decode] JSON " + name + " from string", start);
-            console.log();
-        }
-
-        bench_protobuf();
-        bench_protobuf_rw();
-        if (process.argv.length < 4) {
-            bench_json("native", JSON);
-            bench_json_nb("native", JSON);
-            // bench_json("polyfill", JSONPoly);
-        }
-
-        console.log("--- warmed up ---\n");
-        bench_protobuf();
-        bench_protobuf_rw();
-        if (process.argv.length < 4) {
-            bench_json("native", JSON);
-            bench_json_nb("native", JSON);
-            // bench_json("polyfill", JSONPoly);
-        }
-
-    } catch (e) {
-        console.error(e);
-    }        
+    newSuite("combined")
+    .add("Type to/from buffer", function() {
+        Test.decode(Test.encode(data));
+    })
+    .add("JSON to/from string", function() {
+        JSON.parse(JSON.stringify(data));
+    })
+    .add("JSON to/from buffer", function() {
+        JSON.parse(new Buffer(JSON.stringify(data)).toString("utf8"), "utf8");
+    })
+    .run();
 
 });
+
+var padSize = 27;
+
+function newSuite(name) {
+    var benches = [];
+    return new benchmark.Suite(name)
+    .on("add", function(event) {
+        benches.push(event.target);
+    })
+    .on("start", function() {
+        console.log("benchmarking " + name + " performance ...\n");
+    })
+    .on("error", function(err) {
+        console.log("ERROR:", err);
+    })
+    .on("cycle", function(event) {
+        console.log(String(event.target));
+    })
+    .on("complete", function(event) {
+        var fastest = this.filter('fastest'),
+            slowest = this.filter('slowest');
+        var fastestHz = getHz(fastest[0]);
+        console.log("\n" + chalk.white.bold(pad(fastest.map('name')+'', padSize)) + " was " + chalk.green("fastest"));
+        benches.forEach(function(bench) {
+            if (fastest.indexOf(bench) > -1)
+                return;
+            var hz = hz = getHz(bench);
+            var percent = (1 - (hz / fastestHz)) * 100;
+            console.log(chalk.white.bold(pad(bench.name, padSize)) + " was " + chalk.red(percent.toFixed(1)+'% slower'));
+        });
+        console.log();
+    });
+}
+
+function getHz(bench) {
+    return 1 / (bench.stats.mean + bench.stats.moe);
+}
 
 function pad(str, len, l) {
     while (str.length < len)

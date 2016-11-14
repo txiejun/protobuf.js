@@ -11,6 +11,11 @@ var Enum    = require("./enum"),
  * @param {Type} type Message type
  */
 function Encoder(type) {
+
+    /**
+     * Message type.
+     * @type {Type}
+     */
     this.type = type;
 }
 
@@ -23,7 +28,7 @@ var EncoderPrototype = Encoder.prototype;
  * @param {Writer} writer Writer to encode to
  * @returns {Writer} writer
  */
-EncoderPrototype.encode = function encode(message, writer) { // codegen reference and fallback
+EncoderPrototype.encode = function encode_fallback(message, writer) { // codegen reference and fallback
     /* eslint-disable block-scoped-var, no-redeclare */
     var fieldsArray = this.type.fieldsArray,
         fieldsCount = fieldsArray.length;

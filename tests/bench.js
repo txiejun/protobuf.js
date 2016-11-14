@@ -3,6 +3,8 @@ var tap = require("tap");
 var protobuf = require(".."),
     util = protobuf.util;
 
+util.codegen.verbose = true;
+
 tap.test("bench.proto and bench.json", function(test) {
     protobuf.load(require.resolve("../scripts/bench.proto"), function(err, root) {
         if (err)
@@ -13,6 +15,7 @@ tap.test("bench.proto and bench.json", function(test) {
             util.Buffer = null;
             try {
                 var data = require("../scripts/bench.json");
+                test.ok(Test.verify(data), "should verify our test data");
                 var writer = Test.encode(data);
                 test.ok(writer instanceof protobuf.Writer && !(writer instanceof protobuf.BufferWriter), "should use a Writer");
 

@@ -41,7 +41,7 @@ var s_open     = "{",
  * @property {string[]|undefined} imports Imports, if any
  * @property {string[]|undefined} publicImports Public imports, if any
  * @property {string[]|undefined} weakImports Weak imports, if any
- * @property {string|undefined} syntax Syntax if specified (either `"proto2"` or `"proto3"`)
+ * @property {string|undefined} syntax Syntax, if specified (either `"proto2"` or `"proto3"`)
  * @property {Root} root Populated root instance
  */
 

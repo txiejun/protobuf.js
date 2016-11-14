@@ -11,6 +11,11 @@ var Enum    = require("./enum"),
  * @param {Type} type Message type
  */
 function Decoder(type) {
+
+    /**
+     * Message type.
+     * @type {Type}
+     */
     this.type = type;
 }
 
@@ -24,7 +29,7 @@ var DecoderPrototype = Decoder.prototype;
  * @param {number} limit Maximum read offset
  * @returns {Prototype} Populated runtime message
  */
-DecoderPrototype.decode = function decode(reader, message, limit) { // codegen reference and fallback
+DecoderPrototype.decode = function decode_fallback(reader, message, limit) { // codegen reference and fallback
     /* eslint-disable no-invalid-this, block-scoped-var, no-redeclare */
     var fieldsById = this.type.fieldsById;
     while (reader.pos < limit) {
