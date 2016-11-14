@@ -3,8 +3,6 @@ var tap = require("tap");
 var protobuf = require(".."),
     util = protobuf.util;
 
-util.codegen.verbose = true;
-
 tap.test("bench.proto and bench.json", function(test) {
     protobuf.load(require.resolve("../scripts/bench.proto"), function(err, root) {
         if (err)

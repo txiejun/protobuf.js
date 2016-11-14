@@ -14,7 +14,6 @@ var LongBits = require("./longbits"),
  * @param {number[]} buf Buffer to write to
  * @param {number} pos Position to write at
  * @param {*} val Value to write
- * @param {number} len Value byte length
  * @returns {undefined}
  */
 
@@ -471,7 +470,7 @@ WriterPrototype.finish = function finish() {
         pos  = 0;
     this.reset();
     while (head) {
-        head.fn(buf, pos, head.val, head.len);
+        head.fn(buf, pos, head.val);
         pos += head.len;
         head = head.next;
     }
@@ -520,7 +519,8 @@ BufferWriterPrototype.double = function write_double_buffer(value) {
 };
 
 function writeBytesBuffer(buf, pos, val) {
-    val.copy(buf, pos, 0, val.length);
+    if (val.length)
+        val.copy(buf, pos, 0, val.length);
 }
 
 /**
@@ -535,8 +535,8 @@ BufferWriterPrototype.bytes = function write_bytes_buffer(value) {
         : this.push(writeByte, 1, 0);
 };
 
-function writeStringBuffer(buf, pos, val, len) {
-    buf.write(val, pos, len);
+function writeStringBuffer(buf, pos, val) {
+    buf.write(val, pos);
 }
 
 /**
@@ -561,7 +561,7 @@ BufferWriterPrototype.finish = function finish_buffer() {
         pos  = 0;
     this.reset();
     while (head) {
-        head.fn(buf, pos, head.val, head.len);
+        head.fn(buf, pos, head.val);
         pos += head.len;
         head = head.next;
     }

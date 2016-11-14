@@ -170,8 +170,8 @@ Object.defineProperties(TypePrototype, {
                 return this._ctor;
             var ctor;
             if (codegen.supported)
-                ctor = codegen("p")("$p.call(this,p)").eof(this.fullName + "$ctor", {
-                    $p: Prototype
+                ctor = codegen("p")("P.call(this,p)").eof(this.fullName + "$ctor", {
+                    P: Prototype
                 });
             else
                 ctor = function GenericMessage(properties) {
@@ -191,8 +191,8 @@ Object.defineProperties(TypePrototype, {
 
 function clearCache(type) {
     type._fieldsById = type._fieldsArray = type._requiredFieldsArray = type._oneofsArray = type._ctor = null;
-    delete type.encode_;
-    delete type.decode_;
+    delete type.encode;
+    delete type.decode;
     return type;
 }
 
@@ -328,22 +328,11 @@ TypePrototype.create = function create(properties, ctor) {
  * @returns {Writer} writer
  */
 TypePrototype.encode = function encode(message, writer) {
-    return this.encode_(message, writer || Writer());
-};
-
-/**
- * Encodes a message of this type.
- * This method differs from {@link Type#encode} in that it expects already type checked and known to be present arguments.
- * @param {Prototype|Object} message Message instance or plain object
- * @param {Writer} [writer] Writer to encode to
- * @returns {Writer} writer
- */
-TypePrototype.encode_ = function encode_internal(message, writer) {
     var encoder = new Encoder(this);
-    this.encode_ = codegen.supported
+    this.encode = codegen.supported
         ? encoder.generate()
-        : encoder.encode.bind(encoder);
-    return this.encode_(message, writer);
+        : encoder.encode;
+    return this.encode(message, writer);
 };
 
 /**
@@ -355,7 +344,7 @@ TypePrototype.encode_ = function encode_internal(message, writer) {
 TypePrototype.encodeDelimited = function encodeDelimited(message, writer) {
     if (!writer)
         writer = Writer();
-    return this.encode_(message, writer.fork()).ldelim();
+    return this.encode(message, writer.fork()).ldelim();
 };
 
 /**
@@ -365,26 +354,11 @@ TypePrototype.encodeDelimited = function encodeDelimited(message, writer) {
  * @returns {Prototype} Decoded message
  */
 TypePrototype.decode = function decode(readerOrBuffer, length) {
-    var reader  = readerOrBuffer instanceof Reader ? readerOrBuffer : Reader(readerOrBuffer),
-        limit   = length === undefined ? reader.len : reader.pos + length;
-    return this.decode_(reader, new this.ctor(), limit);
-};
-
-/**
- * Decodes a message of this type.
- * This method differs from {@link Type#decode} in that it expects already type checked and known to be present arguments.
- * @function
- * @param {Reader} reader Reader to decode from
- * @param {Prototype} message Message instance to populate
- * @param {number} limit Maximum read offset
- * @returns {Prototype} Populated message instance
- */
-TypePrototype.decode_ = function decode_internal(reader, message, limit) {
     var decoder = new Decoder(this);
-    this.decode_ = codegen.supported
+    this.decode = codegen.supported
         ? decoder.generate()
-        : decoder.decode.bind(decoder);
-    return this.decode_(reader, message, limit);
+        : decoder.decode;
+    return this.decode(readerOrBuffer, length);
 };
 
 /**
@@ -393,8 +367,8 @@ TypePrototype.decode_ = function decode_internal(reader, message, limit) {
  * @returns {Prototype} Decoded message
  */
 TypePrototype.decodeDelimited = function decodeDelimited(readerOrBuffer) {
-    var reader = readerOrBuffer instanceof Reader ? readerOrBuffer : Reader(readerOrBuffer);
-    return this.decode(reader, reader.uint32());
+    readerOrBuffer = readerOrBuffer instanceof Reader ? readerOrBuffer : Reader(readerOrBuffer);
+    return this.decode(readerOrBuffer, readerOrBuffer.uint32());
 };
 
 /**

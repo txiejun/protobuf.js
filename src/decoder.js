@@ -1,8 +1,9 @@
 module.exports = Decoder;
 
-var Enum    = require("./enum"),
-    types   = require("./types"),
-    util    = require("./util");
+var Enum   = require("./enum"),
+    Reader = require("./reader"),
+    types  = require("./types"),
+    util   = require("./util");
 
 /**
  * Constructs a new decoder for the specified message type.
@@ -22,21 +23,49 @@ function Decoder(type) {
 /** @alias Decoder.prototype */
 var DecoderPrototype = Decoder.prototype;
 
+// This is here to mimic Type so that fallback functions work without having to bind()
+Object.defineProperties(DecoderPrototype, {
+
+    /**
+     * Fields of this decoder's message type by id for lookups.
+     * @name Decoder#fieldsById
+     * @type {Object.<number,Field>}
+     * @readonly
+     */
+    fieldsById: {
+        get: function() {
+            return this.type.fieldsById;
+        }
+    },
+
+    /**
+     * With this decoder's message type registered constructor, if any registered, otherwise a generic constructor.
+     * @name Decoder#ctor
+     * @type {Prototype}
+     */
+    ctor: {
+        get: function() {
+            return this.type.ctor;
+        }
+    }
+});
+
 /**
  * Decodes a message of this decoder's message type.
  * @param {Reader} reader Reader to decode from
- * @param {Prototype} message Runtime message to populate
- * @param {number} limit Maximum read offset
+ * @param {number} [length] Length of the message, if known beforehand
  * @returns {Prototype} Populated runtime message
  */
-DecoderPrototype.decode = function decode_fallback(reader, message, limit) { // codegen reference and fallback
+DecoderPrototype.decode = function decode_fallback(reader, length) { // codegen reference and fallback
     /* eslint-disable no-invalid-this, block-scoped-var, no-redeclare */
-    var fieldsById = this.type.fieldsById;
+    var fieldsById = this.fieldsById;
+    var reader = reader instanceof Reader ? reader : Reader(reader),
+        limit = length === undefined ? reader.len : reader.pos + length,
+        message = new this.ctor();
     while (reader.pos < limit) {
         var tag      = reader.tag(),
-            field    = fieldsById[tag.id],
-            type     = field.resolvedType instanceof Enum ? "uint32" : field.type,
-            wireType = types.basic[type];
+            field    = fieldsById[tag.id].resolve(),
+            type     = field.resolvedType instanceof Enum ? "uint32" : field.type;
         
         // Known fields
         if (field) {
@@ -44,7 +73,7 @@ DecoderPrototype.decode = function decode_fallback(reader, message, limit) { // 
             // Map fields
             if (field.map) {
 
-                var keyType = field.resolve().resolvedKeyType /* only valid is enum */ ? "uint32" : field.keyType,
+                var keyType = field.resolvedKeyType /* only valid is enum */ ? "uint32" : field.keyType,
                     length  = reader.uint32(),
                     map     = {};
                 if (length) {
@@ -53,10 +82,10 @@ DecoderPrototype.decode = function decode_fallback(reader, message, limit) { // 
                     while (reader.pos < length) {
                         if (reader.tag().id === 1)
                             ks[ki++] = reader[keyType]();
-                        else if (wireType !== undefined)
+                        else if (types.basic[type] !== undefined)
                             values[vi++] = reader[type]();
                         else
-                            values[vi++] = field.resolvedType.decode_(reader, new field.resolvedType.ctor(), reader.uint32() + reader.pos);
+                            values[vi++] = field.resolvedType.decode(reader, reader.uint32());
                     }
                     var key;
                     for (ki = 0; ki < vi; ++ki)
@@ -77,16 +106,16 @@ DecoderPrototype.decode = function decode_fallback(reader, message, limit) { // 
                         values[length++] = reader[type]();
 
                 // Non-packed
-                } else if (wireType !== undefined)
+                } else if (types.basic[type] !== undefined)
                     values[length++] = reader[type]();
                 else
-                    values[length++] = field.resolvedType.decode_(reader, new field.resolvedType.ctor(), reader.uint32() + reader.pos);
+                    values[length++] = field.resolvedType.decode(reader, reader.uint32());
 
             // Non-repeated
-            } else if (wireType !== undefined)
+            } else if (types.basic[type] !== undefined)
                 message[field.name] = reader[type]();
             else
-                message[field.name] = field.resolvedType.decode_(reader, new field.resolvedType.ctor(), reader.uint32() + reader.pos);
+                message[field.name] = field.resolvedType.decode(reader, reader.uint32());
 
         // Unknown fields
         } else
@@ -105,18 +134,18 @@ DecoderPrototype.generate = function generate() {
     var fieldsArray = this.type.fieldsArray,
         fieldsCount = fieldsArray.length;
     
-    var gen = util.codegen("r", "m", "l")
-
-    ("while(r.pos<l){")
+    var gen = util.codegen("r", "l")
+    ("r=r instanceof Reader?r:Reader(r)")
+    ("var c=l===undefined?r.len:r.pos+l")
+    ("var m=new this.ctor()")
+    ("while(r.pos<c){")
         ("var t=r.tag()")
         ("switch(t.id){");
     
     for (var i = 0; i < fieldsCount; ++i) {
-        var field    = fieldsArray[i].resolve(),
-            type     = field.resolvedType instanceof Enum ? "uint32" : field.type,
-            wireType = types.basic[type],
-            packType = types.packed[type],
-            prop     = util.safeProp(field.name);
+        var field = fieldsArray[i].resolve(),
+            type  = field.resolvedType instanceof Enum ? "uint32" : field.type,
+            prop  = util.safeProp(field.name);
         gen
             ("case %d:", field.id);
 
@@ -130,17 +159,17 @@ DecoderPrototype.generate = function generate() {
                     ("while(r.pos<n){")
                         ("if(r.tag().id===1)")
                             ("ks[ki++]=r.%s()", keyType);
-                        if (wireType !== undefined) gen
+                        if (types.basic[type] !== undefined) gen
                         ("else")
                             ("vs[vi++]=r.%s()", type);
                         else gen
                         ("else")
-                            ("vs[vi++]=$t[%d].decode_(r,new $t[%d].ctor(),r.uint32()+r.pos)", i, i);
+                            ("vs[vi++]=types[%d].decode(r,r.uint32())", i, i);
                     gen
                     ("}")
                     ("var k")
                     ("for (ki=0;ki<vi;++ki)")
-                        ("o[typeof(k=ks[ki])==='object'?$h(k):k]=vs[ki]")
+                        ("o[typeof(k=ks[ki])==='object'?util.toHash(k):k]=vs[ki]")
                 ("}")
                 ("m%s=o", prop);
 
@@ -148,7 +177,7 @@ DecoderPrototype.generate = function generate() {
 
                 ("var vs=m%s||(m%s=[]),n=vs.length", prop, prop);
 
-            if (field.packed && packType !== undefined) { gen
+            if (field.packed && types.packed[type] !== undefined) { gen
 
                 ("if(t.wireType===2){")
                     ("var e=r.uint32()+r.pos")
@@ -158,21 +187,21 @@ DecoderPrototype.generate = function generate() {
 
             }
 
-            if (wireType !== undefined) gen
+            if (types.basic[type] !== undefined) gen
 
                     ("vs[n++]=r.%s()", type);
 
             else gen
 
-                    ("vs[n++]=$t[%d].decode_(r,new $t[%d].ctor(),r.uint32()+r.pos)", i, i);
+                    ("vs[n++]=types[%d].decode(r,r.uint32())", i, i);
 
-        } else if (wireType !== undefined) { gen
+        } else if (types.basic[type] !== undefined) { gen
 
                 ("m%s=r.%s()", prop, type);
 
         } else { gen
 
-                ("m%s=$t[%d].decode_(r,new $t[%d].ctor(),r.uint32()+r.pos)", prop, i, i);
+                ("m%s=types[%d].decode(r,r.uint32())", prop, i, i);
 
         } gen
                 ("break");
@@ -184,8 +213,9 @@ DecoderPrototype.generate = function generate() {
     ("}")
     ("return m");
     return gen.eof(this.type.fullName + "$decode", {
-        $t: fieldsArray.map(function(fld) { return fld.resolvedType; }),
-        $h: util.toHash
+        Reader: Reader,
+        types: fieldsArray.map(function(fld) { return fld.resolvedType; }),
+        util: util.toHash
     });
     /* eslint-enable no-unexpected-multiline */
 };

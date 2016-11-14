@@ -1,6 +1,6 @@
 /*!
  * protobuf.js v6.0.0-dev (c) 2016 Daniel Wirtz
- * Compiled Mon, 14 Nov 2016 00:42:11 UTC
+ * Compiled Mon, 14 Nov 2016 03:14:53 UTC
  * Licensed under the Apache License, Version 2.0
  * see: https://github.com/dcodeIO/protobuf.js for details
  */
@@ -259,12 +259,16 @@ try { codegen.supported = codegen("a","b")("return a-b").eof()(2,1) === 1; } cat
 
 codegen.verbose = false;
 
+codegen.vartype = "var";
+try { eval("let a=1;"); codegen.vartype = "let"; } catch (e) {} // eslint-disable-line no-empty
+
 },{}],3:[function(require,module,exports){
 module.exports = Decoder;
 
-var Enum    = require(5),
-    types   = require(21),
-    util    = require(22);
+var Enum   = require(5),
+    Reader = require(16),
+    types  = require(21),
+    util   = require(22);
 
 /**
  * Constructs a new decoder for the specified message type.
@@ -284,21 +288,49 @@ function Decoder(type) {
 /** @alias Decoder.prototype */
 var DecoderPrototype = Decoder.prototype;
 
+// This is here to mimic Type so that fallback functions work without having to bind()
+Object.defineProperties(DecoderPrototype, {
+
+    /**
+     * Fields of this decoder's message type by id for lookups.
+     * @name Decoder#fieldsById
+     * @type {Object.<number,Field>}
+     * @readonly
+     */
+    fieldsById: {
+        get: function() {
+            return this.type.fieldsById;
+        }
+    },
+
+    /**
+     * With this decoder's message type registered constructor, if any registered, otherwise a generic constructor.
+     * @name Decoder#ctor
+     * @type {Prototype}
+     */
+    ctor: {
+        get: function() {
+            return this.type.ctor;
+        }
+    }
+});
+
 /**
  * Decodes a message of this decoder's message type.
  * @param {Reader} reader Reader to decode from
- * @param {Prototype} message Runtime message to populate
- * @param {number} limit Maximum read offset
+ * @param {number} [length] Length of the message, if known beforehand
  * @returns {Prototype} Populated runtime message
  */
-DecoderPrototype.decode = function decode_fallback(reader, message, limit) { // codegen reference and fallback
+DecoderPrototype.decode = function decode_fallback(reader, length) { // codegen reference and fallback
     /* eslint-disable no-invalid-this, block-scoped-var, no-redeclare */
-    var fieldsById = this.type.fieldsById;
+    var fieldsById = this.fieldsById;
+    var reader = reader instanceof Reader ? reader : Reader(reader),
+        limit = length === undefined ? reader.len : reader.pos + length,
+        message = new this.ctor();
     while (reader.pos < limit) {
         var tag      = reader.tag(),
-            field    = fieldsById[tag.id],
-            type     = field.resolvedType instanceof Enum ? "uint32" : field.type,
-            wireType = types.basic[type];
+            field    = fieldsById[tag.id].resolve(),
+            type     = field.resolvedType instanceof Enum ? "uint32" : field.type;
         
         // Known fields
         if (field) {
@@ -306,7 +338,7 @@ DecoderPrototype.decode = function decode_fallback(reader, message, limit) { // 
             // Map fields
             if (field.map) {
 
-                var keyType = field.resolve().resolvedKeyType /* only valid is enum */ ? "uint32" : field.keyType,
+                var keyType = field.resolvedKeyType /* only valid is enum */ ? "uint32" : field.keyType,
                     length  = reader.uint32(),
                     map     = {};
                 if (length) {
@@ -315,10 +347,10 @@ DecoderPrototype.decode = function decode_fallback(reader, message, limit) { // 
                     while (reader.pos < length) {
                         if (reader.tag().id === 1)
                             ks[ki++] = reader[keyType]();
-                        else if (wireType !== undefined)
+                        else if (types.basic[type] !== undefined)
                             values[vi++] = reader[type]();
                         else
-                            values[vi++] = field.resolvedType.decode_(reader, new field.resolvedType.ctor(), reader.uint32() + reader.pos);
+                            values[vi++] = field.resolvedType.decode(reader, reader.uint32());
                     }
                     var key;
                     for (ki = 0; ki < vi; ++ki)
@@ -339,16 +371,16 @@ DecoderPrototype.decode = function decode_fallback(reader, message, limit) { // 
                         values[length++] = reader[type]();
 
                 // Non-packed
-                } else if (wireType !== undefined)
+                } else if (types.basic[type] !== undefined)
                     values[length++] = reader[type]();
                 else
-                    values[length++] = field.resolvedType.decode_(reader, new field.resolvedType.ctor(), reader.uint32() + reader.pos);
+                    values[length++] = field.resolvedType.decode(reader, reader.uint32());
 
             // Non-repeated
-            } else if (wireType !== undefined)
+            } else if (types.basic[type] !== undefined)
                 message[field.name] = reader[type]();
             else
-                message[field.name] = field.resolvedType.decode_(reader, new field.resolvedType.ctor(), reader.uint32() + reader.pos);
+                message[field.name] = field.resolvedType.decode(reader, reader.uint32());
 
         // Unknown fields
         } else
@@ -367,18 +399,18 @@ DecoderPrototype.generate = function generate() {
     var fieldsArray = this.type.fieldsArray,
         fieldsCount = fieldsArray.length;
     
-    var gen = util.codegen("r", "m", "l")
-
-    ("while(r.pos<l){")
+    var gen = util.codegen("r", "l")
+    ("r=r instanceof Reader?r:Reader(r)")
+    ("var c=l===undefined?r.len:r.pos+l")
+    ("var m=new this.ctor()")
+    ("while(r.pos<c){")
         ("var t=r.tag()")
         ("switch(t.id){");
     
     for (var i = 0; i < fieldsCount; ++i) {
-        var field    = fieldsArray[i].resolve(),
-            type     = field.resolvedType instanceof Enum ? "uint32" : field.type,
-            wireType = types.basic[type],
-            packType = types.packed[type],
-            prop     = util.safeProp(field.name);
+        var field = fieldsArray[i].resolve(),
+            type  = field.resolvedType instanceof Enum ? "uint32" : field.type,
+            prop  = util.safeProp(field.name);
         gen
             ("case %d:", field.id);
 
@@ -392,17 +424,17 @@ DecoderPrototype.generate = function generate() {
                     ("while(r.pos<n){")
                         ("if(r.tag().id===1)")
                             ("ks[ki++]=r.%s()", keyType);
-                        if (wireType !== undefined) gen
+                        if (types.basic[type] !== undefined) gen
                         ("else")
                             ("vs[vi++]=r.%s()", type);
                         else gen
                         ("else")
-                            ("vs[vi++]=$t[%d].decode_(r,new $t[%d].ctor(),r.uint32()+r.pos)", i, i);
+                            ("vs[vi++]=types[%d].decode(r,r.uint32())", i, i);
                     gen
                     ("}")
                     ("var k")
                     ("for (ki=0;ki<vi;++ki)")
-                        ("o[typeof(k=ks[ki])==='object'?$h(k):k]=vs[ki]")
+                        ("o[typeof(k=ks[ki])==='object'?util.toHash(k):k]=vs[ki]")
                 ("}")
                 ("m%s=o", prop);
 
@@ -410,7 +442,7 @@ DecoderPrototype.generate = function generate() {
 
                 ("var vs=m%s||(m%s=[]),n=vs.length", prop, prop);
 
-            if (field.packed && packType !== undefined) { gen
+            if (field.packed && types.packed[type] !== undefined) { gen
 
                 ("if(t.wireType===2){")
                     ("var e=r.uint32()+r.pos")
@@ -420,21 +452,21 @@ DecoderPrototype.generate = function generate() {
 
             }
 
-            if (wireType !== undefined) gen
+            if (types.basic[type] !== undefined) gen
 
                     ("vs[n++]=r.%s()", type);
 
             else gen
 
-                    ("vs[n++]=$t[%d].decode_(r,new $t[%d].ctor(),r.uint32()+r.pos)", i, i);
+                    ("vs[n++]=types[%d].decode(r,r.uint32())", i, i);
 
-        } else if (wireType !== undefined) { gen
+        } else if (types.basic[type] !== undefined) { gen
 
                 ("m%s=r.%s()", prop, type);
 
         } else { gen
 
-                ("m%s=$t[%d].decode_(r,new $t[%d].ctor(),r.uint32()+r.pos)", prop, i, i);
+                ("m%s=types[%d].decode(r,r.uint32())", prop, i, i);
 
         } gen
                 ("break");
@@ -446,18 +478,20 @@ DecoderPrototype.generate = function generate() {
     ("}")
     ("return m");
     return gen.eof(this.type.fullName + "$decode", {
-        $t: fieldsArray.map(function(fld) { return fld.resolvedType; }),
-        $h: util.toHash
+        Reader: Reader,
+        types: fieldsArray.map(function(fld) { return fld.resolvedType; }),
+        util: util.toHash
     });
     /* eslint-enable no-unexpected-multiline */
 };
 
-},{"21":21,"22":22,"5":5}],4:[function(require,module,exports){
+},{"16":16,"21":21,"22":22,"5":5}],4:[function(require,module,exports){
 module.exports = Encoder;
 
-var Enum    = require(5),
-    types   = require(21),
-    util    = require(22);
+var Enum   = require(5),
+    Writer = require(24),
+    types  = require(21),
+    util   = require(22);
 
 /**
  * Constructs a new encoder for the specified message type.
@@ -477,15 +511,33 @@ function Encoder(type) {
 /** @alias Encoder.prototype */
 var EncoderPrototype = Encoder.prototype;
 
+// This is here to mimic Type so that fallback functions work without having to bind()
+Object.defineProperties(EncoderPrototype, {
+
+    /**
+     * Fields of this encoder's message type as an array for iteration.
+     * @name Encoder#fieldsArray
+     * @type {Field[]}
+     * @readonly
+     */
+    fieldsArray: {
+        get: function() {
+            return this.type.fieldsArray;
+        }
+    }
+});
+
 /**
  * Encodes a message of this encoder's message type.
  * @param {Prototype|Object} message Runtime message or plain object to encode
- * @param {Writer} writer Writer to encode to
+ * @param {Writer} [writer] Writer to encode to
  * @returns {Writer} writer
  */
 EncoderPrototype.encode = function encode_fallback(message, writer) { // codegen reference and fallback
     /* eslint-disable block-scoped-var, no-redeclare */
-    var fieldsArray = this.type.fieldsArray,
+    if (!writer)
+        writer = Writer();
+    var fieldsArray = this.fieldsArray,
         fieldsCount = fieldsArray.length;
 
     for (var fi = 0; fi < fieldsCount; ++fi) {
@@ -505,7 +557,7 @@ EncoderPrototype.encode = function encode_fallback(message, writer) { // codegen
                     if (wireType !== undefined)
                         writer.tag(2, wireType)[type](value[key]);
                     else
-                        field.resolvedType.encode_(value[key], writer.tag(2, 2).fork()).ldelim();
+                        field.resolvedType.encode(value[key], writer.tag(2, 2).fork()).ldelim();
                 }
                 writer.ldelim();
             }
@@ -526,7 +578,7 @@ EncoderPrototype.encode = function encode_fallback(message, writer) { // codegen
             // Non-packed
             } else {
                 while (i < k)
-                    field.resolvedType.encode_(values[i++], writer.tag(field.id, 2).fork()).ldelim();
+                    field.resolvedType.encode(values[i++], writer.tag(field.id, 2).fork()).ldelim();
             }
 
         // Non-repeated
@@ -537,7 +589,7 @@ EncoderPrototype.encode = function encode_fallback(message, writer) { // codegen
                 if (wireType !== undefined)
                     writer.tag(field.id, wireType)[type](value);
                 else
-                    field.resolvedType.encode_(value, writer.tag(field.id, 2).fork()).ldelim();
+                    field.resolvedType.encode(value, writer.tag(field.id, 2).fork()).ldelim();
             }
         }
     }
@@ -553,8 +605,9 @@ EncoderPrototype.generate = function generate() {
     /* eslint-disable no-unexpected-multiline */
     var fieldsArray = this.type.fieldsArray,
         fieldsCount = fieldsArray.length;
-    var gen = util.codegen("m", "w");
-    
+    var gen = util.codegen("m", "w")
+    ("w||(w=Writer())");
+
     for (var i = 0; i < fieldsCount; ++i) {
         var field = fieldsArray[i].resolve();
         var type = field.resolvedType instanceof Enum ? "uint32" : field.type,
@@ -567,15 +620,16 @@ EncoderPrototype.generate = function generate() {
                 keyWireType = types.mapKey[keyType];
             gen
 
-    ("var o=m%s,ks", prop)
-    ("if(o&&(ks=Object.keys(o)).length){")
+    ("var ks")
+    ("if(m%s&&(ks=Object.keys(m%s)).length){", prop, prop)
         ("w.tag(%d,2).fork()", field.id)
-        ("for(var i=0,l=ks.length,k;i<l;++i){")
-            ("w.tag(1,%d).%s(k=ks[i])", keyWireType, keyType);
+        ("var i=0")
+        ("while(i<ks.length){")
+            ("w.tag(1,%d).%s(ks[i])", keyWireType, keyType);
             if (wireType !== undefined) gen
-            ("w.tag(2,%d).%s(o[k])", wireType, type);
+            ("w.tag(2,%d).%s(m%s[ks[i++]])", wireType, type, prop);
             else gen
-            ("$t[%d].encode_(o[k],w.tag(2,2).fork()).ldelim()", i);
+            ("types[%d].encode(m%s[ks[i++]],w.tag(2,2).fork()).ldelim()", i, prop);
             gen
         ("}")
         ("w.ldelim()")
@@ -583,24 +637,24 @@ EncoderPrototype.generate = function generate() {
 
         // Repeated fields
         } else if (field.repeated) { gen
-    
-    ("var vs=m%s,i=0,k=vs.length", prop);
 
             // Packed repeated
             if (field.packed && types.packed[type] !== undefined) { gen
 
-    ("if(k>0){")
+    ("if(m%s.length){", prop)
         ("w.tag(%d,2).fork()", field.id)
-        ("while(i<k)")
-            ("w.%s(vs[i++])", type)
+        ("var i=0")
+        ("while(i<m%s.length)", prop)
+            ("w.%s(m%s[i++])", type, prop)
         ("w.ldelim()")
     ("}");
 
             // Non-packed
             } else { gen
 
-    ("while(i<k)")
-        ("$t[%d].encode_(vs[i++],w.tag(%d,2).fork()).ldelim()", i, field.id);
+    ("var i=0")
+    ("while(i<m%s.length)", prop)
+        ("types[%d].encode(m%s[i++],w.tag(%d,2).fork()).ldelim()", i, prop, field.id);
 
             }
 
@@ -611,19 +665,20 @@ EncoderPrototype.generate = function generate() {
             if (wireType !== undefined) gen
         ("w.tag(%d,%d).%s(m%s)", field.id, wireType, type, prop);
             else gen
-        ("$t[%d].encode_(m%s,w.tag(%d,2).fork()).ldelim()", i, prop, field.id);
+        ("types[%d].encode(m%s,w.tag(%d,2).fork()).ldelim()", i, prop, field.id);
     
         }
     }
     return gen
     ("return w")
     .eof(this.type.fullName + "$encode", {
-        $t: fieldsArray.map(function(fld) { return fld.resolvedType; })
+        Writer: Writer,
+        types: fieldsArray.map(function(fld) { return fld.resolvedType; })
     });
     /* eslint-enable no-unexpected-multiline */
 };
 
-},{"21":21,"22":22,"5":5}],5:[function(require,module,exports){
+},{"21":21,"22":22,"24":24,"5":5}],5:[function(require,module,exports){
 module.exports = Enum;
 
 var ReflectionObject = require(12);
@@ -1060,7 +1115,7 @@ function inherits(clazz, type, options) {
              */
             encode: {
                 value: function encode(message, writer) {
-                    return this.$type.encode_(message, writer || Writer()).finish();
+                    return this.$type.encode(message, writer).finish();
                 }
             },
 
@@ -1074,9 +1129,7 @@ function inherits(clazz, type, options) {
              */
             encodeDelimited: {
                 value: function encodeDelimited(message, writer) {
-                    if (!writer)
-                        writer = Writer();
-                    return this.$type.encode_(message, writer.fork()).ldelim().finish();
+                    return this.$type.encodeDelimited(message, writer).finish();
                 }
             },
 
@@ -1089,7 +1142,7 @@ function inherits(clazz, type, options) {
              */
             decode: {
                 value: function decode(buffer) {
-                    return this.$type.decode_(Reader(buffer), new this(), buffer.length);
+                    return this.$type.decode(buffer);
                 }
             },
 
@@ -1102,8 +1155,7 @@ function inherits(clazz, type, options) {
              */
             decodeDelimited: {
                 value: function decodeDelimited(buffer) {
-                    var reader = Reader(buffer);
-                    return this.$type.decode_(reader, new this(), reader.uint32() + reader.pos);
+                    return this.$type.decodeDelimited(buffer);
                 }
             },
 
@@ -1128,7 +1180,7 @@ function inherits(clazz, type, options) {
     prototype.constructor = clazz;
 
     if (!options.noRegister)
-        type.constructor = clazz;
+        type.ctor = clazz;
 
     return prototype;
 }
@@ -4402,8 +4454,8 @@ Object.defineProperties(TypePrototype, {
                 return this._ctor;
             var ctor;
             if (codegen.supported)
-                ctor = codegen("p")("$p.call(this,p)").eof(this.fullName + "$ctor", {
-                    $p: Prototype
+                ctor = codegen("p")("P.call(this,p)").eof(this.fullName + "$ctor", {
+                    P: Prototype
                 });
             else
                 ctor = function GenericMessage(properties) {
@@ -4423,8 +4475,8 @@ Object.defineProperties(TypePrototype, {
 
 function clearCache(type) {
     type._fieldsById = type._fieldsArray = type._requiredFieldsArray = type._oneofsArray = type._ctor = null;
-    delete type.encode_;
-    delete type.decode_;
+    delete type.encode;
+    delete type.decode;
     return type;
 }
 
@@ -4560,22 +4612,11 @@ TypePrototype.create = function create(properties, ctor) {
  * @returns {Writer} writer
  */
 TypePrototype.encode = function encode(message, writer) {
-    return this.encode_(message, writer || Writer());
-};
-
-/**
- * Encodes a message of this type.
- * This method differs from {@link Type#encode} in that it expects already type checked and known to be present arguments.
- * @param {Prototype|Object} message Message instance or plain object
- * @param {Writer} [writer] Writer to encode to
- * @returns {Writer} writer
- */
-TypePrototype.encode_ = function encode_internal(message, writer) {
     var encoder = new Encoder(this);
-    this.encode_ = codegen.supported
+    this.encode = codegen.supported
         ? encoder.generate()
-        : encoder.encode.bind(encoder);
-    return this.encode_(message, writer);
+        : encoder.encode;
+    return this.encode(message, writer);
 };
 
 /**
@@ -4587,7 +4628,7 @@ TypePrototype.encode_ = function encode_internal(message, writer) {
 TypePrototype.encodeDelimited = function encodeDelimited(message, writer) {
     if (!writer)
         writer = Writer();
-    return this.encode_(message, writer.fork()).ldelim();
+    return this.encode(message, writer.fork()).ldelim();
 };
 
 /**
@@ -4597,26 +4638,11 @@ TypePrototype.encodeDelimited = function encodeDelimited(message, writer) {
  * @returns {Prototype} Decoded message
  */
 TypePrototype.decode = function decode(readerOrBuffer, length) {
-    var reader  = readerOrBuffer instanceof Reader ? readerOrBuffer : Reader(readerOrBuffer),
-        limit   = length === undefined ? reader.len : reader.pos + length;
-    return this.decode_(reader, new this.ctor(), limit);
-};
-
-/**
- * Decodes a message of this type.
- * This method differs from {@link Type#decode} in that it expects already type checked and known to be present arguments.
- * @function
- * @param {Reader} reader Reader to decode from
- * @param {Prototype} message Message instance to populate
- * @param {number} limit Maximum read offset
- * @returns {Prototype} Populated message instance
- */
-TypePrototype.decode_ = function decode_internal(reader, message, limit) {
     var decoder = new Decoder(this);
-    this.decode_ = codegen.supported
+    this.decode = codegen.supported
         ? decoder.generate()
-        : decoder.decode.bind(decoder);
-    return this.decode_(reader, message, limit);
+        : decoder.decode;
+    return this.decode(readerOrBuffer, length);
 };
 
 /**
@@ -4625,8 +4651,8 @@ TypePrototype.decode_ = function decode_internal(reader, message, limit) {
  * @returns {Prototype} Decoded message
  */
 TypePrototype.decodeDelimited = function decodeDelimited(readerOrBuffer) {
-    var reader = readerOrBuffer instanceof Reader ? readerOrBuffer : Reader(readerOrBuffer);
-    return this.decode(reader, reader.uint32());
+    readerOrBuffer = readerOrBuffer instanceof Reader ? readerOrBuffer : Reader(readerOrBuffer);
+    return this.decode(readerOrBuffer, readerOrBuffer.uint32());
 };
 
 /**
@@ -4696,6 +4722,10 @@ types.basic = bake([
     /* bytes    */ 2
 ]);
 
+var emptyArray = [];
+if (Object.freeze)
+    Object.freeze(emptyArray);
+
 /**
  * Basic type defaults.
  * @type {Object.<string,*>}
@@ -4715,7 +4745,7 @@ types.defaults = bake([
     /* sfixed64 */ 0,
     /* bool     */ false,
     /* string   */ "",
-    /* bytes    */ null
+    /* bytes    */ emptyArray
 ]);
 
 /**
@@ -5130,7 +5160,6 @@ var LongBits = require(8),
  * @param {number[]} buf Buffer to write to
  * @param {number} pos Position to write at
  * @param {*} val Value to write
- * @param {number} len Value byte length
  * @returns {undefined}
  */
 
@@ -5587,7 +5616,7 @@ WriterPrototype.finish = function finish() {
         pos  = 0;
     this.reset();
     while (head) {
-        head.fn(buf, pos, head.val, head.len);
+        head.fn(buf, pos, head.val);
         pos += head.len;
         head = head.next;
     }
@@ -5636,7 +5665,8 @@ BufferWriterPrototype.double = function write_double_buffer(value) {
 };
 
 function writeBytesBuffer(buf, pos, val) {
-    val.copy(buf, pos, 0, val.length);
+    if (val.length)
+        val.copy(buf, pos, 0, val.length);
 }
 
 /**
@@ -5651,8 +5681,8 @@ BufferWriterPrototype.bytes = function write_bytes_buffer(value) {
         : this.push(writeByte, 1, 0);
 };
 
-function writeStringBuffer(buf, pos, val, len) {
-    buf.write(val, pos, len);
+function writeStringBuffer(buf, pos, val) {
+    buf.write(val, pos);
 }
 
 /**
@@ -5677,7 +5707,7 @@ BufferWriterPrototype.finish = function finish_buffer() {
         pos  = 0;
     this.reset();
     while (head) {
-        head.fn(buf, pos, head.val, head.len);
+        head.fn(buf, pos, head.val);
         pos += head.len;
         head = head.next;
     }

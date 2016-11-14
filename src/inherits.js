@@ -66,7 +66,7 @@ function inherits(clazz, type, options) {
              */
             encode: {
                 value: function encode(message, writer) {
-                    return this.$type.encode_(message, writer || Writer()).finish();
+                    return this.$type.encode(message, writer).finish();
                 }
             },
 
@@ -80,9 +80,7 @@ function inherits(clazz, type, options) {
              */
             encodeDelimited: {
                 value: function encodeDelimited(message, writer) {
-                    if (!writer)
-                        writer = Writer();
-                    return this.$type.encode_(message, writer.fork()).ldelim().finish();
+                    return this.$type.encodeDelimited(message, writer).finish();
                 }
             },
 
@@ -95,7 +93,7 @@ function inherits(clazz, type, options) {
              */
             decode: {
                 value: function decode(buffer) {
-                    return this.$type.decode_(Reader(buffer), new this(), buffer.length);
+                    return this.$type.decode(buffer);
                 }
             },
 
@@ -108,8 +106,7 @@ function inherits(clazz, type, options) {
              */
             decodeDelimited: {
                 value: function decodeDelimited(buffer) {
-                    var reader = Reader(buffer);
-                    return this.$type.decode_(reader, new this(), reader.uint32() + reader.pos);
+                    return this.$type.decodeDelimited(buffer);
                 }
             },
 
@@ -134,7 +131,7 @@ function inherits(clazz, type, options) {
     prototype.constructor = clazz;
 
     if (!options.noRegister)
-        type.constructor = clazz;
+        type.ctor = clazz;
 
     return prototype;
 }

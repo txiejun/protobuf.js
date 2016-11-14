@@ -51,6 +51,10 @@ types.basic = bake([
     /* bytes    */ 2
 ]);
 
+var emptyArray = [];
+if (Object.freeze)
+    Object.freeze(emptyArray);
+
 /**
  * Basic type defaults.
  * @type {Object.<string,*>}
@@ -70,7 +74,7 @@ types.defaults = bake([
     /* sfixed64 */ 0,
     /* bool     */ false,
     /* string   */ "",
-    /* bytes    */ null
+    /* bytes    */ emptyArray
 ]);
 
 /**

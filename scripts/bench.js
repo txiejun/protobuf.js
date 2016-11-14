@@ -73,7 +73,7 @@ function newSuite(name) {
         var fastest = this.filter('fastest'),
             slowest = this.filter('slowest');
         var fastestHz = getHz(fastest[0]);
-        console.log("\n" + chalk.white.bold(pad(fastest.map('name')+'', padSize)) + " was " + chalk.green("fastest"));
+        console.log("\n" + chalk.white.bold(pad(fastest[0].name, padSize)) + " was " + chalk.green("fastest"));
         benches.forEach(function(bench) {
             if (fastest.indexOf(bench) > -1)
                 return;
