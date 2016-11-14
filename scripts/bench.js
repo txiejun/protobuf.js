@@ -2,9 +2,9 @@ var benchmark = require("benchmark"),
     suite     = new benchmark.Suite(),
     chalk     = require("chalk"),
     data      = require("./bench.json");
-var protobuf = require("../src/index");
+var protobuf  = require("../src/index");
 
-protobuf.load(require.resolve("./bench.proto")).then(function(root) {
+protobuf.load(require.resolve("./bench.proto"), function onload(err, root) {
     var Test = root.lookup("Test");
 
     protobuf.util.codegen.verbose = true;
@@ -40,13 +40,13 @@ protobuf.load(require.resolve("./bench.proto")).then(function(root) {
 
     newSuite("combined")
     .add("Type to/from buffer", function() {
-        Test.decode(Test.encode(data));
+        Test.decode(Test.encode(data).finish());
     })
     .add("JSON to/from string", function() {
         JSON.parse(JSON.stringify(data));
     })
     .add("JSON to/from buffer", function() {
-        JSON.parse(new Buffer(JSON.stringify(data)).toString("utf8"), "utf8");
+        JSON.parse(new Buffer(JSON.stringify(data), "utf8").toString("utf8"));
     })
     .run();
 
@@ -73,13 +73,13 @@ function newSuite(name) {
         var fastest = this.filter('fastest'),
             slowest = this.filter('slowest');
         var fastestHz = getHz(fastest[0]);
-        console.log("\n" + chalk.white.bold(pad(fastest[0].name, padSize)) + " was " + chalk.green("fastest"));
+        console.log("\n" + chalk.white(pad(fastest[0].name, padSize)) + " was " + chalk.green("fastest"));
         benches.forEach(function(bench) {
             if (fastest.indexOf(bench) > -1)
                 return;
             var hz = hz = getHz(bench);
             var percent = (1 - (hz / fastestHz)) * 100;
-            console.log(chalk.white.bold(pad(bench.name, padSize)) + " was " + chalk.red(percent.toFixed(1)+'% slower'));
+            console.log(chalk.white(pad(bench.name, padSize)) + " was " + chalk.red(percent.toFixed(1)+'% slower'));
         });
         console.log();
     });

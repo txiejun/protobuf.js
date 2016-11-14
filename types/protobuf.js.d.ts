@@ -1,6 +1,6 @@
 /*
  * protobuf.js v6.0.0-dev TypeScript definitions
- * Generated Mon, 14 Nov 2016 06:54:08 UTC
+ * Generated Mon, 14 Nov 2016 09:55:00 UTC
  */
 declare module protobuf {
 
@@ -1824,6 +1824,22 @@ declare module protobuf {
       type: Type;
    
       /**
+       * Fields of this verifier's message type as an array for iteration.
+       * @name Verifier#fieldsArray
+       * @type {Field[]}
+       * @readonly
+       */
+      fieldsArray: Field[];
+   
+      /**
+       * Full name of this verifier's message type.
+       * @name Verifier#fullName
+       * @type {string}
+       * @readonly
+       */
+      fullName: string;
+   
+      /**
        * Verifies a runtime message of this verifier's message type.
        * @param {Prototype|Object} message Runtime message or plain object to verify
        * @returns {?string} `null` if valid, otherwise the reason why it is not
@@ -1949,12 +1965,6 @@ declare module protobuf {
            */
           len: number;
    
-          /**
-           * Current remembered id.
-           * @type {number}
-           */
-          id: number;
-   
       }
    
       /**
@@ -1980,12 +1990,6 @@ declare module protobuf {
        * @type {State[]}
        */
       stack: State[];
-   
-      /**
-       * Remembered id.
-       * @type {mumber}
-       */
-      id: mumber;
    
       /**
        * Pushes a new operation to the queue.
@@ -2117,10 +2121,9 @@ declare module protobuf {
        * Forks this writer's state by pushing it to a stack and reusing the remaining buffer
        * for a new set of write operations. A call to {@link Writer#reset} or {@link Writer#finish}
        * resets the writer to the previous state.
-       * @param {number} id Id to remember until {@link Writer#ldelim} is called.
        * @returns {Writer} `this`
        */
-      fork(id: number): Writer;
+      fork(): Writer;
    
       /**
        * Resets this instance to the last state. If there is no last state, all references
@@ -2131,10 +2134,10 @@ declare module protobuf {
    
       /**
        * Resets to the last state and appends the fork state's current write length as a varint followed by its operations.
-       * @param {boolean} required Whether the forked payload is required even when empty.
+       * @param {number} [id] Id with wire type 2 to prepend where applicable
        * @returns {Writer} `this`
        */
-      ldelim(required: boolean): Writer;
+      ldelim(id?: number): Writer;
    
       /**
        * Finishes the current sequence of write operations and frees all resources.

@@ -342,7 +342,7 @@ TypePrototype.encode = function encode(message, writer) {
  * @returns {Writer} writer
  */
 TypePrototype.encodeDelimited = function encodeDelimited(message, writer) {
-    return this.encode(message, writer).ldelim(true);
+    return this.encode(message, writer).ldelim();
 };
 
 /**
@@ -378,6 +378,6 @@ TypePrototype.verify = function verify(message) {
     var verifier = new Verifier(this);
     this.verify = codegen.supported
         ? verifier.generate()
-        : verifier.verify.bind(verifier);
+        : verifier.verify;
     return this.verify(message);
 };

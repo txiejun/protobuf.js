@@ -23,20 +23,48 @@ function Verifier(type) {
 /** @alias Verifier.prototype */
 var VerifierPrototype = Verifier.prototype;
 
+// This is here to mimic Type so that fallback functions work without having to bind()
+Object.defineProperties(VerifierPrototype, {
+
+    /**
+     * Fields of this verifier's message type as an array for iteration.
+     * @name Verifier#fieldsArray
+     * @type {Field[]}
+     * @readonly
+     */
+    fieldsArray: {
+        get: function() {
+            return this.type.fieldsArray;
+        }
+    },
+
+    /**
+     * Full name of this verifier's message type.
+     * @name Verifier#fullName
+     * @type {string}
+     * @readonly
+     */
+    fullName: {
+        get: function() {
+            return this.type.fullName;
+        }
+    }
+});
+
 /**
  * Verifies a runtime message of this verifier's message type.
  * @param {Prototype|Object} message Runtime message or plain object to verify
  * @returns {?string} `null` if valid, otherwise the reason why it is not
  */
 VerifierPrototype.verify = function verify_fallback(message) {
-    var fields = this.type.fieldsArray, i = 0, k = fields.length,
+    var fields = this.fieldsArray, i = 0, k = fields.length,
         reason;
     while (i < k) {
         var field = fields[i++].resolve(),
             value = message[field.name];
         if (value === undefined || value === null) {
             if (field.required)
-                return "missing required field " + field.name + " in " + this.type.fullName;
+                return "missing required field " + field.name + " in " + this.fullName;
         } else if (field.resolvedType instanceof Enum && field.resolvedType.valuesById[value] === undefined)
             return "invalid enum value " + field.name + " = " + value + " in " + this.fullName;
         else if (field.resolvedType instanceof Type) {

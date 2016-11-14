@@ -84,15 +84,11 @@ function State(writer) {
      * @type {number}
      */
     this.len = writer.len;
-
-    /**
-     * Current remembered id.
-     * @type {number}
-     */
-    this.id = writer.id;
 }
 
 Writer.State = State;
+
+var ArrayImpl =  typeof Uint8Array !== 'undefined' ? Uint8Array : Array;
 
 /**
  * Constructs a new writer.
@@ -130,12 +126,6 @@ function Writer() {
      * @type {State[]}
      */
     this.stack = [];
-
-    /**
-     * Remembered id.
-     * @type {mumber}
-     */
-    this.id = -1;
 
     // When a value is written, the writer calculates its byte length and puts it into a linked
     // list of operations to perform when finish() is called. This both allows us to allocate
@@ -350,10 +340,9 @@ WriterPrototype.double = function write_double(value) {
     return this.push(writeDouble, 8, value);
 };
 
-function writeBytes(buf, pos, val) {
-    for (var i = 0, k = val.length; i < k; ++i)
-        buf[pos + i] = val[i];
-}
+var writeBytes = ArrayImpl.prototype.set
+    ? function writeBytesSet(buf, pos, val) { buf.set(val, pos); }
+    : function writeBytesFor(buf, pos, val) { for (var i = 0; i < val.length; ++i) buf[pos + i] = val[i]; };
 
 /**
  * Writes a sequence of bytes.
@@ -427,14 +416,12 @@ WriterPrototype.string = function write_string(value) {
  * Forks this writer's state by pushing it to a stack and reusing the remaining buffer
  * for a new set of write operations. A call to {@link Writer#reset} or {@link Writer#finish}
  * resets the writer to the previous state.
- * @param {number} id Id to remember until {@link Writer#ldelim} is called.
  * @returns {Writer} `this`
  */
-WriterPrototype.fork = function fork(id) {
+WriterPrototype.fork = function fork() {
     this.stack.push(new State(this));
     this.head = this.tail = new Op(noop, 0, 0);
     this.len = 0;
-    this.id  = id;
     return this;
 };
 
@@ -449,38 +436,31 @@ WriterPrototype.reset = function reset() {
         this.head = state.head;
         this.tail = state.tail;
         this.len  = state.len;
-        this.id   = state.id;
     } else {
         this.head = this.tail = new Op(noop, 0, 0);
         this.len  = 0;
-        this.id   = -1;
     }
     return this;
 };
 
 /**
  * Resets to the last state and appends the fork state's current write length as a varint followed by its operations.
- * @param {boolean} required Whether the forked payload is required even when empty.
- * @returns {Writer} `this` 
+ * @param {number} [id] Id with wire type 2 to prepend where applicable
+ * @returns {Writer} `this`
  */
-WriterPrototype.ldelim = function ldelim(required) {
+WriterPrototype.ldelim = function ldelim(id) {
     var head = this.head,
         tail = this.tail,
-        len  = this.len,
-        id   = this.id;
+        len  = this.len;
     this.reset();
-    if (len || required) {
-        if (id !== -1)
-            this.tag(id, 2);
-        this.uint32(len);
-        this.tail.next = head.next; // skip noop
-        this.tail = tail;
-        this.len += len;
-    }
+    if (id !== undefined)
+        this.tag(id, 2);
+    this.uint32(len);
+    this.tail.next = head.next; // skip noop
+    this.tail = tail;
+    this.len += len;
     return this;
 };
-
-var ArrayImpl =  typeof Uint8Array !== 'undefined' ? Uint8Array : Array;
 
 /**
  * Finishes the current sequence of write operations and frees all resources.
@@ -579,7 +559,7 @@ BufferWriterPrototype.string = function write_string_buffer(value) {
  */
 BufferWriterPrototype.finish = function finish_buffer() {
     var head = this.head.next, // skip noop
-        buf  = new util.Buffer(this.len),
+        buf  = util.Buffer.allocUnsafe && util.Buffer.allocUnsafe(this.len) || new util.Buffer(this.len),
         pos  = 0;
     this.reset();
     while (head) {

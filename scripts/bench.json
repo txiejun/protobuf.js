@@ -1,5 +1,5 @@
 {
-    "string" : "Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua.",
+    "string" : "Lorem ipsum dolor sit amet.",
     "uint32" : 9000,
     "inner" : {
         "int32" : 20161110,

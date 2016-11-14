@@ -1,6 +1,6 @@
 /*!
  * protobuf.js v6.0.0-dev (c) 2016 Daniel Wirtz
- * Compiled Mon, 14 Nov 2016 06:53:55 UTC
+ * Compiled Mon, 14 Nov 2016 09:54:55 UTC
  * Licensed under the Apache License, Version 2.0
  * see: https://github.com/dcodeIO/protobuf.js for details
  */
@@ -546,15 +546,15 @@ EncoderPrototype.encode = function encode_fallback(message, writer) { // codegen
                 keyWireType = types.mapKey[keyType];
             var value, keys;
             if ((value = message[field.name]) && (keys = Object.keys(value)).length) {
-                writer.fork(field.id);
+                writer.fork();
                 for (var i = 0; i < keys.length; ++i) {
                     writer.tag(1, keyWireType)[keyType](keys[i]);
                     if (wireType !== undefined)
                         writer.tag(2, wireType)[type](value[keys[i]]);
                     else
-                        field.resolvedType.encode(value[keys[i]], writer.fork(2)).ldelim(true);
+                        field.resolvedType.encode(value[keys[i]], writer.tag(2,2).fork()).ldelim();
                 }
-                writer.ldelim(false);
+                writer.ldelim(field.id);
             }
 
         // Repeated fields
@@ -564,17 +564,17 @@ EncoderPrototype.encode = function encode_fallback(message, writer) { // codegen
 
                 // Packed repeated
                 if (field.packed && types.packed[type] !== undefined) {
-                    writer.fork(field.id);
+                    writer.fork();
                     var i = 0;
                     while (i < values.length)
                         writer[type](values[i++]);
-                    writer.ldelim();
+                    writer.ldelim(field.id);
 
                 // Non-packed
                 } else {
                     var i = 0;
                     while (i < values.length)
-                        field.resolvedType.encode(values[i++], writer.fork(field.id)).ldelim(true);
+                        field.resolvedType.encode(values[i++], writer.tag(field.id,2).fork()).ldelim();
                 }
 
             }
@@ -586,8 +586,13 @@ EncoderPrototype.encode = function encode_fallback(message, writer) { // codegen
             if (required || value !== undefined && value !== field.defaultValue) { // eslint-disable-line eqeqeq
                 if (wireType !== undefined)
                     writer.tag(field.id, wireType)[type](value);
-                else
-                    field.resolvedType.encode(value, writer.fork(field.id)).ldelim(required);
+                else {
+                    field.resolvedType.encode(value, writer.fork());
+                    if (writer.len || required)
+                        writer.ldelim(field.id);
+                    else
+                        writer.reset();
+                }
             }
         }
     }
@@ -618,17 +623,17 @@ EncoderPrototype.generate = function generate() {
             gen
 
     ("if(m%s){", prop)
-        ("w.fork(%d)", field.id)
+        ("w.fork()")
         ("var i=0,ks=Object.keys(m%s)", prop)
         ("while(i<ks.length){")
             ("w.tag(1,%d).%s(ks[i])", keyWireType, keyType);
             if (wireType !== undefined) gen
             ("w.tag(2,%d).%s(m%s[ks[i++]])", wireType, type, prop);
             else gen
-            ("types[%d].encode(m%s[ks[i++]],w.fork(2)).ldelim(true)", i, prop);
+            ("types[%d].encode(m%s[ks[i++]],w.tag(2,2).fork()).ldelim()", i, prop);
             gen
         ("}")
-        ("w.ldelim()")
+        ("w.len&&w.ldelim(%d)||w.reset()", field.id)
     ("}");
 
         // Repeated fields
@@ -638,11 +643,11 @@ EncoderPrototype.generate = function generate() {
             if (field.packed && types.packed[type] !== undefined) { gen
 
     ("if(m%s){", prop)
-        ("w.fork(%d)", field.id)
+        ("w.fork()")
         ("var i=0")
         ("while(i<m%s.length)", prop)
             ("w.%s(m%s[i++])", type, prop)
-        ("w.ldelim()")
+        ("w.len&&w.ldelim(%d)||w.reset()", field.id)
     ("}");
 
             // Non-packed
@@ -651,7 +656,7 @@ EncoderPrototype.generate = function generate() {
     ("if(m%s){", prop)
         ("var i=0")
         ("while(i<m%s.length)", prop)
-            ("types[%d].encode(m%s[i++],w.fork(%d)).ldelim(true)", i, prop, field.id)
+            ("types[%d].encode(m%s[i++],w.tag(%d,2).fork()).ldelim()", i, prop, field.id)
     ("}");
 
             }
@@ -662,8 +667,10 @@ EncoderPrototype.generate = function generate() {
     ("if(m%s!==undefined&&m%s!==%j)", prop, prop, field.defaultValue); 
             if (wireType !== undefined) gen
         ("w.tag(%d,%d).%s(m%s)", field.id, wireType, type, prop);
+            else if (field.required) gen
+        ("types[%d].encode(m%s,w.tag(%d,2).fork()).ldelim()", i, prop, field.id);
             else gen
-        ("types[%d].encode(m%s,w.fork(%d)).ldelim(%j)", i, prop, field.id, field.required);
+        ("types[%d].encode(m%s,w.fork()).len&&w.ldelim(%d)||w.reset()", i, prop, field.id);
     
         }
     }
@@ -4633,7 +4640,7 @@ TypePrototype.encode = function encode(message, writer) {
  * @returns {Writer} writer
  */
 TypePrototype.encodeDelimited = function encodeDelimited(message, writer) {
-    return this.encode(message, writer).ldelim(true);
+    return this.encode(message, writer).ldelim();
 };
 
 /**
@@ -4669,7 +4676,7 @@ TypePrototype.verify = function verify(message) {
     var verifier = new Verifier(this);
     this.verify = codegen.supported
         ? verifier.generate()
-        : verifier.verify.bind(verifier);
+        : verifier.verify;
     return this.verify(message);
 };
 
@@ -5088,20 +5095,48 @@ function Verifier(type) {
 /** @alias Verifier.prototype */
 var VerifierPrototype = Verifier.prototype;
 
+// This is here to mimic Type so that fallback functions work without having to bind()
+Object.defineProperties(VerifierPrototype, {
+
+    /**
+     * Fields of this verifier's message type as an array for iteration.
+     * @name Verifier#fieldsArray
+     * @type {Field[]}
+     * @readonly
+     */
+    fieldsArray: {
+        get: function() {
+            return this.type.fieldsArray;
+        }
+    },
+
+    /**
+     * Full name of this verifier's message type.
+     * @name Verifier#fullName
+     * @type {string}
+     * @readonly
+     */
+    fullName: {
+        get: function() {
+            return this.type.fullName;
+        }
+    }
+});
+
 /**
  * Verifies a runtime message of this verifier's message type.
  * @param {Prototype|Object} message Runtime message or plain object to verify
  * @returns {?string} `null` if valid, otherwise the reason why it is not
  */
 VerifierPrototype.verify = function verify_fallback(message) {
-    var fields = this.type.fieldsArray, i = 0, k = fields.length,
+    var fields = this.fieldsArray, i = 0, k = fields.length,
         reason;
     while (i < k) {
         var field = fields[i++].resolve(),
             value = message[field.name];
         if (value === undefined || value === null) {
             if (field.required)
-                return "missing required field " + field.name + " in " + this.type.fullName;
+                return "missing required field " + field.name + " in " + this.fullName;
         } else if (field.resolvedType instanceof Enum && field.resolvedType.valuesById[value] === undefined)
             return "invalid enum value " + field.name + " = " + value + " in " + this.fullName;
         else if (field.resolvedType instanceof Type) {
@@ -5244,15 +5279,11 @@ function State(writer) {
      * @type {number}
      */
     this.len = writer.len;
-
-    /**
-     * Current remembered id.
-     * @type {number}
-     */
-    this.id = writer.id;
 }
 
 Writer.State = State;
+
+var ArrayImpl =  typeof Uint8Array !== 'undefined' ? Uint8Array : Array;
 
 /**
  * Constructs a new writer.
@@ -5290,12 +5321,6 @@ function Writer() {
      * @type {State[]}
      */
     this.stack = [];
-
-    /**
-     * Remembered id.
-     * @type {mumber}
-     */
-    this.id = -1;
 
     // When a value is written, the writer calculates its byte length and puts it into a linked
     // list of operations to perform when finish() is called. This both allows us to allocate
@@ -5510,10 +5535,9 @@ WriterPrototype.double = function write_double(value) {
     return this.push(writeDouble, 8, value);
 };
 
-function writeBytes(buf, pos, val) {
-    for (var i = 0, k = val.length; i < k; ++i)
-        buf[pos + i] = val[i];
-}
+var writeBytes = ArrayImpl.prototype.set
+    ? function writeBytesSet(buf, pos, val) { buf.set(val, pos); }
+    : function writeBytesFor(buf, pos, val) { for (var i = 0; i < val.length; ++i) buf[pos + i] = val[i]; };
 
 /**
  * Writes a sequence of bytes.
@@ -5587,14 +5611,12 @@ WriterPrototype.string = function write_string(value) {
  * Forks this writer's state by pushing it to a stack and reusing the remaining buffer
  * for a new set of write operations. A call to {@link Writer#reset} or {@link Writer#finish}
  * resets the writer to the previous state.
- * @param {number} id Id to remember until {@link Writer#ldelim} is called.
  * @returns {Writer} `this`
  */
-WriterPrototype.fork = function fork(id) {
+WriterPrototype.fork = function fork() {
     this.stack.push(new State(this));
     this.head = this.tail = new Op(noop, 0, 0);
     this.len = 0;
-    this.id  = id;
     return this;
 };
 
@@ -5609,38 +5631,31 @@ WriterPrototype.reset = function reset() {
         this.head = state.head;
         this.tail = state.tail;
         this.len  = state.len;
-        this.id   = state.id;
     } else {
         this.head = this.tail = new Op(noop, 0, 0);
         this.len  = 0;
-        this.id   = -1;
     }
     return this;
 };
 
 /**
  * Resets to the last state and appends the fork state's current write length as a varint followed by its operations.
- * @param {boolean} required Whether the forked payload is required even when empty.
- * @returns {Writer} `this` 
+ * @param {number} [id] Id with wire type 2 to prepend where applicable
+ * @returns {Writer} `this`
  */
-WriterPrototype.ldelim = function ldelim(required) {
+WriterPrototype.ldelim = function ldelim(id) {
     var head = this.head,
         tail = this.tail,
-        len  = this.len,
-        id   = this.id;
+        len  = this.len;
     this.reset();
-    if (len || required) {
-        if (id !== -1)
-            this.tag(id, 2);
-        this.uint32(len);
-        this.tail.next = head.next; // skip noop
-        this.tail = tail;
-        this.len += len;
-    }
+    if (id !== undefined)
+        this.tag(id, 2);
+    this.uint32(len);
+    this.tail.next = head.next; // skip noop
+    this.tail = tail;
+    this.len += len;
     return this;
 };
-
-var ArrayImpl =  typeof Uint8Array !== 'undefined' ? Uint8Array : Array;
 
 /**
  * Finishes the current sequence of write operations and frees all resources.
@@ -5739,7 +5754,7 @@ BufferWriterPrototype.string = function write_string_buffer(value) {
  */
 BufferWriterPrototype.finish = function finish_buffer() {
     var head = this.head.next, // skip noop
-        buf  = new util.Buffer(this.len),
+        buf  = util.Buffer.allocUnsafe && util.Buffer.allocUnsafe(this.len) || new util.Buffer(this.len),
         pos  = 0;
     this.reset();
     while (head) {
