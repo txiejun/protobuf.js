@@ -271,6 +271,8 @@ Compatibility
 
 * The library will try to generate optimized type specific encoders and decoders at runtime, which requires `new Function(...)` (basically `eval`) support. If code generation is not supported, it uses an equivalent but slower fallback.
 
+* Options are supported but handled differeently than the official implementation does because the internal structure of this package does not rely on `descriptor.proto`.
+
 * If you'd like to use node's buffer API in the browser, you can use [feross/buffer](https://github.com/feross/buffer) for example and assign its constructor, or that of any compatible library, to `protobuf.util.Buffer`.
 
 * If you need a proper way to work with 64 bit values (uint64, int64 etc.), you can install [long.js](https://github.com/dcodeIO/long.js) alongside this library. Just as with buffers, you can assign its constructor to `protobuf.util.Long`. All 64 bit numbers will then be returned as a `Long` instance instead of a possibly unsafe JavaScript number ([see](https://github.com/dcodeIO/long.js)).

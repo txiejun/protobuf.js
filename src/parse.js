@@ -20,6 +20,12 @@ function lower(token) {
     return token === null ? null : token.toLowerCase();
 }
 
+function camelCase(name) {
+    return name.substring(0,1)
+         + name.substring(1)
+               .replace(/_([a-z])(?=[a-z]|$)/g, function($0, $1) { return $1.toUpperCase(); });
+}
+
 var s_required = "required",
     s_repeated = "repeated",
     s_optional = "optional",
@@ -288,6 +294,7 @@ function parse(source, root, visible) {
         var name = next();
         if (!nameRe.test(name))
             throw illegal(name, s_name);
+        name = camelCase(name);
         skip("=");
         var id = parseNumber(next());
         var field = parseInlineOptions(new Field(name, id, type, rule, extend));
@@ -307,6 +314,9 @@ function parse(source, root, visible) {
             throw illegal(valueType, s_type);
         skip(">");
         var name = next();
+        if (!nameRe.test(name))
+            throw illegal(name, s_name);
+        name = camelCase(name);
         skip("=");
         var id = parseId(next());
         parent.add(parseInlineOptions(new MapField(name, id, keyType, valueType)));
@@ -316,6 +326,7 @@ function parse(source, root, visible) {
         var name = next();
         if (!nameRe.test(name))
             throw illegal(name, s_name);
+        name = camelCase(name);
         var oneof = new OneOf(name);
         if (skip(s_open, true)) {
             while ((token = next()) !== s_close) {

@@ -43,6 +43,12 @@ function push(line) {
     out.push(ind + line);
 }
 
+function under_score(name) {
+    return name.substring(0,1)
+         + name.substring(1)
+               .replace(/([A-Z])(?=[a-z]|$)/g, function($0, $1) { return "_" + $1.toLowerCase(); });
+}
+
 function buildRoot(root) {
     root.resolveAll();
     var pkg = [];
@@ -142,7 +148,7 @@ function buildField(field) {
         sb.push("repeated", field.type);
     else
         sb.push(field.type);
-    sb.push(field.name, "=", field.id);
+    sb.push(under_score(field.name), "=", field.id);
     if (field.repeated && !field.packed)
         sb.push("[packed=false]");
     push(sb.join(" ") + ";");
@@ -171,13 +177,13 @@ function consolidateExtends(nested) {
 
 function buildOneOf(oneof) {
     push("");
-    push("oneof " + oneof.name + " {");
+    push("oneof " + under_score(oneof.name) + " {");
     ++indent; first = true;
     oneof.oneof.forEach(function(fieldName) {
         var field = oneof.parent.get(fieldName);
         if (first)
             push(""), first = false;
-        push(field.type + " " + field.name + " = " + field.id + ";");
+        push(field.type + " " + under_score(field.name) + " = " + field.id + ";");
     });
     --indent;
     push("}");
