@@ -83,8 +83,19 @@ Object.defineProperties(NamespacePrototype, {
                 this._object[(obj = nested[i++]).name] = obj.object;
             return this._object;
         }
-    }
+    },
 
+    /**
+     * Determines whether this is a plain namespace and not a type or service.
+     * @name Namespace#plain
+     * @type {boolean}
+     * @readonly
+     */
+    plain: {
+        get: function() {
+            return !(this instanceof Type || this instanceof Service);
+        }
+    }
 });
 
 /**

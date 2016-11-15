@@ -1,6 +1,6 @@
 /*!
  * protobuf.js v6.0.0-dev (c) 2016 Daniel Wirtz
- * Compiled Mon, 14 Nov 2016 17:09:44 UTC
+ * Compiled Tue, 15 Nov 2016 01:02:59 UTC
  * Licensed under the Apache License, Version 2.0
  * see: https://github.com/dcodeIO/protobuf.js for details
  */
@@ -1765,8 +1765,19 @@ Object.defineProperties(NamespacePrototype, {
                 this._object[(obj = nested[i++]).name] = obj.object;
             return this._object;
         }
-    }
+    },
 
+    /**
+     * Determines whether this is a plain namespace and not a type or service.
+     * @name Namespace#plain
+     * @type {boolean}
+     * @readonly
+     */
+    plain: {
+        get: function() {
+            return !(this instanceof Type || this instanceof Service);
+        }
+    }
 });
 
 /**
@@ -2367,6 +2378,7 @@ OneOfPrototype.add = function add(field) {
         throw _TypeError("field", "a Field");
     if (field.parent)
         field.parent.remove(field);
+    this.oneof.push(field.name);
     this._fields.push(field);
     field.partOf = this; // field.parent remains null
     addFieldsToParent(this);
@@ -2593,7 +2605,7 @@ function parse(source, root, visible) {
         pkg = next();
         if (!typeRefRe.test(pkg))
             throw illegal(pkg, s_name);
-        ptr = ptr.define(pkg);
+        ptr = ptr.define(pkg, visible);
         skip(s_semi);
     }
 
@@ -2711,9 +2723,7 @@ function parse(source, root, visible) {
         parent.add(parseInlineOptions(new Field(name, id, type, rule, extend)));
     }
 
-    function parseMapField(parent, token) {
-        if (!isProto3)
-            throw illegal(token);
+    function parseMapField(parent) {
         skip("<");
         var keyType = next();
         if (types.mapKey[keyType] === undefined)
@@ -2739,8 +2749,10 @@ function parse(source, root, visible) {
                 if (token === s_option) {
                     parseOption(oneof, token);
                     skip(s_semi);
-                } else
+                } else {
+                    push(token);
                     parseField(oneof, s_optional);
+                }
             }
             skip(s_semi, true);
         } else
@@ -2924,28 +2936,39 @@ function parse(source, root, visible) {
 
     var token;
     while ((token = next()) !== null) {
-        if (parseCommon(ptr, token)) {
-            head = false;
-            continue;
-        }
-        if (!head)
-            throw illegal(token);
         var tokenLower = lower(token);
         switch (tokenLower) {
 
             case "package":
+                if (!head)
+                    throw illegal(token);
                 parsePackage();
                 break;
 
             case "import":
+                if (!head)
+                    throw illegal(token);
                 parseImport();
                 break;
 
             case "syntax":
+                if (!head)
+                    throw illegal(token);
                 parseSyntax();
                 break;
 
+            case s_option:
+                if (!head)
+                    throw illegal(token);
+                parseOption(root, token);
+                skip(s_semi);
+                break;
+
             default:
+                if (parseCommon(ptr, token)) {
+                    head = false;
+                    continue;
+                }
                 throw illegal(token);
         }
     }
@@ -3623,6 +3646,10 @@ RootPrototype.addLoaded = function addLoaded(filename) {
  * @returns {undefined}
  */
 function importGoogleTypes(root, visible) {
+    if (visible === undefined)
+        visible = null;
+    else if (visible !== null && typeof visible !== 'boolean')
+        throw util._TypeError("visible", "a boolean or null");
 
     var // bool     = "bool",
         int32    = "int32",
@@ -3796,6 +3823,7 @@ function importGoogleTypes(root, visible) {
         if (!root.addLoaded(gp + "/" + protoName + ".proto"))
             return;
         types[protoName].forEach(function(type) {
+            type.visible = visible;
             ns.add(type);
             root.common[type.name] = type;
         });

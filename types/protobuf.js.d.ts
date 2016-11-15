@@ -1,6 +1,6 @@
 /*
  * protobuf.js v6.0.0-dev TypeScript definitions
- * Generated Mon, 14 Nov 2016 09:55:00 UTC
+ * Generated Tue, 15 Nov 2016 01:02:27 UTC
  */
 declare module protobuf {
 
@@ -613,6 +613,14 @@ declare module protobuf {
        * @readonly
        */
       nestedArray: ReflectionObject[];
+   
+      /**
+       * Determines whether this is a plain namespace and not a type or service.
+       * @name Namespace#plain
+       * @type {boolean}
+       * @readonly
+       */
+      plain: boolean;
    
       /**
        * Tests if the specified JSON object describes not another reflection object.
@@ -1230,6 +1238,16 @@ declare module protobuf {
        * @returns {undefined}
        */
       static importGoogleTypes(root: Root, visible?: boolean): undefined;
+   
+      /**
+       * Resolves the path of an imported file, relative to the importing origin.
+       * This method exists so you can override it with your own logic in case your imports are scattered over multiple directories.
+       * @function
+       * @param {string} origin The file name of the importing file
+       * @param {string} target The file name being imported
+       * @returns {string} Resolved path to `target`
+       */
+      resolvePath(origin: string, target: string): string;
    
       /**
        * Loads one or multiple .proto or preprocessed .json files into this root namespace.

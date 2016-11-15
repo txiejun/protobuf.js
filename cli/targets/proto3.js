@@ -12,7 +12,7 @@ module.exports = proto_target;
 
 var out = [];
 var indent = 0;
-var firstField = false;
+var first = false;
 
 /**
  * .proto target.
@@ -22,16 +22,14 @@ var firstField = false;
 function proto_target(root, options, callback) {
     process.nextTick(function() {
         try {
-            out.push('syntax = "proto3";');
-            root.resolveAll();
-            root.nestedArray.forEach(build);
+            buildRoot(root);
             callback(null, out.join('\n'));
         } catch (err) {
             callback(err);
         } finally {
             out = [];
             indent = 0;
-            firstField = false;
+            first = false;
         }
     });
 }
@@ -45,16 +43,41 @@ function push(line) {
     out.push(ind + line);
 }
 
-function build(object) {
+function buildRoot(root) {
+    root.resolveAll();
+    var pkg = [];
+    var ptr = root;
+    do {
+        var nested = ptr.nestedArray.filter(isBuilt);
+        if (nested.length === 1 && nested[0] instanceof Namespace && nested[0].plain) {
+            ptr = nested[0];
+            if (ptr !== root)
+                pkg.push(ptr.name);
+        } else
+            break;
+    } while (true);
+    if (pkg.length)
+        out.push("package " + pkg.join(".") + ";", "");
+    out.push('syntax = "proto3";');
+    ptr.nestedArray.forEach(build);
+}
+
+function isBuilt(object) {
     if (!object.visible)
+        return false;
+    return true;    
+}
+
+function build(object) {
+    if (!isBuilt(object))
         return;
     if (object instanceof Enum)
         buildEnum(object);
     else if (object instanceof Type)
         buildType(object);
-    else if (object instanceof Field) {
+    else if (object instanceof Field)
         buildField(object);
-    } else if (object instanceof OneOf)
+    else if (object instanceof OneOf)
         buildOneOf(object);
     else if (object instanceof Service)
         buildService(object);
@@ -66,12 +89,9 @@ function build(object) {
 
 function buildNamespace(namespace) { // just a namespace, not a type etc.
     push("");
-    push("message " + namespace.name + "{");
+    push("message " + namespace.name + " {");
     ++indent;
-    if (namespace.nestedArray.length) {
-        push("");
-        namespace.nestedArray.forEach(build);
-    }
+    consolidateExtends(namespace.nestedArray).remaining.forEach(build);
     --indent;
     push("}");
 }
@@ -79,12 +99,16 @@ function buildNamespace(namespace) { // just a namespace, not a type etc.
 function buildEnum(enm) {
     push("");
     push("enum " + enm.name + " {");
-    ++indent;
+    ++indent; first = true;
     Object.keys(enm.values).forEach(function(name) {
         var val = enm.values[name];
+        if (first) {
+            push("");
+            first = false;
+        }
         push(name + " = " + val + ";");
     });
-    --indent;
+    --indent; first = false;
     push("}");
 }
 
@@ -92,24 +116,19 @@ function buildType(type) {
     push("");
     push("message " + type.name + " {");
     ++indent;
-    type.oneofsArray.forEach(buildOneOf);
-    firstField = true;
-    type.fieldsArray.forEach(buildField);
-    type.nestedArray.forEach(build);
+    type.oneofsArray.forEach(build);
+    first = true;
+    type.fieldsArray.forEach(build);
+    consolidateExtends(type.nestedArray).remaining.forEach(build);
     --indent;
     push("}");
 }
 
 function buildField(field) {
-    if (field.partOf || field.declaringField)
+    if (field.partOf || field.declaringType || field.extend !== undefined)
         return;
-    if (field.extensionField) { // TODO: Consolidate
-        push("extend " + field.extend + " {");
-        ++indent;
-    } else if (firstField) {
-        push("");
-        firstField = false;
-    }
+    if (first)
+        first = false, push("");
     var sb = [];
     if (field.map)
         sb.push("map<" + field.keyType + ", " + field.type + ">");
@@ -121,17 +140,39 @@ function buildField(field) {
     if (field.repeated && !field.packed)
         sb.push("[packed=false]");
     push(sb.join(" ") + ";");
-    if (field.extensionField) {
+}
+
+function consolidateExtends(nested) {
+    var ext = {};
+    nested = nested.filter(function(obj) {
+        if (!(obj instanceof Field) || obj.extend === undefined)
+            return true;
+        (ext[obj.extend] || (ext[obj.extend] = [])).push(obj);
+        return false;
+    });
+    Object.keys(ext).forEach(function(extend) {
+        push("");
+        push("extend " + extend + " {");
+        ++indent; first = true;
+        ext[extend].forEach(buildField);
         --indent;
         push("}");
-    }
+    });
+    return {
+        remaining: nested
+    };
 }
 
 function buildOneOf(oneof) {
     push("");
     push("oneof " + oneof.name + " {");
-    ++indent;
-    oneof.fields.forEach(buildField);
+    ++indent; first = true;
+    oneof.oneof.forEach(function(fieldName) {
+        var field = oneof.parent.get(fieldName);
+        if (first)
+            push(""), first = false;
+        push(field.type + " " + field.name + " = " + field.id + ";");
+    });
     --indent;
     push("}");
 }
@@ -139,8 +180,8 @@ function buildOneOf(oneof) {
 function buildService(service) {
     push("service " + service.name + " {");
     ++indent;
-    service.methodsArray.forEach(buildMethod);
-    service.nestedArray.forEach(build);
+    service.methodsArray.forEach(build);
+    consolidateExtends(service.nestedArray).remaining.forEach(build);
     --indent;
     push("}");
 }

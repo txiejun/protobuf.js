@@ -87,6 +87,7 @@ OneOfPrototype.add = function add(field) {
         throw _TypeError("field", "a Field");
     if (field.parent)
         field.parent.remove(field);
+    this.oneof.push(field.name);
     this._fields.push(field);
     field.partOf = this; // field.parent remains null
     addFieldsToParent(this);

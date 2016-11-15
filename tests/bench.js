@@ -8,11 +8,11 @@ tap.test("bench.proto and bench.json", function(test) {
         if (err)
             return test.threw(err);
         var Test = root.lookup("Test");
+        var data = require("../bench/bench.json");
 
         test.test("within browsers", function(test) {
             util.Buffer = null;
             try {
-                var data = require("../bench/bench.json");
                 test.equal(Test.verify(data), null, "should verify our test data");
                 var writer = Test.encode(data);
                 test.ok(writer instanceof protobuf.Writer && !(writer instanceof protobuf.BufferWriter), "should use a Writer");
@@ -27,7 +27,6 @@ tap.test("bench.proto and bench.json", function(test) {
 
         test.test("within node", function(test) {
 
-            var data = require("../scripts/bench.json");
             var writer = Test.encode(data);
             test.type(writer, protobuf.BufferWriter, "should use a BufferWriter");
 

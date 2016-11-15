@@ -177,7 +177,7 @@ function parse(source, root, visible) {
         pkg = next();
         if (!typeRefRe.test(pkg))
             throw illegal(pkg, s_name);
-        ptr = ptr.define(pkg);
+        ptr = ptr.define(pkg, visible);
         skip(s_semi);
     }
 
@@ -295,9 +295,7 @@ function parse(source, root, visible) {
         parent.add(parseInlineOptions(new Field(name, id, type, rule, extend)));
     }
 
-    function parseMapField(parent, token) {
-        if (!isProto3)
-            throw illegal(token);
+    function parseMapField(parent) {
         skip("<");
         var keyType = next();
         if (types.mapKey[keyType] === undefined)
@@ -323,8 +321,10 @@ function parse(source, root, visible) {
                 if (token === s_option) {
                     parseOption(oneof, token);
                     skip(s_semi);
-                } else
+                } else {
+                    push(token);
                     parseField(oneof, s_optional);
+                }
             }
             skip(s_semi, true);
         } else
@@ -508,28 +508,39 @@ function parse(source, root, visible) {
 
     var token;
     while ((token = next()) !== null) {
-        if (parseCommon(ptr, token)) {
-            head = false;
-            continue;
-        }
-        if (!head)
-            throw illegal(token);
         var tokenLower = lower(token);
         switch (tokenLower) {
 
             case "package":
+                if (!head)
+                    throw illegal(token);
                 parsePackage();
                 break;
 
             case "import":
+                if (!head)
+                    throw illegal(token);
                 parseImport();
                 break;
 
             case "syntax":
+                if (!head)
+                    throw illegal(token);
                 parseSyntax();
                 break;
 
+            case s_option:
+                if (!head)
+                    throw illegal(token);
+                parseOption(root, token);
+                skip(s_semi);
+                break;
+
             default:
+                if (parseCommon(ptr, token)) {
+                    head = false;
+                    continue;
+                }
                 throw illegal(token);
         }
     }

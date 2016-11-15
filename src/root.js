@@ -89,6 +89,10 @@ RootPrototype.addLoaded = function addLoaded(filename) {
  * @returns {undefined}
  */
 function importGoogleTypes(root, visible) {
+    if (visible === undefined)
+        visible = null;
+    else if (visible !== null && typeof visible !== 'boolean')
+        throw util._TypeError("visible", "a boolean or null");
 
     var // bool     = "bool",
         int32    = "int32",
@@ -262,6 +266,7 @@ function importGoogleTypes(root, visible) {
         if (!root.addLoaded(gp + "/" + protoName + ".proto"))
             return;
         types[protoName].forEach(function(type) {
+            type.visible = visible;
             ns.add(type);
             root.common[type.name] = type;
         });
