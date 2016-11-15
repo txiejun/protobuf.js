@@ -277,8 +277,6 @@ function parse(source, root, visible) {
             skip(s_semi, true);
         } else
             skip(s_semi);
-        if (!isProto3)
-            type.setOption("packed", false, /* ifNotSet */ true);
         type.visible = visible;
         parent.add(type);
     }
@@ -292,7 +290,10 @@ function parse(source, root, visible) {
             throw illegal(name, s_name);
         skip("=");
         var id = parseNumber(next());
-        parent.add(parseInlineOptions(new Field(name, id, type, rule, extend)));
+        var field = parseInlineOptions(new Field(name, id, type, rule, extend));
+        if (field.repeated && isProto3)
+            field.setOption("packed", true, /* ifNotSet */ true);
+        parent.add(field);
     }
 
     function parseMapField(parent) {
@@ -532,7 +533,7 @@ function parse(source, root, visible) {
             case s_option:
                 if (!head)
                     throw illegal(token);
-                parseOption(root, token);
+                parseOption(ptr, token);
                 skip(s_semi);
                 break;
 

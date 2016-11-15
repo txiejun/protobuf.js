@@ -59,6 +59,9 @@ function buildRoot(root) {
     if (pkg.length)
         out.push("package " + pkg.join(".") + ";", "");
     out.push('syntax = "proto3";');
+
+    // file level options don't really make sense with protobuf.js
+    // buildOptions(ptr);
     ptr.nestedArray.forEach(build);
 }
 
@@ -91,6 +94,7 @@ function buildNamespace(namespace) { // just a namespace, not a type etc.
     push("");
     push("message " + namespace.name + " {");
     ++indent;
+    buildOptions(namespace);
     consolidateExtends(namespace.nestedArray).remaining.forEach(build);
     --indent;
     push("}");
@@ -99,6 +103,7 @@ function buildNamespace(namespace) { // just a namespace, not a type etc.
 function buildEnum(enm) {
     push("");
     push("enum " + enm.name + " {");
+    buildOptions(enm);
     ++indent; first = true;
     Object.keys(enm.values).forEach(function(name) {
         var val = enm.values[name];
@@ -116,6 +121,7 @@ function buildType(type) {
     push("");
     push("message " + type.name + " {");
     ++indent;
+    buildOptions(type);
     type.oneofsArray.forEach(build);
     first = true;
     type.fieldsArray.forEach(build);
@@ -136,7 +142,7 @@ function buildField(field) {
         sb.push("repeated", field.type);
     else
         sb.push(field.type);
-    sb.push(field.name, field.id);
+    sb.push(field.name, "=", field.id);
     if (field.repeated && !field.packed)
         sb.push("[packed=false]");
     push(sb.join(" ") + ";");
@@ -188,4 +194,16 @@ function buildService(service) {
 
 function buildMethod(method) {
     push(method.type + " " + method.name + " (" + (method.requestStream ? "stream " : "") + method.requestType + ") returns (" + (method.responseStream ? "stream " : "") + method.responseType + ");");
+}
+
+function buildOptions(object) {
+    if (!object.options)
+        return
+    first = true;
+    Object.keys(object.options).forEach(function(key) {
+        if (first)
+            push(""), first = false;
+        var val = object.options[key];
+        push("option " + key + " = " + JSON.stringify(val) + ";");
+    });
 }

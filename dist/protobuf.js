@@ -1,6 +1,6 @@
 /*!
  * protobuf.js v6.0.0-dev (c) 2016 Daniel Wirtz
- * Compiled Tue, 15 Nov 2016 01:02:59 UTC
+ * Compiled Tue, 15 Nov 2016 07:44:55 UTC
  * Licensed under the Apache License, Version 2.0
  * see: https://github.com/dcodeIO/protobuf.js for details
  */
@@ -2705,8 +2705,6 @@ function parse(source, root, visible) {
             skip(s_semi, true);
         } else
             skip(s_semi);
-        if (!isProto3)
-            type.setOption("packed", false, /* ifNotSet */ true);
         type.visible = visible;
         parent.add(type);
     }
@@ -2720,7 +2718,10 @@ function parse(source, root, visible) {
             throw illegal(name, s_name);
         skip("=");
         var id = parseNumber(next());
-        parent.add(parseInlineOptions(new Field(name, id, type, rule, extend)));
+        var field = parseInlineOptions(new Field(name, id, type, rule, extend));
+        if (field.repeated && isProto3)
+            field.setOption("packed", true, /* ifNotSet */ true);
+        parent.add(field);
     }
 
     function parseMapField(parent) {
@@ -2960,7 +2961,7 @@ function parse(source, root, visible) {
             case s_option:
                 if (!head)
                     throw illegal(token);
-                parseOption(root, token);
+                parseOption(ptr, token);
                 skip(s_semi);
                 break;
 
