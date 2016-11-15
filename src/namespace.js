@@ -78,9 +78,9 @@ Object.defineProperties(NamespacePrototype, {
             if (this._object)
                 return this._object;
             this._object = Object.create(this);
-            var nested = this.nestedArray, i = 0, k = nested.length, obj;
-            while (i < k)
-                this._object[(obj = nested[i++]).name] = obj.object;
+            var nested = this.nestedArray;
+            for (var i = 0; i < nested.length; ++i)
+                this._object[nested[i].name] = nested[i].object;
             return this._object;
         }
     },
@@ -150,14 +150,14 @@ NamespacePrototype.toJSON = function toJSON() {
 NamespacePrototype.addJSON = function addJSON(json) {
     if (json) {
         var keys = Object.keys(json);
-        for (var i = 0, k = keys.length, key; i < k; ++i) {
-            var nested = json[key = keys[i]];
-            for (var j = 0, l = nestedTypes.length, ReflObj; j < l; ++j)
-                if ((ReflObj = nestedTypes[j]).testJSON(nested)) {
-                    this.add(ReflObj.fromJSON(key, nested));
+        for (var i = 0; i < keys.length; ++i) {
+            var nested = json[keys[i]];
+            for (var j = 0; j < nestedTypes.length; ++j)
+                if (nestedTypes[j].testJSON(nested)) {
+                    this.add(nestedTypes[j].fromJSON(keys[i], nested));
                     break;
                 }
-            throw _TypeError("json." + key, "JSON for " + nestedError);
+            throw _TypeError("json." + keys[i], "JSON for " + nestedError);
         }
     }
     return this;
@@ -191,9 +191,9 @@ NamespacePrototype.add = function add(object) {
         if (prev) {
             if (prev instanceof Namespace && !(prev instanceof Type) && object instanceof Type) {
                 // move existing nested objects to the message type and remove the previous namespace
-                var nested = prev.nestedArray, i = 0, k = nested.length;
-                while (i < k)
-                    object.add(nested[i++]);
+                var nested = prev.nestedArray;
+                for (var i = 0; i < nested.length; ++i)
+                    object.add(nested[i]);
                 this.remove(prev);
             } else
                 throw Error("duplicate name '" + object.name + "' in " + this);
@@ -267,8 +267,8 @@ NamespacePrototype.define = function define(path, json, visible) {
  * @returns {Namespace} `this`
  */
 NamespacePrototype.resolveAll = function resolve() {
-    var nested = this.nestedArray, i = 0, k = nested.length;
-    while (i < k)
+    var nested = this.nestedArray, i = 0;
+    while (i < nested.length)
         nested[i++].resolve();
     return ReflectionObject.prototype.resolve.call(this);
 };
@@ -284,14 +284,13 @@ NamespacePrototype.lookup = function lookup(path, parentAlreadyChecked) {
         if (!path.length)
             return null;
         path = path.split('.');
-    }
-    if (!path.length)
+    } else if (!path.length)
         return null;
     // Start at root if path is absolute
     if (path[0] === "")
         return this.root.lookup(path.slice(1));
     // Test if the first part matches any nested object, and if so, traverse if path contains more
-    var found = this.nested && this.nested[path[0]];
+    var found = this.get(path[0]);
     if (found && (path.length === 1 || found.lookup && (found = found.lookup(path.slice(1), true))))
         return found;
     // If there hasn't been a match, try again at the parent

@@ -5,6 +5,23 @@ var protobuf  = require("../src/index"),
     suite     = new benchmark.Suite(),
     data      = require("./bench.json");
 
+// NOTE: This benchmark is flawed in that it compares protocol buffers, which is purely a binary
+// format, to JSON, which is purely a string format.
+//
+// This matters because the encoder must convert JavaScript strings from UTF16 LE characters to
+// UTF8 bytes with every string operation while JSON does not require a mechanism for this by its
+// own. Ultimately, also strings produced by JSON must be converted to UTF8 somewhere down the
+// road, but this implementation detail is hidden from JS code and cannot be reliably measured
+// here without using some sort of networking layer, i.e. a tcp socket, in between, which would
+// most likely introduce other statistical difficulties.
+//
+// Hence, this benchmark compares to both pure string performance of JSON and additional binary
+// conversion of the same data using node buffers, which is probably slower than what a modern
+// VM uses under the hood when sending string data over the network. Comparable JSON performance
+// should be somewhere in between what is displayed as "to string" and "to buffer", though.
+//
+// To experience the impact by yourself, increase string lengths within bench.json.
+
 protobuf.load(require.resolve("./bench.proto"), function onload(err, root) {
     var Test = root.lookup("Test");
 

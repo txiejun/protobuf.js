@@ -169,15 +169,15 @@ function normalizePath(path) {
     var prefix = "";
     if (abs)
         prefix = parts.shift() + '/';
-    for (var i = 0, k = parts.length, part; i < k;) {
-        if ((part = parts[i]) === '..') {
+    for (var i = 0; i < parts.length;) {
+        if (parts[i] === '..') {
             if (i > 0)
                 parts.splice(--i, 2);
             else if (abs)
                 parts.splice(i, 1);
             else
                 ++i;
-        } else if (part === '.')
+        } else if (parts[i] === '.')
             parts.splice(i, 1);
         else
             ++i;
@@ -239,9 +239,9 @@ util.fromHash = function fromHash(hash, unsigned) {
 util.merge = function merge(dst, src, ifNotSet) {
     if (src) {
         var keys = Object.keys(src);
-        for (var i = 0, k = keys.length, key; i < k; ++i)
-            if (!dst[key = keys[i]] || !ifNotSet)
-                dst[key] = src[key];
+        for (var i = 0; i < keys.length; ++i)
+            if (dst[keys[i]] === undefined || !ifNotSet)
+                dst[keys[i]] = src[keys[i]];
     }
     return dst;
 };

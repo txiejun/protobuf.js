@@ -105,7 +105,7 @@ Object.defineProperties(TypePrototype, {
                 return this._fieldsById;
             this._fieldsById = {};
             var names = Object.keys(this.fields);
-            for (var i = 0, k = names.length; i < k; ++i) {
+            for (var i = 0; i < names.length; ++i) {
                 var field = this.fields[names[i]],
                     id = field.id;
                 if (this._fieldsById[id])
@@ -140,7 +140,7 @@ Object.defineProperties(TypePrototype, {
                 return this._requiredFieldsArray;
             var fields   = this.fieldsArray,
                 required = this._requiredFieldsArray = [];
-            for (var i = 0, k = fields.length; i < k; ++i)
+            for (var i = 0; i < fields.length; ++i)
                 if (fields[i].required)
                     required[required.length] = fields[i];
             return required;
@@ -228,9 +228,9 @@ Type.fromJSON = function fromJSON(name, json) {
     if (json.nested)
         Object.keys(json.nested).forEach(function(nestedName) {
             var nested = json.nested[nestedName];
-            for (var i = 0, k = nestedTypes.length, clazz; i < k; ++i)
-                if ((clazz = nestedTypes[i]).testJSON(nested)) {
-                    type.add(clazz.fromJSON(nestedName, nested));
+            for (var i = 0; i < nested.length; ++i)
+                if (nested[i].testJSON(nested)) {
+                    type.add(nested[i].fromJSON(nestedName, nested));
                     return;
                 }
             throw Error("invalid nested object in " + type + ": " + nestedName);
@@ -280,11 +280,11 @@ TypePrototype.toJSON = function toJSON() {
  * @override
  */
 TypePrototype.resolveAll = function resolve() {
-    var fields = this.fieldsArray, i = 0, k = fields.length;
-    while (i < k)
+    var fields = this.fieldsArray, i = 0;
+    while (i < fields.length)
         fields[i++].resolve();
-    var oneofs = this.oneofsArray; i = 0; k = oneofs.length;
-    while (i < k)
+    var oneofs = this.oneofsArray; i = 0;
+    while (i < oneofs.length)
         oneofs[i++].resolve();
     return NamespacePrototype.resolve.call(this);
 };

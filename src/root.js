@@ -412,9 +412,9 @@ RootPrototype._handleAdd = function handleAdd(object) {
     if (object instanceof Field && object.extend !== undefined && !object.extensionField && !handleExtension(object) && this.pendingExtensions.indexOf(object) < 0)
         this.pendingExtensions.push(object);
     else if (object instanceof Namespace) {
-        var nested = object.nestedArray, k = nested.length; i = 0;
-        while (i < k) // recurse into the namespace
-            this._handleAdd(nested[i++]);
+        var nested = object.nestedArray;
+        for (var i = 0; i < nested.length; ++i) // recurse into the namespace
+            this._handleAdd(nested[i]);
     }
 };
 
@@ -438,9 +438,9 @@ RootPrototype._handleRemove = function handleRemove(object) {
             object.extensionField = null;
         }
     } else if (object instanceof Namespace) {
-        var nested = object.nestedArray, i = 0, k = nested.length;
-        while (i < k) // recurse into the namespace
-            this._handleRemove(nested[i++]);
+        var nested = object.nestedArray;
+        for (var i = 0; i < nested.length; ++i) // recurse into the namespace
+            this._handleRemove(nested[i]);
     }
 };
 

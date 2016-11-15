@@ -56,11 +56,11 @@ Object.defineProperties(ServicePrototype, {
             if (this._object)
                 return this._object;
             this._object = Object.create(this);
-            var nested = this.methodsArray, i = 0, k = nested.length, obj;
-            while (i < k)
+            var nested = this.methodsArray, i = 0, obj;
+            while (i < nested.length)
                 this._object[(obj = nested[i++]).name] = obj.object;
-            nested = this.nestedArray; i = 0; k = nested.length;
-            while (i < k)
+            nested = this.nestedArray; i = 0;
+            while (i < nested.length)
                 this._object[(obj = nested[i++]).name] = obj.object;
             return this._object;
         }
@@ -129,9 +129,9 @@ ServicePrototype.get = function get(name) {
  * @override
  */
 ServicePrototype.resolveAll = function resolve() {
-    var methods = this.methodsArray, i = 0, k = methods.length;
-    while (i < k)
-        methods[i++].resolve();
+    var methods = this.methodsArray;
+    for (var i = 0; i < methods.length; ++i)
+        methods[i].resolve();
     return NamespacePrototype.resolve.call(this);
 };
 

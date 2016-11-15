@@ -1,6 +1,6 @@
 /*!
  * protobuf.js v6.0.0-dev (c) 2016 Daniel Wirtz
- * Compiled Tue, 15 Nov 2016 07:44:55 UTC
+ * Compiled Tue, 15 Nov 2016 08:50:50 UTC
  * Licensed under the Apache License, Version 2.0
  * see: https://github.com/dcodeIO/protobuf.js for details
  */
@@ -1236,18 +1236,18 @@ inherits.defineProperties = function defineProperties(prototype, type) {
         prototypeProperties[oneof.resolve().name] = {
             get: function() {
                 var keys = oneof.oneof;
-                for (var i = 0, k = keys.length, key; i < k; ++i) {
-                    var field = oneof.parent.fields[key = keys[i]];
-                    if (this[key] != field.defaultValue) // eslint-disable-line eqeqeq
-                        return key;
+                for (var i = 0; i < keys.length; ++i) {
+                    var field = oneof.parent.fields[keys[i]];
+                    if (this[keys[i]] != field.defaultValue) // eslint-disable-line eqeqeq
+                        return keys[i];
                 }
                 return undefined;
             },
             set: function(value) {
                 var keys = oneof.oneof;
-                for (var i = 0, k = keys.length, key; i < k; ++i) {
-                    if ((key = keys[i]) !== value)
-                        delete this[key];
+                for (var i = 0; i < keys.length; ++i) {
+                    if (keys[i] !== value)
+                        delete this[keys[i]];
                 }
             }
         };
@@ -1760,9 +1760,9 @@ Object.defineProperties(NamespacePrototype, {
             if (this._object)
                 return this._object;
             this._object = Object.create(this);
-            var nested = this.nestedArray, i = 0, k = nested.length, obj;
-            while (i < k)
-                this._object[(obj = nested[i++]).name] = obj.object;
+            var nested = this.nestedArray;
+            for (var i = 0; i < nested.length; ++i)
+                this._object[nested[i].name] = nested[i].object;
             return this._object;
         }
     },
@@ -1832,14 +1832,14 @@ NamespacePrototype.toJSON = function toJSON() {
 NamespacePrototype.addJSON = function addJSON(json) {
     if (json) {
         var keys = Object.keys(json);
-        for (var i = 0, k = keys.length, key; i < k; ++i) {
-            var nested = json[key = keys[i]];
-            for (var j = 0, l = nestedTypes.length, ReflObj; j < l; ++j)
-                if ((ReflObj = nestedTypes[j]).testJSON(nested)) {
-                    this.add(ReflObj.fromJSON(key, nested));
+        for (var i = 0; i < keys.length; ++i) {
+            var nested = json[keys[i]];
+            for (var j = 0; j < nestedTypes.length; ++j)
+                if (nestedTypes[j].testJSON(nested)) {
+                    this.add(nestedTypes[j].fromJSON(keys[i], nested));
                     break;
                 }
-            throw _TypeError("json." + key, "JSON for " + nestedError);
+            throw _TypeError("json." + keys[i], "JSON for " + nestedError);
         }
     }
     return this;
@@ -1873,9 +1873,9 @@ NamespacePrototype.add = function add(object) {
         if (prev) {
             if (prev instanceof Namespace && !(prev instanceof Type) && object instanceof Type) {
                 // move existing nested objects to the message type and remove the previous namespace
-                var nested = prev.nestedArray, i = 0, k = nested.length;
-                while (i < k)
-                    object.add(nested[i++]);
+                var nested = prev.nestedArray;
+                for (var i = 0; i < nested.length; ++i)
+                    object.add(nested[i]);
                 this.remove(prev);
             } else
                 throw Error("duplicate name '" + object.name + "' in " + this);
@@ -1949,8 +1949,8 @@ NamespacePrototype.define = function define(path, json, visible) {
  * @returns {Namespace} `this`
  */
 NamespacePrototype.resolveAll = function resolve() {
-    var nested = this.nestedArray, i = 0, k = nested.length;
-    while (i < k)
+    var nested = this.nestedArray, i = 0;
+    while (i < nested.length)
         nested[i++].resolve();
     return ReflectionObject.prototype.resolve.call(this);
 };
@@ -1966,14 +1966,13 @@ NamespacePrototype.lookup = function lookup(path, parentAlreadyChecked) {
         if (!path.length)
             return null;
         path = path.split('.');
-    }
-    if (!path.length)
+    } else if (!path.length)
         return null;
     // Start at root if path is absolute
     if (path[0] === "")
         return this.root.lookup(path.slice(1));
     // Test if the first part matches any nested object, and if so, traverse if path contains more
-    var found = this.nested && this.nested[path[0]];
+    var found = this.get(path[0]);
     if (found && (path.length === 1 || found.lookup && (found = found.lookup(path.slice(1), true))))
         return found;
     // If there hasn't been a match, try again at the parent
@@ -3010,9 +3009,9 @@ function Prototype(properties, options) {
         var any    = !(options && options.fieldsOnly),
             fields = this.constructor.$type.fields,
             keys   = Object.keys(properties);
-        for (var i = 0, k = keys.length, key; i < k; ++i)
-            if (fields[key = keys[i]] || any)
-                this[key] = properties[key];
+        for (var i = 0; i < keys.length; ++i)
+            if (fields[keys[i]] || any)
+                this[keys[i]] = properties[keys[i]];
     }
 }
 
@@ -3033,7 +3032,7 @@ Prototype.prototype.asJSON = function asJSON(options) {
         fields = this.constructor.$type.fields,
         json   = {};
     var keys   = Object.keys(this);
-    for (var i = 0, k = keys.length, key; i < k; ++i) {
+    for (var i = 0, key; i < keys.length; ++i) {
         var field = fields[key = keys[i]],
             value = this[key];
         if (field) {
@@ -3970,9 +3969,9 @@ RootPrototype._handleAdd = function handleAdd(object) {
     if (object instanceof Field && object.extend !== undefined && !object.extensionField && !handleExtension(object) && this.pendingExtensions.indexOf(object) < 0)
         this.pendingExtensions.push(object);
     else if (object instanceof Namespace) {
-        var nested = object.nestedArray, k = nested.length; i = 0;
-        while (i < k) // recurse into the namespace
-            this._handleAdd(nested[i++]);
+        var nested = object.nestedArray;
+        for (var i = 0; i < nested.length; ++i) // recurse into the namespace
+            this._handleAdd(nested[i]);
     }
 };
 
@@ -3996,9 +3995,9 @@ RootPrototype._handleRemove = function handleRemove(object) {
             object.extensionField = null;
         }
     } else if (object instanceof Namespace) {
-        var nested = object.nestedArray, i = 0, k = nested.length;
-        while (i < k) // recurse into the namespace
-            this._handleRemove(nested[i++]);
+        var nested = object.nestedArray;
+        for (var i = 0; i < nested.length; ++i) // recurse into the namespace
+            this._handleRemove(nested[i]);
     }
 };
 
@@ -4068,11 +4067,11 @@ Object.defineProperties(ServicePrototype, {
             if (this._object)
                 return this._object;
             this._object = Object.create(this);
-            var nested = this.methodsArray, i = 0, k = nested.length, obj;
-            while (i < k)
+            var nested = this.methodsArray, i = 0, obj;
+            while (i < nested.length)
                 this._object[(obj = nested[i++]).name] = obj.object;
-            nested = this.nestedArray; i = 0; k = nested.length;
-            while (i < k)
+            nested = this.nestedArray; i = 0;
+            while (i < nested.length)
                 this._object[(obj = nested[i++]).name] = obj.object;
             return this._object;
         }
@@ -4141,9 +4140,9 @@ ServicePrototype.get = function get(name) {
  * @override
  */
 ServicePrototype.resolveAll = function resolve() {
-    var methods = this.methodsArray, i = 0, k = methods.length;
-    while (i < k)
-        methods[i++].resolve();
+    var methods = this.methodsArray;
+    for (var i = 0; i < methods.length; ++i)
+        methods[i].resolve();
     return NamespacePrototype.resolve.call(this);
 };
 
@@ -4475,7 +4474,7 @@ Object.defineProperties(TypePrototype, {
                 return this._fieldsById;
             this._fieldsById = {};
             var names = Object.keys(this.fields);
-            for (var i = 0, k = names.length; i < k; ++i) {
+            for (var i = 0; i < names.length; ++i) {
                 var field = this.fields[names[i]],
                     id = field.id;
                 if (this._fieldsById[id])
@@ -4510,7 +4509,7 @@ Object.defineProperties(TypePrototype, {
                 return this._requiredFieldsArray;
             var fields   = this.fieldsArray,
                 required = this._requiredFieldsArray = [];
-            for (var i = 0, k = fields.length; i < k; ++i)
+            for (var i = 0; i < fields.length; ++i)
                 if (fields[i].required)
                     required[required.length] = fields[i];
             return required;
@@ -4598,9 +4597,9 @@ Type.fromJSON = function fromJSON(name, json) {
     if (json.nested)
         Object.keys(json.nested).forEach(function(nestedName) {
             var nested = json.nested[nestedName];
-            for (var i = 0, k = nestedTypes.length, clazz; i < k; ++i)
-                if ((clazz = nestedTypes[i]).testJSON(nested)) {
-                    type.add(clazz.fromJSON(nestedName, nested));
+            for (var i = 0; i < nested.length; ++i)
+                if (nested[i].testJSON(nested)) {
+                    type.add(nested[i].fromJSON(nestedName, nested));
                     return;
                 }
             throw Error("invalid nested object in " + type + ": " + nestedName);
@@ -4650,11 +4649,11 @@ TypePrototype.toJSON = function toJSON() {
  * @override
  */
 TypePrototype.resolveAll = function resolve() {
-    var fields = this.fieldsArray, i = 0, k = fields.length;
-    while (i < k)
+    var fields = this.fieldsArray, i = 0;
+    while (i < fields.length)
         fields[i++].resolve();
-    var oneofs = this.oneofsArray; i = 0; k = oneofs.length;
-    while (i < k)
+    var oneofs = this.oneofsArray; i = 0;
+    while (i < oneofs.length)
         oneofs[i++].resolve();
     return NamespacePrototype.resolve.call(this);
 };
@@ -5093,15 +5092,15 @@ function normalizePath(path) {
     var prefix = "";
     if (abs)
         prefix = parts.shift() + '/';
-    for (var i = 0, k = parts.length, part; i < k;) {
-        if ((part = parts[i]) === '..') {
+    for (var i = 0; i < parts.length;) {
+        if (parts[i] === '..') {
             if (i > 0)
                 parts.splice(--i, 2);
             else if (abs)
                 parts.splice(i, 1);
             else
                 ++i;
-        } else if (part === '.')
+        } else if (parts[i] === '.')
             parts.splice(i, 1);
         else
             ++i;
@@ -5163,9 +5162,9 @@ util.fromHash = function fromHash(hash, unsigned) {
 util.merge = function merge(dst, src, ifNotSet) {
     if (src) {
         var keys = Object.keys(src);
-        for (var i = 0, k = keys.length, key; i < k; ++i)
-            if (!dst[key = keys[i]] || !ifNotSet)
-                dst[key] = src[key];
+        for (var i = 0; i < keys.length; ++i)
+            if (dst[keys[i]] === undefined || !ifNotSet)
+                dst[keys[i]] = src[keys[i]];
     }
     return dst;
 };
@@ -5272,7 +5271,7 @@ VerifierPrototype.generate = function generate() {
     var gen = util.codegen("m");
     var hasReasonVar = false;
 
-    for (var i = 0, k = fields.length; i < k; ++i) {
+    for (var i = 0; i < fields.length; ++i) {
         var field = fields[i].resolve(),
             prop  = util.safeProp(field.name);
         if (field.required) { gen

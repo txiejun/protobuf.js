@@ -170,18 +170,18 @@ inherits.defineProperties = function defineProperties(prototype, type) {
         prototypeProperties[oneof.resolve().name] = {
             get: function() {
                 var keys = oneof.oneof;
-                for (var i = 0, k = keys.length, key; i < k; ++i) {
-                    var field = oneof.parent.fields[key = keys[i]];
-                    if (this[key] != field.defaultValue) // eslint-disable-line eqeqeq
-                        return key;
+                for (var i = 0; i < keys.length; ++i) {
+                    var field = oneof.parent.fields[keys[i]];
+                    if (this[keys[i]] != field.defaultValue) // eslint-disable-line eqeqeq
+                        return keys[i];
                 }
                 return undefined;
             },
             set: function(value) {
                 var keys = oneof.oneof;
-                for (var i = 0, k = keys.length, key; i < k; ++i) {
-                    if ((key = keys[i]) !== value)
-                        delete this[key];
+                for (var i = 0; i < keys.length; ++i) {
+                    if (keys[i] !== value)
+                        delete this[keys[i]];
                 }
             }
         };

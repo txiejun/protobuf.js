@@ -90,7 +90,7 @@ VerifierPrototype.generate = function generate() {
     var gen = util.codegen("m");
     var hasReasonVar = false;
 
-    for (var i = 0, k = fields.length; i < k; ++i) {
+    for (var i = 0; i < fields.length; ++i) {
         var field = fields[i].resolve(),
             prop  = util.safeProp(field.name);
         if (field.required) { gen

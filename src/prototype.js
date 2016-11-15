@@ -24,9 +24,9 @@ function Prototype(properties, options) {
         var any    = !(options && options.fieldsOnly),
             fields = this.constructor.$type.fields,
             keys   = Object.keys(properties);
-        for (var i = 0, k = keys.length, key; i < k; ++i)
-            if (fields[key = keys[i]] || any)
-                this[key] = properties[key];
+        for (var i = 0; i < keys.length; ++i)
+            if (fields[keys[i]] || any)
+                this[keys[i]] = properties[keys[i]];
     }
 }
 
@@ -47,7 +47,7 @@ Prototype.prototype.asJSON = function asJSON(options) {
         fields = this.constructor.$type.fields,
         json   = {};
     var keys   = Object.keys(this);
-    for (var i = 0, k = keys.length, key; i < k; ++i) {
+    for (var i = 0, key; i < keys.length; ++i) {
         var field = fields[key = keys[i]],
             value = this[key];
         if (field) {
