@@ -5,7 +5,7 @@ var Field = require("./field");
 /** @alias Field.prototype */
 var FieldPrototype = Field.prototype;
 /** @alias MapField.prototype */
-var MapFieldPrototype = Field.extend(MapField, [ "keyType" ]);
+var MapFieldPrototype = Field.extend(MapField);
 
 var Enum    = require("./enum"),
     types   = require("./types"),
@@ -31,7 +31,7 @@ function MapField(name, id, keyType, type, options) {
      * Key type.
      * @type {string}
      */
-    this.keyType = keyType; // exposed, marker
+    this.keyType = keyType; // toJSON, marker
 
     /**
      * Resolved key type if not a basic type.
@@ -61,6 +61,19 @@ MapField.testJSON = function testJSON(json) {
  */
 MapField.fromJSON = function fromJSON(name, json) {
     return new MapField(name, json.id, json.keyType, json.type, json.options);
+};
+
+/**
+ * @override
+ */
+MapFieldPrototype.toJSON = function toJSON() {
+    return this.visible && {
+        keyType : this.keyType,
+        type    : this.type,
+        id      : this.id,
+        extend  : this.extend,
+        options : this.options
+    } || undefined;
 };
 
 /**

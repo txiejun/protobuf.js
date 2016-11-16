@@ -1,6 +1,6 @@
 /*!
  * protobuf.js v6.0.0-dev (c) 2016 Daniel Wirtz
- * Compiled Wed, 16 Nov 2016 02:51:47 UTC
+ * Compiled Wed, 16 Nov 2016 11:28:57 UTC
  * Licensed under the Apache License, Version 2.0
  * see: https://github.com/dcodeIO/protobuf.js for details
  */
@@ -699,7 +699,7 @@ module.exports = Enum;
 
 var ReflectionObject = require(12);
 /** @alias Enum.prototype */
-var EnumPrototype = ReflectionObject.extend(Enum, [ "values" ]);
+var EnumPrototype = ReflectionObject.extend(Enum);
 
 var util = require(22);
 
@@ -721,7 +721,7 @@ function Enum(name, values, options) {
      * Enum values by name.
      * @type {Object.<string,number>}
      */
-    this.values = values || {}; // exposed, marker
+    this.values = values || {}; // toJSON, marker
 
     /**
      * Cached values by id.
@@ -762,6 +762,11 @@ Object.defineProperties(EnumPrototype, {
     }
 });
 
+function clearCache(enm) {
+    enm._valuesById = null;
+    return enm;
+}
+
 /**
  * Tests if the specified JSON object describes an enum.
  * @param {*} json JSON object to test
@@ -783,6 +788,16 @@ Enum.fromJSON = function fromJSON(name, json) {
 };
 
 /**
+ * @override
+ */
+EnumPrototype.toJSON = function toJSON() {
+    return this.visible && {
+        options : this.options,
+        values  : this.values
+    } || undefined;
+};
+
+/**
  * Adds a value to this enum.
  * @param {string} name Value name
  * @param {number} id Value id
@@ -794,8 +809,7 @@ EnumPrototype.add = function(name, id) {
     if (!util.isInteger(id) || id < 0)
         throw _TypeError("id", "a non-negative integer");
     this.values[name] = id;
-    this._valuesById = null;
-    return this;
+    return clearCache(this);
 };
 
 /**
@@ -807,8 +821,7 @@ EnumPrototype.remove = function(name) {
     if (!util.isString(name))
         throw _TypeError("name");
     delete this.values[name];
-    this._valuesById = null;
-    return this;
+    return clearCache(this);
 };
 
 },{"12":12,"22":22}],6:[function(require,module,exports){
@@ -817,7 +830,7 @@ module.exports = Field;
 
 var ReflectionObject = require(12);
 /** @alias Field.prototype */
-var FieldPrototype = ReflectionObject.extend(Field, [ "rule", "type", "id", "extend" ]);
+var FieldPrototype = ReflectionObject.extend(Field);
 
 var Type      = require(20),
     Enum      = require(5),
@@ -861,25 +874,25 @@ function Field(name, id, type, rule, extend, options) {
      * Field rule, if any.
      * @type {string|undefined}
      */
-    this.rule = rule && rule !== 'optional' ? rule : undefined; // exposed
+    this.rule = rule && rule !== 'optional' ? rule : undefined; // toJSON
 
     /**
      * Field type.
      * @type {string}
      */
-    this.type = type; // exposed
+    this.type = type; // toJSON
 
     /**
      * Unique field id.
      * @type {number}
      */
-    this.id = id; // exposed, marker
+    this.id = id; // toJSON, marker
 
     /**
      * Extended type if different from parent.
      * @type {string|undefined}
      */
-    this.extend = extend || undefined; // exposed
+    this.extend = extend || undefined; // toJSON
 
     /**
      * Whether this field is required.
@@ -1002,6 +1015,19 @@ Field.fromJSON = function fromJSON(name, json) {
     if (json.keyType !== undefined)
         return MapField.fromJSON(name, json);
     return new Field(name, json.id, json.type, json.role, json.extend, json.options);
+};
+
+/**
+ * @override
+ */
+FieldPrototype.toJSON = function toJSON() {
+    return this.visible && {
+        rule    : this.rule !== "optional" && this.rule || undefined,
+        type    : this.type,
+        id      : this.id,
+        extend  : this.extend,
+        options : this.options
+    } || undefined;
 };
 
 /**
@@ -1436,7 +1462,7 @@ var Field = require(6);
 /** @alias Field.prototype */
 var FieldPrototype = Field.prototype;
 /** @alias MapField.prototype */
-var MapFieldPrototype = Field.extend(MapField, [ "keyType" ]);
+var MapFieldPrototype = Field.extend(MapField);
 
 var Enum    = require(5),
     types   = require(21),
@@ -1462,7 +1488,7 @@ function MapField(name, id, keyType, type, options) {
      * Key type.
      * @type {string}
      */
-    this.keyType = keyType; // exposed, marker
+    this.keyType = keyType; // toJSON, marker
 
     /**
      * Resolved key type if not a basic type.
@@ -1497,6 +1523,19 @@ MapField.fromJSON = function fromJSON(name, json) {
 /**
  * @override
  */
+MapFieldPrototype.toJSON = function toJSON() {
+    return this.visible && {
+        keyType : this.keyType,
+        type    : this.type,
+        id      : this.id,
+        extend  : this.extend,
+        options : this.options
+    } || undefined;
+};
+
+/**
+ * @override
+ */
 MapFieldPrototype.resolve = function resolve() {
     if (this.resolved)
         return this;
@@ -1519,7 +1558,7 @@ module.exports = Method;
 
 var ReflectionObject = require(12);
 /** @alias Method.prototype */
-var MethodPrototype = ReflectionObject.extend(Method, [ "type", "requestType", "requestStream", "responseType", "responseStream" ]);
+var MethodPrototype = ReflectionObject.extend(Method);
 
 var Type = require(20),
     util = require(22);
@@ -1532,7 +1571,7 @@ var _TypeError = util._TypeError;
  * @extends ReflectionObject
  * @constructor
  * @param {string} name Method name
- * @param {string} type Method type, usually `"rpc"`
+ * @param {string|undefined} type Method type, usually `"rpc"`
  * @param {string} requestType Request message type
  * @param {string} responseType Response message type
  * @param {boolean} [requestStream] Whether the request is streamed
@@ -1560,31 +1599,31 @@ function Method(name, type, requestType, responseType, requestStream, responseSt
      * Method type.
      * @type {string}
      */
-    this.type = type || "rpc"; // exposed
+    this.type = type || "rpc"; // toJSON
 
     /**
      * Request type.
      * @type {string}
      */
-    this.requestType = requestType; // exposed, marker
+    this.requestType = requestType; // toJSON, marker
 
     /**
      * Whether requests are streamed or not.
      * @type {boolean|undefined}
      */
-    this.requestStream = requestStream ? true : undefined; // exposed
+    this.requestStream = requestStream ? true : undefined; // toJSON
 
     /**
      * Response type.
      * @type {string}
      */
-    this.responseType = responseType; // exposed
+    this.responseType = responseType; // toJSON
 
     /**
      * Whether responses are streamed or not.
      * @type {boolean|undefined}
      */
-    this.responseStream = responseStream ? true : undefined; // exposed
+    this.responseStream = responseStream ? true : undefined; // toJSON
 
     /**
      * Resolved request type.
@@ -1627,6 +1666,20 @@ Method.testJSON = function testJSON(json) {
  */
 Method.fromJSON = function fromJSON(name, json) {
     return new Method(name, json.type, json.requestType, json.responseType, json.requestStream, json.responseStream, json.options);
+};
+
+/**
+ * @override
+ */
+MethodPrototype.toJSON = function toJSON() {
+    return this.visible && {
+        type           : this.type !== "rpc" && this.type || undefined,
+        requestType    : this.requestType,
+        requestStream  : this.requestStream,
+        responseType   : this.responseType,
+        responseStream : this.responseStream,
+        options        : this.options
+    } || undefined;
 };
 
 /**
@@ -1685,7 +1738,7 @@ module.exports = Namespace;
 
 var ReflectionObject = require(12);
 /** @alias Namespace.prototype */
-var NamespacePrototype = ReflectionObject.extend(Namespace, [ "nested" ]);
+var NamespacePrototype = ReflectionObject.extend(Namespace);
 
 var Enum    = require(5),
     Type    = require(20),
@@ -1713,7 +1766,7 @@ function Namespace(name, options) {
      * Nested objects by name.
      * @type {Object.<string,ReflectionObject>|undefined}
      */
-    this.nested = undefined; // exposed
+    this.nested = undefined; // toJSON
 
     /**
      * Cached nested objects as an array.
@@ -1811,17 +1864,18 @@ Namespace.fromJSON = function fromJSON(name, json) {
  * @override
  */
 NamespacePrototype.toJSON = function toJSON() {
-    var nestedVisible = {}, found = false;
+    var nested = {}, anyVisible = false;
     this.nestedArray.forEach(function(obj) {
         var json = obj.toJSON();
         if (json) {
-            nestedVisible[obj.name] = json;
-            found = true;
+            nested[obj.name] = json;
+            anyVisible = true;
         }
     });
-    return found
-        ? { nested: nestedVisible }
-        : undefined;
+    return anyVisible && {
+        options : this.options,
+        nested  : nested
+    } || undefined;
 };
 
 /**
@@ -2007,21 +2061,10 @@ function ReflectionObject(name, options) {
         throw _TypeError("options", "an object");
 
     /**
-     * JSON-exportable properties.
-     * @type {?Object.<string,*>}
-     */
-    this.properties = null;
-
-    // NOTE: The properties object contains the JSON-exportable descriptor of this object. The
-    // properties object itself will most likely not benefit from hidden class optimizations, which
-    // is ok, because it actually is a hash map, while the rest of the class is not. All properties
-    // marked as "exposed" below and within other reflection objects are stored within properties.
-
-    /**
      * Options.
      * @type {Object.<string,*>|undefined}
      */
-    this.options = options; // exposed
+    this.options = options; // toJSON
 
     /**
      * Unique name within its namespace.
@@ -2058,8 +2101,6 @@ function ReflectionObject(name, options) {
 
 /** @alias ReflectionObject.prototype */
 var ReflectionObjectPrototype = ReflectionObject.prototype;
-
-exposeJSON(ReflectionObjectPrototype, [ "options" ]);
 
 Object.defineProperties(ReflectionObjectPrototype, {
 
@@ -2132,60 +2173,26 @@ Object.defineProperties(ReflectionObjectPrototype, {
 });
 
 /**
- * Extends this class and optionally exposes the specified properties to JSON.
+ * Lets the specified constructor extend this class.
  * @memberof ReflectionObject
  * @param {Function} constructor Extending constructor
- * @param {string[]} [exposePropertyNames] Properties to expose to JSON
  * @returns {Object} Prototype
  * @this ReflectionObject
  */
-function extend(constructor, exposePropertyNames) {
+function extend(constructor) {
     var proto = constructor.prototype = Object.create(this.prototype);
     proto.constructor = constructor;
     constructor.extend = extend;
-    if (exposePropertyNames)
-        exposeJSON(proto, exposePropertyNames);
     return proto;
 }
 
 /**
- * Exposes the specified properties to JSON.
- * @memberof ReflectionObject
- * @param {Object} prototype Prototype to expose the properties upon
- * @param {string[]} propertyNames Property names to expose
- * @returns {Object} prototype
- * @this ReflectionObject
- */
-function exposeJSON(prototype, propertyNames) {
-    var descriptors = {};
-    propertyNames.forEach(function(name) {
-        descriptors[name] = {
-            get: function() {
-                if (!this.properties)
-                    return undefined;
-                return this.properties[name];
-            },
-            set: function(value) {
-                (this.properties || (this.properties = {}))[name] = value;
-            }
-        };
-    });
-    Object.defineProperties(prototype, descriptors);
-    return prototype;
-}
-
-ReflectionObject.exposeJSON = exposeJSON;
-
-/**
  * Converts this reflection object to its JSON representation.
- * Returns only properties that have explicitly been exposed.
- * @returns {Object} JSON object
- * @see {@link ReflectionObject.exposeJSON}
+ * @returns {Object|undefined} JSON object or `undefined` if not visible
+ * @abstract
  */
 ReflectionObjectPrototype.toJSON = function toJSON() {
-    if (this.visible)
-        return this.properties || undefined;
-    return undefined;
+    throw Error("not implemented");
 };
 
 /**
@@ -2293,7 +2300,7 @@ module.exports = OneOf;
 
 var ReflectionObject = require(12);
 /** @alias OneOf.prototype */
-var OneOfPrototype = ReflectionObject.extend(OneOf, [ "oneof" ]);
+var OneOfPrototype = ReflectionObject.extend(OneOf);
 
 var Field = require(6),
     util  = require(22);
@@ -2322,7 +2329,7 @@ function OneOf(name, fieldNames, options) {
      * Field names that belong to this oneof.
      * @type {Array.<string>}
      */
-    this.oneof = fieldNames || []; // exposed, marker
+    this.oneof = fieldNames || []; // toJSON, marker
 
     /**
      * Fields that belong to this oneof and are possibly not yet added to its parent.
@@ -2350,6 +2357,16 @@ OneOf.testJSON = function testJSON(json) {
  */
 OneOf.fromJSON = function fromJSON(name, json) {
     return new OneOf(name, json.oneof, json.options);
+};
+
+/**
+ * @override
+ */
+OneOfPrototype.toJSON = function toJSON() {
+    return this.visible && {
+        oneof   : this.oneof,
+        options : this.options
+    } || undefined;
 };
 
 /**
@@ -4027,7 +4044,7 @@ var Namespace = require(11);
 /** @alias Namespace.prototype */
 var NamespacePrototype = Namespace.prototype;
 /** @alias Service.prototype */
-var ServicePrototype = Namespace.extend(Service, [ "methods" ]);
+var ServicePrototype = Namespace.extend(Service);
 
 var Method = require(10),
     util   = require(22);
@@ -4048,7 +4065,7 @@ function Service(name, options) {
      * Service methods.
      * @type {Object.<string,Method>}
      */
-    this.methods = {}; // exposed, marker
+    this.methods = {}; // toJSON, marker
 
     /**
      * Cached methods as an array.
@@ -4119,25 +4136,22 @@ Service.fromJSON = function fromJSON(name, json) {
  * @override
  */
 ServicePrototype.toJSON = function toJSON() {
-
-    var methodsVisible = {}, found = false;
+    var methods = {}, anyVisible = false;
     this.methodsArray.forEach(function(obj) {
         var json = obj.toJSON();
         if (json) {
-            methodsVisible[obj.name] = json;
-            found = true;
+            methods[obj.name] = json;
+            anyVisible = true;
         }
     });
-    if (!found) methodsVisible = undefined;
+    if (!anyVisible) methods = undefined;
     
-    var superVisible = NamespacePrototype.toJSON.call(this);
-    if (!superVisible) {
-        if (!methodsVisible)
-            return undefined;
-        superVisible = {};
-    }
-    superVisible.methods = methodsVisible;
-    return superVisible;
+    var inherited = NamespacePrototype.toJSON.call(this);
+    return (inherited || methods) && {
+        options : inherited && inherited.options || undefined,
+        methods : methods,
+        nested  : inherited && inherited.nested || undefined
+    } || undefined;
 };
 
 /**
@@ -4385,7 +4399,7 @@ var Namespace = require(11);
 /** @alias Namespace.prototype */
 var NamespacePrototype = Namespace.prototype;
 /** @alias Type.prototype */
-var TypePrototype = Namespace.extend(Type, [ "fields", "oneofs", "extensions", "reserved" ]);
+var TypePrototype = Namespace.extend(Type);
 
 var Enum      = require(5),
     OneOf     = require(13),
@@ -4415,25 +4429,25 @@ function Type(name, options) {
      * Message fields.
      * @type {Object.<string,Field>}
      */
-    this.fields = {};  // exposed, marker
+    this.fields = {};  // toJSON, marker
 
     /**
      * Oneofs declared within this namespace, if any.
      * @type {Object.<string,OneOf>}
      */
-    this.oneofs = undefined; // exposed
+    this.oneofs = undefined; // toJSON
 
     /**
      * Extension ranges, if any.
      * @type {number[][]}
      */
-    this.extensions = undefined; // exposed
+    this.extensions = undefined; // toJSON
 
     /**
      * Reserved ranges, if any.
      * @type {number[][]}
      */
-    this.reserved = undefined; // exposed
+    this.reserved = undefined; // toJSON
 
     /**
      * Cached fields by id.
@@ -4623,38 +4637,35 @@ Type.fromJSON = function fromJSON(name, json) {
  * @override
  */
 TypePrototype.toJSON = function toJSON() {
-
-    var fieldsVisible = {}, found = false;
+    var fields = {}, anyVisible = false;
     this.fieldsArray.forEach(function(obj) {
         if (obj.declaringField)
             return;
         var json = obj.toJSON();
         if (json) {
-            fieldsVisible[obj.name] = json;
-            found = true;
+            fields[obj.name] = json;
+            anyVisible = true;
         }
     });
-    if (!found) fieldsVisible = undefined;
+    if (!anyVisible) fields = undefined;
 
-    var oneofsVisible = {}; found = 0;
+    var oneofs = {}; anyVisible = false;
     this.oneofsArray.forEach(function(obj) {
         var json = obj.toJSON();
         if (json) {
-            oneofsVisible[obj.name] = json;
-            found = true;
+            oneofs[obj.name] = json;
+            anyVisible = true;
         }
     });
-    if (!found) oneofsVisible = undefined;
+    if (!anyVisible) oneofs = undefined;
     
-    var superVisible = NamespacePrototype.toJSON.call(this);
-    if (!superVisible) {
-        if (!fieldsVisible && !oneofsVisible)
-            return undefined;
-        superVisible = {};
-    }
-    superVisible.fields = fieldsVisible;
-    superVisible.oneofs = oneofsVisible;
-    return superVisible;
+    var inherited = NamespacePrototype.toJSON.call(this);
+    return (inherited || fields || oneofs) && {
+        options : inherited && inherited.options || undefined,
+        oneofs  : oneofs,
+        fields  : fields,
+        nested  : inherited && inherited.nested || undefined
+    } || undefined;
 };
 
 /**

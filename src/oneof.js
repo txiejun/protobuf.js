@@ -3,7 +3,7 @@ module.exports = OneOf;
 
 var ReflectionObject = require("./object");
 /** @alias OneOf.prototype */
-var OneOfPrototype = ReflectionObject.extend(OneOf, [ "oneof" ]);
+var OneOfPrototype = ReflectionObject.extend(OneOf);
 
 var Field = require("./field"),
     util  = require("./util");
@@ -32,7 +32,7 @@ function OneOf(name, fieldNames, options) {
      * Field names that belong to this oneof.
      * @type {Array.<string>}
      */
-    this.oneof = fieldNames || []; // exposed, marker
+    this.oneof = fieldNames || []; // toJSON, marker
 
     /**
      * Fields that belong to this oneof and are possibly not yet added to its parent.
@@ -60,6 +60,16 @@ OneOf.testJSON = function testJSON(json) {
  */
 OneOf.fromJSON = function fromJSON(name, json) {
     return new OneOf(name, json.oneof, json.options);
+};
+
+/**
+ * @override
+ */
+OneOfPrototype.toJSON = function toJSON() {
+    return this.visible && {
+        oneof   : this.oneof,
+        options : this.options
+    } || undefined;
 };
 
 /**

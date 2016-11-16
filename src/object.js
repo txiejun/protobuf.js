@@ -23,21 +23,10 @@ function ReflectionObject(name, options) {
         throw _TypeError("options", "an object");
 
     /**
-     * JSON-exportable properties.
-     * @type {?Object.<string,*>}
-     */
-    this.properties = null;
-
-    // NOTE: The properties object contains the JSON-exportable descriptor of this object. The
-    // properties object itself will most likely not benefit from hidden class optimizations, which
-    // is ok, because it actually is a hash map, while the rest of the class is not. All properties
-    // marked as "exposed" below and within other reflection objects are stored within properties.
-
-    /**
      * Options.
      * @type {Object.<string,*>|undefined}
      */
-    this.options = options; // exposed
+    this.options = options; // toJSON
 
     /**
      * Unique name within its namespace.
@@ -74,8 +63,6 @@ function ReflectionObject(name, options) {
 
 /** @alias ReflectionObject.prototype */
 var ReflectionObjectPrototype = ReflectionObject.prototype;
-
-exposeJSON(ReflectionObjectPrototype, [ "options" ]);
 
 Object.defineProperties(ReflectionObjectPrototype, {
 
@@ -148,60 +135,26 @@ Object.defineProperties(ReflectionObjectPrototype, {
 });
 
 /**
- * Extends this class and optionally exposes the specified properties to JSON.
+ * Lets the specified constructor extend this class.
  * @memberof ReflectionObject
  * @param {Function} constructor Extending constructor
- * @param {string[]} [exposePropertyNames] Properties to expose to JSON
  * @returns {Object} Prototype
  * @this ReflectionObject
  */
-function extend(constructor, exposePropertyNames) {
+function extend(constructor) {
     var proto = constructor.prototype = Object.create(this.prototype);
     proto.constructor = constructor;
     constructor.extend = extend;
-    if (exposePropertyNames)
-        exposeJSON(proto, exposePropertyNames);
     return proto;
 }
 
 /**
- * Exposes the specified properties to JSON.
- * @memberof ReflectionObject
- * @param {Object} prototype Prototype to expose the properties upon
- * @param {string[]} propertyNames Property names to expose
- * @returns {Object} prototype
- * @this ReflectionObject
- */
-function exposeJSON(prototype, propertyNames) {
-    var descriptors = {};
-    propertyNames.forEach(function(name) {
-        descriptors[name] = {
-            get: function() {
-                if (!this.properties)
-                    return undefined;
-                return this.properties[name];
-            },
-            set: function(value) {
-                (this.properties || (this.properties = {}))[name] = value;
-            }
-        };
-    });
-    Object.defineProperties(prototype, descriptors);
-    return prototype;
-}
-
-ReflectionObject.exposeJSON = exposeJSON;
-
-/**
  * Converts this reflection object to its JSON representation.
- * Returns only properties that have explicitly been exposed.
- * @returns {Object} JSON object
- * @see {@link ReflectionObject.exposeJSON}
+ * @returns {Object|undefined} JSON object or `undefined` if not visible
+ * @abstract
  */
 ReflectionObjectPrototype.toJSON = function toJSON() {
-    if (this.visible)
-        return this.properties || undefined;
-    return undefined;
+    throw Error("not implemented");
 };
 
 /**

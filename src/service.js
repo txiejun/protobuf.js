@@ -5,7 +5,7 @@ var Namespace = require("./namespace");
 /** @alias Namespace.prototype */
 var NamespacePrototype = Namespace.prototype;
 /** @alias Service.prototype */
-var ServicePrototype = Namespace.extend(Service, [ "methods" ]);
+var ServicePrototype = Namespace.extend(Service);
 
 var Method = require("./method"),
     util   = require("./util");
@@ -26,7 +26,7 @@ function Service(name, options) {
      * Service methods.
      * @type {Object.<string,Method>}
      */
-    this.methods = {}; // exposed, marker
+    this.methods = {}; // toJSON, marker
 
     /**
      * Cached methods as an array.
@@ -97,25 +97,22 @@ Service.fromJSON = function fromJSON(name, json) {
  * @override
  */
 ServicePrototype.toJSON = function toJSON() {
-
-    var methodsVisible = {}, found = false;
+    var methods = {}, anyVisible = false;
     this.methodsArray.forEach(function(obj) {
         var json = obj.toJSON();
         if (json) {
-            methodsVisible[obj.name] = json;
-            found = true;
+            methods[obj.name] = json;
+            anyVisible = true;
         }
     });
-    if (!found) methodsVisible = undefined;
+    if (!anyVisible) methods = undefined;
     
-    var superVisible = NamespacePrototype.toJSON.call(this);
-    if (!superVisible) {
-        if (!methodsVisible)
-            return undefined;
-        superVisible = {};
-    }
-    superVisible.methods = methodsVisible;
-    return superVisible;
+    var inherited = NamespacePrototype.toJSON.call(this);
+    return (inherited || methods) && {
+        options : inherited && inherited.options || undefined,
+        methods : methods,
+        nested  : inherited && inherited.nested || undefined
+    } || undefined;
 };
 
 /**

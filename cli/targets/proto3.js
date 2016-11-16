@@ -66,8 +66,7 @@ function buildRoot(root) {
         out.push("package " + pkg.join(".") + ";", "");
     out.push('syntax = "proto3";');
 
-    // file level options don't really make sense with protobuf.js
-    // buildOptions(ptr);
+    buildOptions(ptr);
     ptr.nestedArray.forEach(build);
 }
 

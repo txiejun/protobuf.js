@@ -3,7 +3,7 @@ module.exports = Field;
 
 var ReflectionObject = require("./object");
 /** @alias Field.prototype */
-var FieldPrototype = ReflectionObject.extend(Field, [ "rule", "type", "id", "extend" ]);
+var FieldPrototype = ReflectionObject.extend(Field);
 
 var Type      = require("./type"),
     Enum      = require("./enum"),
@@ -47,25 +47,25 @@ function Field(name, id, type, rule, extend, options) {
      * Field rule, if any.
      * @type {string|undefined}
      */
-    this.rule = rule && rule !== 'optional' ? rule : undefined; // exposed
+    this.rule = rule && rule !== 'optional' ? rule : undefined; // toJSON
 
     /**
      * Field type.
      * @type {string}
      */
-    this.type = type; // exposed
+    this.type = type; // toJSON
 
     /**
      * Unique field id.
      * @type {number}
      */
-    this.id = id; // exposed, marker
+    this.id = id; // toJSON, marker
 
     /**
      * Extended type if different from parent.
      * @type {string|undefined}
      */
-    this.extend = extend || undefined; // exposed
+    this.extend = extend || undefined; // toJSON
 
     /**
      * Whether this field is required.
@@ -188,6 +188,19 @@ Field.fromJSON = function fromJSON(name, json) {
     if (json.keyType !== undefined)
         return MapField.fromJSON(name, json);
     return new Field(name, json.id, json.type, json.role, json.extend, json.options);
+};
+
+/**
+ * @override
+ */
+FieldPrototype.toJSON = function toJSON() {
+    return this.visible && {
+        rule    : this.rule !== "optional" && this.rule || undefined,
+        type    : this.type,
+        id      : this.id,
+        extend  : this.extend,
+        options : this.options
+    } || undefined;
 };
 
 /**

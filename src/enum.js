@@ -3,7 +3,7 @@ module.exports = Enum;
 
 var ReflectionObject = require("./object");
 /** @alias Enum.prototype */
-var EnumPrototype = ReflectionObject.extend(Enum, [ "values" ]);
+var EnumPrototype = ReflectionObject.extend(Enum);
 
 var util = require("./util");
 
@@ -25,7 +25,7 @@ function Enum(name, values, options) {
      * Enum values by name.
      * @type {Object.<string,number>}
      */
-    this.values = values || {}; // exposed, marker
+    this.values = values || {}; // toJSON, marker
 
     /**
      * Cached values by id.
@@ -66,6 +66,11 @@ Object.defineProperties(EnumPrototype, {
     }
 });
 
+function clearCache(enm) {
+    enm._valuesById = null;
+    return enm;
+}
+
 /**
  * Tests if the specified JSON object describes an enum.
  * @param {*} json JSON object to test
@@ -87,6 +92,16 @@ Enum.fromJSON = function fromJSON(name, json) {
 };
 
 /**
+ * @override
+ */
+EnumPrototype.toJSON = function toJSON() {
+    return this.visible && {
+        options : this.options,
+        values  : this.values
+    } || undefined;
+};
+
+/**
  * Adds a value to this enum.
  * @param {string} name Value name
  * @param {number} id Value id
@@ -98,8 +113,7 @@ EnumPrototype.add = function(name, id) {
     if (!util.isInteger(id) || id < 0)
         throw _TypeError("id", "a non-negative integer");
     this.values[name] = id;
-    this._valuesById = null;
-    return this;
+    return clearCache(this);
 };
 
 /**
@@ -111,6 +125,5 @@ EnumPrototype.remove = function(name) {
     if (!util.isString(name))
         throw _TypeError("name");
     delete this.values[name];
-    this._valuesById = null;
-    return this;
+    return clearCache(this);
 };

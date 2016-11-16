@@ -3,7 +3,7 @@ module.exports = Namespace;
 
 var ReflectionObject = require("./object");
 /** @alias Namespace.prototype */
-var NamespacePrototype = ReflectionObject.extend(Namespace, [ "nested" ]);
+var NamespacePrototype = ReflectionObject.extend(Namespace);
 
 var Enum    = require("./enum"),
     Type    = require("./type"),
@@ -31,7 +31,7 @@ function Namespace(name, options) {
      * Nested objects by name.
      * @type {Object.<string,ReflectionObject>|undefined}
      */
-    this.nested = undefined; // exposed
+    this.nested = undefined; // toJSON
 
     /**
      * Cached nested objects as an array.
@@ -129,17 +129,18 @@ Namespace.fromJSON = function fromJSON(name, json) {
  * @override
  */
 NamespacePrototype.toJSON = function toJSON() {
-    var nestedVisible = {}, found = false;
+    var nested = {}, anyVisible = false;
     this.nestedArray.forEach(function(obj) {
         var json = obj.toJSON();
         if (json) {
-            nestedVisible[obj.name] = json;
-            found = true;
+            nested[obj.name] = json;
+            anyVisible = true;
         }
     });
-    return found
-        ? { nested: nestedVisible }
-        : undefined;
+    return anyVisible && {
+        options : this.options,
+        nested  : nested
+    } || undefined;
 };
 
 /**

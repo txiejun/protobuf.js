@@ -3,7 +3,7 @@ module.exports = Method;
 
 var ReflectionObject = require("./object");
 /** @alias Method.prototype */
-var MethodPrototype = ReflectionObject.extend(Method, [ "type", "requestType", "requestStream", "responseType", "responseStream" ]);
+var MethodPrototype = ReflectionObject.extend(Method);
 
 var Type = require("./type"),
     util = require("./util");
@@ -16,7 +16,7 @@ var _TypeError = util._TypeError;
  * @extends ReflectionObject
  * @constructor
  * @param {string} name Method name
- * @param {string} type Method type, usually `"rpc"`
+ * @param {string|undefined} type Method type, usually `"rpc"`
  * @param {string} requestType Request message type
  * @param {string} responseType Response message type
  * @param {boolean} [requestStream] Whether the request is streamed
@@ -44,31 +44,31 @@ function Method(name, type, requestType, responseType, requestStream, responseSt
      * Method type.
      * @type {string}
      */
-    this.type = type || "rpc"; // exposed
+    this.type = type || "rpc"; // toJSON
 
     /**
      * Request type.
      * @type {string}
      */
-    this.requestType = requestType; // exposed, marker
+    this.requestType = requestType; // toJSON, marker
 
     /**
      * Whether requests are streamed or not.
      * @type {boolean|undefined}
      */
-    this.requestStream = requestStream ? true : undefined; // exposed
+    this.requestStream = requestStream ? true : undefined; // toJSON
 
     /**
      * Response type.
      * @type {string}
      */
-    this.responseType = responseType; // exposed
+    this.responseType = responseType; // toJSON
 
     /**
      * Whether responses are streamed or not.
      * @type {boolean|undefined}
      */
-    this.responseStream = responseStream ? true : undefined; // exposed
+    this.responseStream = responseStream ? true : undefined; // toJSON
 
     /**
      * Resolved request type.
@@ -111,6 +111,20 @@ Method.testJSON = function testJSON(json) {
  */
 Method.fromJSON = function fromJSON(name, json) {
     return new Method(name, json.type, json.requestType, json.responseType, json.requestStream, json.responseStream, json.options);
+};
+
+/**
+ * @override
+ */
+MethodPrototype.toJSON = function toJSON() {
+    return this.visible && {
+        type           : this.type !== "rpc" && this.type || undefined,
+        requestType    : this.requestType,
+        requestStream  : this.requestStream,
+        responseType   : this.responseType,
+        responseStream : this.responseStream,
+        options        : this.options
+    } || undefined;
 };
 
 /**

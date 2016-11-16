@@ -5,7 +5,7 @@ var Namespace = require("./namespace");
 /** @alias Namespace.prototype */
 var NamespacePrototype = Namespace.prototype;
 /** @alias Type.prototype */
-var TypePrototype = Namespace.extend(Type, [ "fields", "oneofs", "extensions", "reserved" ]);
+var TypePrototype = Namespace.extend(Type);
 
 var Enum      = require("./enum"),
     OneOf     = require("./oneof"),
@@ -35,25 +35,25 @@ function Type(name, options) {
      * Message fields.
      * @type {Object.<string,Field>}
      */
-    this.fields = {};  // exposed, marker
+    this.fields = {};  // toJSON, marker
 
     /**
      * Oneofs declared within this namespace, if any.
      * @type {Object.<string,OneOf>}
      */
-    this.oneofs = undefined; // exposed
+    this.oneofs = undefined; // toJSON
 
     /**
      * Extension ranges, if any.
      * @type {number[][]}
      */
-    this.extensions = undefined; // exposed
+    this.extensions = undefined; // toJSON
 
     /**
      * Reserved ranges, if any.
      * @type {number[][]}
      */
-    this.reserved = undefined; // exposed
+    this.reserved = undefined; // toJSON
 
     /**
      * Cached fields by id.
@@ -243,38 +243,35 @@ Type.fromJSON = function fromJSON(name, json) {
  * @override
  */
 TypePrototype.toJSON = function toJSON() {
-
-    var fieldsVisible = {}, found = false;
+    var fields = {}, anyVisible = false;
     this.fieldsArray.forEach(function(obj) {
         if (obj.declaringField)
             return;
         var json = obj.toJSON();
         if (json) {
-            fieldsVisible[obj.name] = json;
-            found = true;
+            fields[obj.name] = json;
+            anyVisible = true;
         }
     });
-    if (!found) fieldsVisible = undefined;
+    if (!anyVisible) fields = undefined;
 
-    var oneofsVisible = {}; found = 0;
+    var oneofs = {}; anyVisible = false;
     this.oneofsArray.forEach(function(obj) {
         var json = obj.toJSON();
         if (json) {
-            oneofsVisible[obj.name] = json;
-            found = true;
+            oneofs[obj.name] = json;
+            anyVisible = true;
         }
     });
-    if (!found) oneofsVisible = undefined;
+    if (!anyVisible) oneofs = undefined;
     
-    var superVisible = NamespacePrototype.toJSON.call(this);
-    if (!superVisible) {
-        if (!fieldsVisible && !oneofsVisible)
-            return undefined;
-        superVisible = {};
-    }
-    superVisible.fields = fieldsVisible;
-    superVisible.oneofs = oneofsVisible;
-    return superVisible;
+    var inherited = NamespacePrototype.toJSON.call(this);
+    return (inherited || fields || oneofs) && {
+        options : inherited && inherited.options || undefined,
+        oneofs  : oneofs,
+        fields  : fields,
+        nested  : inherited && inherited.nested || undefined
+    } || undefined;
 };
 
 /**

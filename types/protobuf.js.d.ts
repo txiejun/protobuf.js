@@ -1,6 +1,6 @@
 /*
  * protobuf.js v6.0.0-dev TypeScript definitions
- * Generated Wed, 16 Nov 2016 02:52:00 UTC
+ * Generated Wed, 16 Nov 2016 11:29:09 UTC
  */
 declare module protobuf {
 
@@ -497,7 +497,7 @@ declare module protobuf {
     * @extends ReflectionObject
     * @constructor
     * @param {string} name Method name
-    * @param {string} type Method type, usually `"rpc"`
+    * @param {string|undefined} type Method type, usually `"rpc"`
     * @param {string} requestType Request message type
     * @param {string} responseType Response message type
     * @param {boolean} [requestStream] Whether the request is streamed
@@ -511,14 +511,14 @@ declare module protobuf {
        * @extends ReflectionObject
        * @constructor
        * @param {string} name Method name
-       * @param {string} type Method type, usually `"rpc"`
+       * @param {string|undefined} type Method type, usually `"rpc"`
        * @param {string} requestType Request message type
        * @param {string} responseType Response message type
        * @param {boolean} [requestStream] Whether the request is streamed
        * @param {boolean} [responseStream] Whether the response is streamed
        * @param {Object} [options] Declared options
        */
-      constructor(name: string, type: string, requestType: string, responseType: string, requestStream?: boolean, responseStream?: boolean, options?: Object);
+      constructor(name: string, type: (string|undefined), requestType: string, responseType: string, requestStream?: boolean, responseStream?: boolean, options?: Object);
    
       /**
        * Method type.
@@ -717,12 +717,6 @@ declare module protobuf {
     */
    abstract class ReflectionObject {
       /**
-       * JSON-exportable properties.
-       * @type {?Object.<string,*>}
-       */
-      properties: { [k: string]: any };
-   
-      /**
        * Options.
        * @type {Object.<string,*>|undefined}
        */
@@ -778,32 +772,20 @@ declare module protobuf {
       object: (Object|undefined);
    
       /**
-       * Extends this class and optionally exposes the specified properties to JSON.
+       * Lets the specified constructor extend this class.
        * @memberof ReflectionObject
        * @param {Function} constructor Extending constructor
-       * @param {string[]} [exposePropertyNames] Properties to expose to JSON
        * @returns {Object} Prototype
        * @this ReflectionObject
        */
-      static extend(constructor: (() => any), exposePropertyNames?: string[]): Object;
-   
-      /**
-       * Exposes the specified properties to JSON.
-       * @memberof ReflectionObject
-       * @param {Object} prototype Prototype to expose the properties upon
-       * @param {string[]} propertyNames Property names to expose
-       * @returns {Object} prototype
-       * @this ReflectionObject
-       */
-      static exposeJSON(prototype: Object, propertyNames: string[]): Object;
+      static extend(constructor: (() => any)): Object;
    
       /**
        * Converts this reflection object to its JSON representation.
-       * Returns only properties that have explicitly been exposed.
-       * @returns {Object} JSON object
-       * @see {@link ReflectionObject.exposeJSON}
+       * @returns {Object|undefined} JSON object or `undefined` if not visible
+       * @abstract
        */
-      toJSON(): Object;
+      toJSON(): (Object|undefined);
    
       /**
        * Called when this object is added to a parent.
