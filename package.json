@@ -44,7 +44,7 @@
     "long": "^3.2.0",
     "minimist": "^1.2.0",
     "tap": "^8.0.0",
-    "tsd-jsdoc": "^1.0.1",
+    "tsd-jsdoc": "dcodeIO/tsd-jsdoc",
     "vinyl-buffer": "^1.0.0",
     "vinyl-fs": "^2.4.4",
     "vinyl-source-stream": "^1.1.0"

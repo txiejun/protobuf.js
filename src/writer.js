@@ -26,6 +26,8 @@ var LongBits = require("./longbits"),
  * @param {Writer.Op.Fn} fn Function to call
  * @param {*} val Value to write
  * @param {number} len Value byte length
+ * @private
+ * @ignore
  */
 function Op(fn, val, len) {
 
@@ -64,6 +66,8 @@ function noop() {} // eslint-disable-line no-empty-function
  * @memberof Writer
  * @constructor
  * @param {Writer} writer Writer to copy state from
+ * @private
+ * @ignore
  */
 function State(writer) {
 
@@ -111,19 +115,19 @@ function Writer() {
 
     /**
      * Operations head.
-     * @type {Writer.Op}
+     * @type {Object}
      */
     this.head = new Op(noop, 0, 0);
 
     /**
      * Operations tail
-     * @type {Writer.Op}
+     * @type {Object}
      */
     this.tail = this.head;
 
     /**
      * State stack.
-     * @type {State[]}
+     * @type {Object[]}
      */
     this.stack = [];
 
@@ -139,7 +143,7 @@ var WriterPrototype = Writer.prototype;
 
 /**
  * Pushes a new operation to the queue.
- * @param {Writer.Op.Fn} fn Function to call
+ * @param {function} fn Function to call
  * @param {number} len Value byte length
  * @param {number} val Value to write
  * @returns {Writer} `this`

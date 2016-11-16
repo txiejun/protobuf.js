@@ -205,7 +205,7 @@ Type.testJSON = function testJSON(json) {
     return Boolean(json && json.fields);
 };
 
-var nestedTypes = [ Enum, Type, Service ];
+var nestedTypes = [ Enum, Type, Field, Service ];
 
 /**
  * Creates a type from JSON.
@@ -228,11 +228,12 @@ Type.fromJSON = function fromJSON(name, json) {
     if (json.nested)
         Object.keys(json.nested).forEach(function(nestedName) {
             var nested = json.nested[nestedName];
-            for (var i = 0; i < nested.length; ++i)
-                if (nested[i].testJSON(nested)) {
-                    type.add(nested[i].fromJSON(nestedName, nested));
-                    return;
+            for (var i = 0; i < nestedTypes.length; ++i) {
+                if (nestedTypes[i].testJSON(nested)) {
+                    type.add(nestedTypes[i].fromJSON(nestedName, nested));
+                    break;
                 }
+            }
             throw Error("invalid nested object in " + type + ": " + nestedName);
         });
     return type;

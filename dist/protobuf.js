@@ -1,6 +1,6 @@
 /*!
  * protobuf.js v6.0.0-dev (c) 2016 Daniel Wirtz
- * Compiled Tue, 15 Nov 2016 08:50:50 UTC
+ * Compiled Wed, 16 Nov 2016 02:51:47 UTC
  * Licensed under the Apache License, Version 2.0
  * see: https://github.com/dcodeIO/protobuf.js for details
  */
@@ -147,7 +147,7 @@ module.exports = codegen;
  * @memberof util
  * @type {function}
  * @param {string} [name] Function name, defaults to generate an anonymous function
- * @param {Object|Array} [scope] Function scope
+ * @param {Object|Array.<string>} [scope] Function scope
  * @returns {function} A function to apply the scope manually when `scope` is an array, otherwise the generated function with scope applied
  */
 
@@ -2447,6 +2447,12 @@ function lower(token) {
     return token === null ? null : token.toLowerCase();
 }
 
+function camelCase(name) {
+    return name.substring(0,1)
+         + name.substring(1)
+               .replace(/_([a-z])(?=[a-z]|$)/g, function($0, $1) { return $1.toUpperCase(); });
+}
+
 var s_required = "required",
     s_repeated = "repeated",
     s_optional = "optional",
@@ -2715,6 +2721,7 @@ function parse(source, root, visible) {
         var name = next();
         if (!nameRe.test(name))
             throw illegal(name, s_name);
+        name = camelCase(name);
         skip("=");
         var id = parseNumber(next());
         var field = parseInlineOptions(new Field(name, id, type, rule, extend));
@@ -2734,6 +2741,9 @@ function parse(source, root, visible) {
             throw illegal(valueType, s_type);
         skip(">");
         var name = next();
+        if (!nameRe.test(name))
+            throw illegal(name, s_name);
+        name = camelCase(name);
         skip("=");
         var id = parseId(next());
         parent.add(parseInlineOptions(new MapField(name, id, keyType, valueType)));
@@ -2743,6 +2753,7 @@ function parse(source, root, visible) {
         var name = next();
         if (!nameRe.test(name))
             throw illegal(name, s_name);
+        name = camelCase(name);
         var oneof = new OneOf(name);
         if (skip(s_open, true)) {
             while ((token = next()) !== s_close) {
@@ -2988,7 +2999,7 @@ module.exports = Prototype;
 
 /**
  * Options passed to the {@link Prototype|prototype constructor}, modifying its behavior.
- * @typedef Prototype.Options
+ * @typedef PrototypeOptions
  * @type {Object}
  * @property {boolean} [fieldsOnly=false] Sets only properties that reference a field
  */
@@ -2999,7 +3010,7 @@ module.exports = Prototype;
  * @classdesc Runtime message prototype ready to be extended by custom classes or generated code.
  * @constructor
  * @param {Object.<string,*>} [properties] Properties to set
- * @param {Prototype.Options} [options] Prototype options
+ * @param {PrototypeOptions} [options] Prototype options
  * @abstract
  * @see {@link inherits}
  * @see {@link Class}
@@ -3567,7 +3578,7 @@ var Namespace = require(11),
 
 /**
  * Options provided to a {@link Root|root namespace}, modifying its behavior.
- * @typedef Root.Options
+ * @typedef RootOptions
  * @type {Object}
  * @property {boolean} [noGoogleTypes=false] Skips loading of common Google types like `google.protobuf.Any`.
  */
@@ -3577,7 +3588,7 @@ var Namespace = require(11),
  * @classdesc Root namespace wrapping all types, enums, services, sub-namespaces etc. that belong together.
  * @extends Namespace
  * @constructor
- * @param {Root.Options} [rootOptions] Root options
+ * @param {RootOptions} [rootOptions] Root options
  * @param {Object} [options] Declared options
  */
 function Root(rootOptions, options) {
@@ -3970,7 +3981,7 @@ RootPrototype._handleAdd = function handleAdd(object) {
         this.pendingExtensions.push(object);
     else if (object instanceof Namespace) {
         var nested = object.nestedArray;
-        for (var i = 0; i < nested.length; ++i) // recurse into the namespace
+        for (i = 0; i < nested.length; ++i) // recurse into the namespace
             this._handleAdd(nested[i]);
     }
 };
@@ -4574,7 +4585,7 @@ Type.testJSON = function testJSON(json) {
     return Boolean(json && json.fields);
 };
 
-var nestedTypes = [ Enum, Type, Service ];
+var nestedTypes = [ Enum, Type, Field, Service ];
 
 /**
  * Creates a type from JSON.
@@ -4597,11 +4608,12 @@ Type.fromJSON = function fromJSON(name, json) {
     if (json.nested)
         Object.keys(json.nested).forEach(function(nestedName) {
             var nested = json.nested[nestedName];
-            for (var i = 0; i < nested.length; ++i)
-                if (nested[i].testJSON(nested)) {
-                    type.add(nested[i].fromJSON(nestedName, nested));
-                    return;
+            for (var i = 0; i < nestedTypes.length; ++i) {
+                if (nestedTypes[i].testJSON(nested)) {
+                    type.add(nestedTypes[i].fromJSON(nestedName, nested));
+                    break;
                 }
+            }
             throw Error("invalid nested object in " + type + ": " + nestedName);
         });
     return type;
@@ -5340,6 +5352,8 @@ var LongBits = require(8),
  * @param {Writer.Op.Fn} fn Function to call
  * @param {*} val Value to write
  * @param {number} len Value byte length
+ * @private
+ * @ignore
  */
 function Op(fn, val, len) {
 
@@ -5378,6 +5392,8 @@ function noop() {} // eslint-disable-line no-empty-function
  * @memberof Writer
  * @constructor
  * @param {Writer} writer Writer to copy state from
+ * @private
+ * @ignore
  */
 function State(writer) {
 
@@ -5425,19 +5441,19 @@ function Writer() {
 
     /**
      * Operations head.
-     * @type {Writer.Op}
+     * @type {Object}
      */
     this.head = new Op(noop, 0, 0);
 
     /**
      * Operations tail
-     * @type {Writer.Op}
+     * @type {Object}
      */
     this.tail = this.head;
 
     /**
      * State stack.
-     * @type {State[]}
+     * @type {Object[]}
      */
     this.stack = [];
 
@@ -5453,7 +5469,7 @@ var WriterPrototype = Writer.prototype;
 
 /**
  * Pushes a new operation to the queue.
- * @param {Writer.Op.Fn} fn Function to call
+ * @param {function} fn Function to call
  * @param {number} len Value byte length
  * @param {number} val Value to write
  * @returns {Writer} `this`

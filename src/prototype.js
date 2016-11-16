@@ -3,7 +3,7 @@ module.exports = Prototype;
 
 /**
  * Options passed to the {@link Prototype|prototype constructor}, modifying its behavior.
- * @typedef Prototype.Options
+ * @typedef PrototypeOptions
  * @type {Object}
  * @property {boolean} [fieldsOnly=false] Sets only properties that reference a field
  */
@@ -14,7 +14,7 @@ module.exports = Prototype;
  * @classdesc Runtime message prototype ready to be extended by custom classes or generated code.
  * @constructor
  * @param {Object.<string,*>} [properties] Properties to set
- * @param {Prototype.Options} [options] Prototype options
+ * @param {PrototypeOptions} [options] Prototype options
  * @abstract
  * @see {@link inherits}
  * @see {@link Class}

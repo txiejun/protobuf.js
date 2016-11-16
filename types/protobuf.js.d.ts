@@ -1,6 +1,6 @@
 /*
  * protobuf.js v6.0.0-dev TypeScript definitions
- * Generated Tue, 15 Nov 2016 01:02:27 UTC
+ * Generated Wed, 16 Nov 2016 02:52:00 UTC
  */
 declare module protobuf {
 
@@ -129,13 +129,6 @@ declare module protobuf {
       values: { [k: string]: number };
    
       /**
-       * Cached values by id.
-       * @type {?Object.<number,string>}
-       * @private
-       */
-      private _valuesById: { [k: number]: string };
-   
-      /**
        * Enum values by id.
        * @name Enum#valuesById
        * @type {Object.<number,string>}
@@ -222,6 +215,12 @@ declare module protobuf {
       id: number;
    
       /**
+       * Extended type if different from parent.
+       * @type {string|undefined}
+       */
+      extend: (string|undefined);
+   
+      /**
        * Whether this field is required.
        * @type {boolean}
        */
@@ -288,13 +287,6 @@ declare module protobuf {
       declaringField: Field;
    
       /**
-       * Internally remembers whether this field is packed.
-       * @type {?boolean}
-       * @private
-       */
-      private _packed: boolean;
-   
-      /**
        * Determines whether this field is packed. Only relevant when repeated and working with proto2.
        * @name Field#packed
        * @type {boolean}
@@ -317,6 +309,13 @@ declare module protobuf {
        * @throws {TypeError} If arguments are invalid
        */
       static fromJSON(name: string, json: Object): Field;
+   
+      /**
+       * Resolves this field's type references.
+       * @returns {Field} `this`
+       * @throws {Error} If any reference cannot be resolved
+       */
+      resolve(): Field;
    
       /**
        * Converts a field value to JSON using the specified options. Note that this method does not account for repeated fields and must be called once for each repeated element instead.
@@ -346,7 +345,7 @@ declare module protobuf {
     * @property {boolean} [noStatics=false] Skips adding the default static methods on top of the constructor
     * @property {boolean} [noRegister=false] Skips registering the constructor with the reflected type
     */
-   interface IInheritanceOptions {
+   interface InheritanceOptions {
       noStatics: boolean;
       noRegister: boolean;
    }
@@ -379,6 +378,14 @@ declare module protobuf {
        * @see {@link inherits}
        */
       constructor(properties?: { [k: string]: any });
+   
+      /**
+       * Reference to the reflected type.
+       * @name Class.$type
+       * @type {Type}
+       * @readonly
+       */
+      static $type: Type;
    
       /**
        * Encodes a message of this type to a buffer.
@@ -465,6 +472,22 @@ declare module protobuf {
        * @type {?ReflectionObject}
        */
       resolvedKeyType: ReflectionObject;
+   
+      /**
+       * Tests if the specified JSON object describes a map field.
+       * @param {Object} json JSON object to test
+       * @returns {boolean} `true` if the object describes a field
+       */
+      static testJSON(json: Object): boolean;
+   
+      /**
+       * Constructs a map field from JSON.
+       * @param {string} name Field name
+       * @param {Object} json JSON object
+       * @returns {MapField} Created map field
+       * @throws {TypeError} If arguments are invalid
+       */
+      static fromJSON(name: string, json: Object): MapField;
    
    }
    
@@ -590,13 +613,6 @@ declare module protobuf {
        * @type {Object.<string,ReflectionObject>|undefined}
        */
       nested: ({ [k: string]: ReflectionObject }|undefined);
-   
-      /**
-       * Cached nested objects as an array.
-       * @type {?ReflectionObject[]}
-       * @private
-       */
-      private _nestedArray: ReflectionObject[];
    
       /**
        * Determines whether this namespace is empty.
@@ -729,20 +745,6 @@ declare module protobuf {
        * @type {boolean}
        */
       resolved: boolean;
-   
-      /**
-       * Internally stores whether this object is visible.
-       * @type {?boolean}
-       * @private
-       */
-      private _visible: boolean;
-   
-      /**
-       * Cached object representation.
-       * @type {Object|undefined}
-       * @private
-       */
-      private _object: (Object|undefined);
    
       /**
        * Reference to the root namespace.
@@ -890,13 +892,6 @@ declare module protobuf {
       oneof: string[];
    
       /**
-       * Fields that belong to this oneof and are possibly not yet added to its parent.
-       * @type {Field[]}
-       * @private
-       */
-      private _fields: Field[];
-   
-      /**
        * Tests if the specified JSON object describes a oneof.
        * @param {*} json JSON object
        * @returns {boolean} `true` if the object describes a oneof
@@ -939,7 +934,7 @@ declare module protobuf {
     * @property {string|undefined} syntax Syntax, if specified (either `"proto2"` or `"proto3"`)
     * @property {Root} root Populated root instance
     */
-   interface IParserResult {
+   interface ParserResult {
       package: (string|undefined);
       imports: (string[]|undefined);
       publicImports: (string[]|undefined);
@@ -959,12 +954,23 @@ declare module protobuf {
    function parse(source: string, root?: Root, visible?: boolean): ParserResult;
    
    /**
+    * Options passed to the {@link Prototype|prototype constructor}, modifying its behavior.
+    * @typedef PrototypeOptions
+    * @type {Object}
+    * @property {boolean} [fieldsOnly=false] Sets only properties that reference a field
+    */
+   interface PrototypeOptions {
+      fieldsOnly: boolean;
+   }
+   
+   
+   /**
     * Constructs a new prototype.
     * This method should be called from your custom constructors, i.e. `Prototype.call(this, properties)`.
     * @classdesc Runtime message prototype ready to be extended by custom classes or generated code.
     * @constructor
     * @param {Object.<string,*>} [properties] Properties to set
-    * @param {Prototype.Options} [options] Prototype options
+    * @param {PrototypeOptions} [options] Prototype options
     * @abstract
     * @see {@link inherits}
     * @see {@link Class}
@@ -977,7 +983,6 @@ declare module protobuf {
        * @readonly
        */
       $type: Type;
-   
    
       /**
        * Converts a runtime message to a JSON object.
@@ -1175,14 +1180,50 @@ declare module protobuf {
        */
       constructor(buffer: Buffer);
    
+      /**
+       * Reads a float (32 bit) as a number using node buffers.
+       * @returns {number} Value read
+       */
+      float(): number;
+   
+      /**
+       * Reads a double (64 bit float) as a number using node buffers.
+       * @returns {number} Value read
+       */
+      double(): number;
+   
+      /**
+       * Reads a string.
+       * @returns {string} Value read
+       */
+      string(): string;
+   
+      /**
+       * Finishes the current sequence of read operations using node buffers, frees all resources and returns the remaining buffer.
+       * @param {Buffer} [buffer] New buffer for a new sequence of read operations
+       * @returns {Buffer} Finished buffer
+       */
+      finish(buffer?: Buffer): Buffer;
+   
    }
+   
+   /**
+    * Options provided to a {@link Root|root namespace}, modifying its behavior.
+    * @typedef RootOptions
+    * @type {Object}
+    * @property {boolean} [noGoogleTypes=false] Skips loading of common Google types like `google.protobuf.Any`.
+    */
+   interface RootOptions {
+      noGoogleTypes: boolean;
+   }
+   
    
    /**
     * Constructs a new root namespace.
     * @classdesc Root namespace wrapping all types, enums, services, sub-namespaces etc. that belong together.
     * @extends Namespace
     * @constructor
-    * @param {Root.Options} [rootOptions] Root options
+    * @param {RootOptions} [rootOptions] Root options
     * @param {Object} [options] Declared options
     */
    class Root extends Namespace {
@@ -1191,11 +1232,10 @@ declare module protobuf {
        * @classdesc Root namespace wrapping all types, enums, services, sub-namespaces etc. that belong together.
        * @extends Namespace
        * @constructor
-       * @param {Root.Options} [rootOptions] Root options
+       * @param {RootOptions} [rootOptions] Root options
        * @param {Object} [options] Declared options
        */
-      constructor(rootOptions?: Root.Options, options?: Object);
-   
+      constructor(rootOptions?: RootOptions, options?: Object);
    
       /**
        * References to common google types.
@@ -1208,13 +1248,6 @@ declare module protobuf {
        * @type {Field[]}
        */
       pendingExtensions: Field[];
-   
-      /**
-       * Already loaded file names.
-       * @type {string[]}
-       * @private
-       */
-      private _loaded: string[];
    
       /**
        * Checks if a specific file has already been loaded.
@@ -1258,22 +1291,6 @@ declare module protobuf {
        */
       load(filename: (string|string[]), callback?: (() => any)): (Promise<Root>|undefined);
    
-      /**
-       * Called when any object is added to this root or its sub-namespaces.
-       * @param {ReflectionObject} object Object added
-       * @returns {undefined}
-       * @private
-       */
-      private _handleAdd(object: ReflectionObject): undefined;
-   
-      /**
-       * Called when any object is removed from this root or its sub-namespaces.
-       * @param {ReflectionObject} object Object removed
-       * @returns {undefined}
-       * @private
-       */
-      private _handleRemove(object: ReflectionObject): undefined;
-   
    }
    
    /**
@@ -1304,19 +1321,28 @@ declare module protobuf {
       methods: { [k: string]: Method };
    
       /**
-       * Cached methods as an array.
-       * @type {?Method[]}
-       * @private
-       */
-      private _methodsArray: Method[];
-   
-      /**
        * Methods of this service as an array for iteration.
        * @name Service#methodsArray
        * @type {Method[]}
        * @readonly
        */
       methodsArray: Method[];
+   
+      /**
+       * Tests if the specified JSON object describes a service.
+       * @param {Object} json JSON object to test
+       * @returns {boolean} `true` if the object describes a service
+       */
+      static testJSON(json: Object): boolean;
+   
+      /**
+       * Constructs a service from JSON.
+       * @param {string} name Service name
+       * @param {Object} json JSON object
+       * @returns {Service} Created service
+       * @throws {TypeError} If arguments are invalid
+       */
+      static fromJSON(name: string, json: Object): Service;
    
    }
    
@@ -1329,7 +1355,7 @@ declare module protobuf {
     * @property {function(string)} push Pushes a token back to the stack
     * @property {function(string, boolean=):boolean} skip Skips a token, returns its presence and advances or, if non-optional and not present, throws
     */
-   interface ITokenizerHandle {
+   interface TokenizerHandle {
       line: (() => any);
       next: (() => any);
       peek: (() => any);
@@ -1389,41 +1415,6 @@ declare module protobuf {
       reserved: number[][];
    
       /**
-       * Cached fields by id.
-       * @type {?Object.<number,Field>}
-       * @private
-       */
-      private _fieldsById: { [k: number]: Field };
-   
-      /**
-       * Cached fields as an array.
-       * @type {?Field[]}
-       * @private
-       */
-      private _fieldsArray: Field[];
-   
-      /**
-       * Cached required fields as an array.
-       * @type {?Field[]}
-       * @private
-       */
-      private _requiredFieldsArray: Field[];
-   
-      /**
-       * Cached oneofs as an array.
-       * @type {?OneOf[]}
-       * @private
-       */
-      private _oneofsArray: OneOf[];
-   
-      /**
-       * Cached constructor.
-       * @type {?Function}
-       * @private
-       */
-      private _ctor: (() => any);
-   
-      /**
        * Message fields by id.
        * @name Type#fieldsById
        * @type {Object.<number,Field>}
@@ -1461,6 +1452,21 @@ declare module protobuf {
        * @type {Prototype}
        */
       ctor: Prototype;
+   
+      /**
+       * Tests if the specified JSON object describes a message type.
+       * @param {*} json JSON object to test
+       * @returns {boolean} `true` if the object describes a message type
+       */
+      static testJSON(json: any): boolean;
+   
+      /**
+       * Creates a type from JSON.
+       * @param {string} name Message name
+       * @param {Object} json JSON object
+       * @returns {Type} Created message type
+       */
+      static fromJSON(name: string, json: Object): Type;
    
       /**
        * Creates a new message of this type using the specified properties.
@@ -1573,10 +1579,10 @@ declare module protobuf {
        * @memberof util
        * @type {function}
        * @param {string} [name] Function name, defaults to generate an anonymous function
-       * @param {Object|Array} [scope] Function scope
+       * @param {Object|string[]} [scope] Function scope
        * @returns {function} A function to apply the scope manually when `scope` is an array, otherwise the generated function with scope applied
        */
-      type CodegenEnder = (name?: string, scope?: (Object|Array)) => (() => any);
+      type CodegenEnder = (name?: string, scope?: (Object|string[])) => (() => any);
    
       /**
        * Stringifies the so far generated function source.
@@ -1735,15 +1741,6 @@ declare module protobuf {
       function toArray(object: { [k: string]: any }): any[];
    
       /**
-       * Creates a type error.
-       * @param {string} name Argument name
-       * @param {string} [description=a string] Expected argument descripotion
-       * @returns {TypeError} Created type error
-       * @private
-       */
-      function _TypeError(name: string, description?: string): TypeError;
-   
-      /**
        * Returns a promise from a node-style function.
        * @memberof util
        * @param {function(Error, ...*)} fn Function to call
@@ -1890,102 +1887,6 @@ declare module protobuf {
       constructor();
    
       /**
-       * Constructs a new writer operation.
-       * @classdesc Scheduled writer operation.
-       * @memberof Writer
-       * @constructor
-       * @param {Writer.Op.Fn} fn Function to call
-       * @param {*} val Value to write
-       * @param {number} len Value byte length
-       */
-      class Op {
-          /**
-           * Constructs a new writer operation.
-           * @classdesc Scheduled writer operation.
-           * @memberof Writer
-           * @constructor
-           * @param {Writer.Op.Fn} fn Function to call
-           * @param {*} val Value to write
-           * @param {number} len Value byte length
-           */
-          constructor(fn: Writer.Op.Fn, val: any, len: number);
-   
-          /**
-           * Operation function.
-           * @typedef Fn
-           * @memberof Writer.Op
-           * @function
-           * @param {number[]} buf Buffer to write to
-           * @param {number} pos Position to write at
-           * @param {*} val Value to write
-           * @returns {undefined}
-           */
-          static Fn(buf: number[], pos: number, val: any): undefined;
-   
-          /**
-           * Function to call.
-           * @type {Writer.Op.Fn}
-           */
-          fn: Writer.Op.Fn;
-   
-          /**
-           * Value to write.
-           * @type {*}
-           */
-          val: any;
-   
-          /**
-           * Value byte length.
-           * @type {number}
-           */
-          len: number;
-   
-          /**
-           * Next operation.
-           * @type {?Writer.Op}
-           */
-          next: Writer.Op;
-   
-      }
-   
-      /**
-       * Constructs a new writer state.
-       * @classdesc Copied writer state.
-       * @memberof Writer
-       * @constructor
-       * @param {Writer} writer Writer to copy state from
-       */
-      class State {
-          /**
-           * Constructs a new writer state.
-           * @classdesc Copied writer state.
-           * @memberof Writer
-           * @constructor
-           * @param {Writer} writer Writer to copy state from
-           */
-          constructor(writer: Writer);
-   
-          /**
-           * Current head.
-           * @type {Writer.Op}
-           */
-          head: Writer.Op;
-   
-          /**
-           * Current tail.
-           * @type {Writer.Op}
-           */
-          tail: Writer.Op;
-   
-          /**
-           * Current buffer length.
-           * @type {number}
-           */
-          len: number;
-   
-      }
-   
-      /**
        * Current length.
        * @type {number}
        */
@@ -1993,30 +1894,30 @@ declare module protobuf {
    
       /**
        * Operations head.
-       * @type {Writer.Op}
+       * @type {Object}
        */
-      head: Writer.Op;
+      head: Object;
    
       /**
        * Operations tail
-       * @type {Writer.Op}
+       * @type {Object}
        */
-      tail: Writer.Op;
+      tail: Object;
    
       /**
        * State stack.
-       * @type {State[]}
+       * @type {Object[]}
        */
-      stack: State[];
+      stack: Object[];
    
       /**
        * Pushes a new operation to the queue.
-       * @param {Writer.Op.Fn} fn Function to call
+       * @param {function} fn Function to call
        * @param {number} len Value byte length
        * @param {number} val Value to write
        * @returns {Writer} `this`
        */
-      push(fn: Writer.Op.Fn, len: number, val: number): Writer;
+      push(fn: (() => any), len: number, val: number): Writer;
    
       /**
        * Writes a tag.
@@ -2182,26 +2083,40 @@ declare module protobuf {
        */
       constructor();
    
-   }
+      /**
+       * Writes a float (32 bit) using node buffers.
+       * @param {number} value Value to write
+       * @returns {BufferWriter} `this`
+       */
+      float(value: number): BufferWriter;
    
-   /**
-    * Options provided to a {@link Root|root namespace}, modifying its behavior.
-    * @typedef Root.Options
-    * @type {Object}
-    * @property {boolean} [noGoogleTypes=false] Skips loading of common Google types like `google.protobuf.Any`.
-    */
-   interface IOptions {
-      noGoogleTypes: boolean;
-   }
+      /**
+       * Writes a double (64 bit float) using node buffers.
+       * @param {number} value Value to write
+       * @returns {BufferWriter} `this`
+       */
+      double(value: number): BufferWriter;
    
-   /**
-    * Options passed to the {@link Prototype|prototype constructor}, modifying its behavior.
-    * @typedef Prototype.Options
-    * @type {Object}
-    * @property {boolean} [fieldsOnly=false] Sets only properties that reference a field
-    */
-   interface IOptions {
-      fieldsOnly: boolean;
+      /**
+       * Writes a sequence of bytes using node buffers.
+       * @param {Buffer} value Value to write
+       * @returns {BufferWriter} `this`
+       */
+      bytes(value: Buffer): BufferWriter;
+   
+      /**
+       * Writes a string using node buffers.
+       * @param {string} value Value to write
+       * @returns {BufferWriter} `this`
+       */
+      string(value: string): BufferWriter;
+   
+      /**
+       * Finishes the current sequence of write operations using node buffers and frees all resources.
+       * @returns {Buffer} Finished buffer
+       */
+      finish(): Buffer;
+   
    }
    
    

@@ -20,7 +20,7 @@ module.exports = codegen;
  * @memberof util
  * @type {function}
  * @param {string} [name] Function name, defaults to generate an anonymous function
- * @param {Object|Array} [scope] Function scope
+ * @param {Object|Array.<string>} [scope] Function scope
  * @returns {function} A function to apply the scope manually when `scope` is an array, otherwise the generated function with scope applied
  */
 

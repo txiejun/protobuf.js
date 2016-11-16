@@ -10,7 +10,7 @@ var Namespace = require("./namespace"),
 
 /**
  * Options provided to a {@link Root|root namespace}, modifying its behavior.
- * @typedef Root.Options
+ * @typedef RootOptions
  * @type {Object}
  * @property {boolean} [noGoogleTypes=false] Skips loading of common Google types like `google.protobuf.Any`.
  */
@@ -20,7 +20,7 @@ var Namespace = require("./namespace"),
  * @classdesc Root namespace wrapping all types, enums, services, sub-namespaces etc. that belong together.
  * @extends Namespace
  * @constructor
- * @param {Root.Options} [rootOptions] Root options
+ * @param {RootOptions} [rootOptions] Root options
  * @param {Object} [options] Declared options
  */
 function Root(rootOptions, options) {
@@ -413,7 +413,7 @@ RootPrototype._handleAdd = function handleAdd(object) {
         this.pendingExtensions.push(object);
     else if (object instanceof Namespace) {
         var nested = object.nestedArray;
-        for (var i = 0; i < nested.length; ++i) // recurse into the namespace
+        for (i = 0; i < nested.length; ++i) // recurse into the namespace
             this._handleAdd(nested[i]);
     }
 };

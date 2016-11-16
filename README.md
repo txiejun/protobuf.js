@@ -45,7 +45,7 @@ package awesomepackage;
 syntax = "proto3";
 
 message AwesomeMessage {
-    string awesomefield = 1;
+    string awesome_field = 1; // becomes awesomeField
 }
 ```
 
@@ -60,14 +60,14 @@ protobuf.load("awesome.proto", function(err, root) {
     // or, if you prefer: root.object.awesomepackage.AwesomeMessage
 
     // Create a new message
-    var message = AwesomeMessage.create({ awesomefield: "AwesomeString" });
+    var message = AwesomeMessage.create({ awesomeField: "AwesomeString" });
 
     // Encode a message (note that reflection encodes to a writer and we need to call finish)
     var buffer = AwesomeMessage.encode(message).finish();
     // ... do something with buffer
 
     // Or, encode a plain object (note that reflection encodes to a writer and we need to call finish)
-    var buffer = AwesomeMessage.encode({ awesomefield: "AwesomeString" }).finish();
+    var buffer = AwesomeMessage.encode({ awesomeField: "AwesomeString" }).finish();
     // ... do something with buffer
 
     // Decode a buffer
@@ -93,7 +93,7 @@ var Root  = protobuf.Root,
     Type  = protobuf.Type,
     Field = protobuf.Field;
 
-var AwesomeMessage = new Type("AwesomeMessage").add(new Field(1, "awesomefield", "string"));
+var AwesomeMessage = new Type("AwesomeMessage").add(new Field(1, "awesomField", "string"));
 
 var root = new Root().define("awesomepackage").add(AwesomeMessage);
 
@@ -112,14 +112,14 @@ function AwesomeMessage(properties) {
 }
 protobuf.inherits(AwesomeMessage, root.lookup("awesomepackage.AwesomeMessage") /* or use reflection */);
 
-var message = new AwesomeMessage({ awesomefield: "AwesomeString" });
+var message = new AwesomeMessage({ awesomeField: "AwesomeString" });
 
 // Encode a message (note that classes encode to a buffer directly)
 var buffer = AwesomeMessage.encode(message);
 // ... do something with buffer
 
 // Or, encode a plain object (note that classes encode to a buffer directly)
-var buffer = AwesomeMessage.encode({ awesomefield: "AwesomeString" });
+var buffer = AwesomeMessage.encode({ awesomeField: "AwesomeString" });
 // ... do something with buffer
 
 // Decode a buffer
@@ -271,7 +271,7 @@ Compatibility
 
 * The library will try to generate optimized type specific encoders and decoders at runtime, which requires `new Function(...)` (basically `eval`) support. If code generation is not supported, it uses an equivalent but slower fallback.
 
-* Options are supported but handled differeently than the official implementation does because the internal structure of this package does not rely on `descriptor.proto`.
+* Options are supported but handled differently than by the official implementation because the internals of this package do not rely on `google/protobuf/descriptor.proto`.
 
 * If you'd like to use node's buffer API in the browser, you can use [feross/buffer](https://github.com/feross/buffer) for example and assign its constructor, or that of any compatible library, to `protobuf.util.Buffer`.
 
