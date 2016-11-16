@@ -58,7 +58,7 @@ Object.defineProperties(VerifierPrototype, {
  */
 VerifierPrototype.verify = function verify_fallback(message) {
     var fields = this.fieldsArray,
-        i = 0, reason;
+        i = 0;
     while (i < fields.length) {
         var field = fields[i++].resolve(),
             value = message[field.name];
@@ -73,6 +73,7 @@ VerifierPrototype.verify = function verify_fallback(message) {
         } else if (field.resolvedType instanceof Type) {
             if (!value && field.required)
                 return "missing required field " + field.name + " in " + this.fullName;
+            var reason;
             if ((reason = field.resolvedType.verify(value)) !== null)
                 return reason;
         }

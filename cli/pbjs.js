@@ -12,9 +12,9 @@ var protobuf = require(".."),
 exports.main = function(args) {
     var argv = minimist(args.slice(2), {
         alias: {
-            target: "t",
-            out   : "o",
-            path  : "p"
+            target : "t",
+            out    : "o",
+            path   : "p"
         },
         string: [ "target", "out", "path" ],
         default: {
@@ -30,7 +30,7 @@ exports.main = function(args) {
             "",
             "Converts between file formats.",
             "",
-            "  -t, --target    Specifies the target format. [" + Object.keys(targets).join(', ') + "]",
+            "  -t, --target    Specifies the target format. [" + Object.keys(targets).filter(function(key) { return !targets[key].private; }).join(', ') + "]",
             "  -o, --out       Saves to a file instead of writing to stdout.",
             "",
             "usage: " + chalk.bold.green(path.basename(process.argv[1])) + " [options] file1.proto file2.json ..."
@@ -41,8 +41,8 @@ exports.main = function(args) {
     var root = new protobuf.Root();
 
     root.resolvePath = function pbjsResolvePath(origin, target) {
-        // argv.path
         // TODO: Resolve include paths here
+        // -> argv.path { undefined | string | string[] }
         return protobuf.util.resolvePath(origin, target);
     };
 

@@ -1,8 +1,13 @@
 "use strict";
 module.exports = Root;
 
-var Namespace = require("./namespace"),
-    Type      = require("./type"),
+var Namespace = require("./namespace");
+/** @alias Namespace.prototype */
+var NamespacePrototype = Namespace.prototype; 
+/** @alias Root.prototype */
+var RootPrototype = Namespace.extend(Root);
+
+var Type      = require("./type"),
     Field     = require("./field"),
     // OneOf     = require("./oneof"),
     // Enum      = require("./enum"),
@@ -79,6 +84,14 @@ RootPrototype.addLoaded = function addLoaded(filename) {
     filename = util.normalizePath(filename);
     this._loaded.push(filename);
     return true;
+};
+
+/**
+ * @override
+ */
+RootPrototype.toJSON = function toJSON() {
+    // TODO: Export imports, but first a Root needs to know what's weak and what's public.
+    return NamespacePrototype.toJSON.call(this);
 };
 
 /**

@@ -66,12 +66,6 @@ function parse(source, root, visible) {
         root = undefined;
     }
 
-    // NOTE:
-    // In its current state this parser accepts a couple of directives that the
-    // official parser wouldn't, i.e. some proto2 tokens in proto3 definitions.
-    // While that shouldn't be much of an issue, it has to be decided how far
-    // we want to go with this: Full compliance or compact library size?
-
     var tn = tokenize(source),
         next = tn.next,
         push = tn.push,
@@ -298,8 +292,8 @@ function parse(source, root, visible) {
         skip("=");
         var id = parseNumber(next());
         var field = parseInlineOptions(new Field(name, id, type, rule, extend));
-        if (field.repeated && isProto3)
-            field.setOption("packed", true, /* ifNotSet */ true);
+        if (field.repeated)
+            field.setOption("packed", isProto3, /* ifNotSet */ true);
         parent.add(field);
     }
 

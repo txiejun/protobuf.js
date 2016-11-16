@@ -1,6 +1,6 @@
 /*!
  * protobuf.js v6.0.0-dev (c) 2016 Daniel Wirtz
- * Compiled Wed, 16 Nov 2016 11:28:57 UTC
+ * Compiled Wed, 16 Nov 2016 12:49:30 UTC
  * Licensed under the Apache License, Version 2.0
  * see: https://github.com/dcodeIO/protobuf.js for details
  */
@@ -2510,12 +2510,6 @@ function parse(source, root, visible) {
         root = undefined;
     }
 
-    // NOTE:
-    // In its current state this parser accepts a couple of directives that the
-    // official parser wouldn't, i.e. some proto2 tokens in proto3 definitions.
-    // While that shouldn't be much of an issue, it has to be decided how far
-    // we want to go with this: Full compliance or compact library size?
-
     var tn = tokenize(source),
         next = tn.next,
         push = tn.push,
@@ -2742,8 +2736,8 @@ function parse(source, root, visible) {
         skip("=");
         var id = parseNumber(next());
         var field = parseInlineOptions(new Field(name, id, type, rule, extend));
-        if (field.repeated && isProto3)
-            field.setOption("packed", true, /* ifNotSet */ true);
+        if (field.repeated)
+            field.setOption("packed", isProto3, /* ifNotSet */ true);
         parent.add(field);
     }
 
@@ -3586,8 +3580,13 @@ BufferReaderPrototype.finish = function finish_buffer(buffer) {
 "use strict";
 module.exports = Root;
 
-var Namespace = require(11),
-    Type      = require(20),
+var Namespace = require(11);
+/** @alias Namespace.prototype */
+var NamespacePrototype = Namespace.prototype; 
+/** @alias Root.prototype */
+var RootPrototype = Namespace.extend(Root);
+
+var Type      = require(20),
     Field     = require(6),
     // OneOf     = require("./oneof"),
     // Enum      = require("./enum"),
@@ -3664,6 +3663,14 @@ RootPrototype.addLoaded = function addLoaded(filename) {
     filename = util.normalizePath(filename);
     this._loaded.push(filename);
     return true;
+};
+
+/**
+ * @override
+ */
+RootPrototype.toJSON = function toJSON() {
+    // TODO: Export imports, but first a Root needs to know what's weak and what's public.
+    return NamespacePrototype.toJSON.call(this);
 };
 
 /**
@@ -5262,7 +5269,7 @@ Object.defineProperties(VerifierPrototype, {
  */
 VerifierPrototype.verify = function verify_fallback(message) {
     var fields = this.fieldsArray,
-        i = 0, reason;
+        i = 0;
     while (i < fields.length) {
         var field = fields[i++].resolve(),
             value = message[field.name];
@@ -5277,6 +5284,7 @@ VerifierPrototype.verify = function verify_fallback(message) {
         } else if (field.resolvedType instanceof Type) {
             if (!value && field.required)
                 return "missing required field " + field.name + " in " + this.fullName;
+            var reason;
             if ((reason = field.resolvedType.verify(value)) !== null)
                 return reason;
         }
