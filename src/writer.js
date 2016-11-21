@@ -3,9 +3,9 @@ module.exports = Writer;
 
 Writer.BufferWriter = BufferWriter;
 
-var LongBits = require("./longbits"),
-    util     = require("./util"),
+var util     = require("./util"),
     ieee754  = require("../lib/ieee754");
+var LongBits = util.LongBits;
 
 /**
  * Operation function.

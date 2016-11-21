@@ -97,7 +97,7 @@ EncoderPrototype.encode = function encode_fallback(message, writer) { // codegen
         // Non-repeated
         } else {
             var value = message[field.name];
-            if (field.required || value !== undefined && value !== field.defaultValue) { // eslint-disable-line eqeqeq
+            if (field.required || value !== undefined && field.long ? util.longNeq(value, field.defaultValue) : value !== field.defaultValue) {
                 if (wireType !== undefined)
                     writer.tag(field.id, wireType)[type](value);
                 else {
@@ -138,17 +138,16 @@ EncoderPrototype.generate = function generate() {
 
     ("if(m%s){", prop)
         ("w.fork()")
-        ("var i=0,ks=Object.keys(m%s)", prop)
-        ("while(i<ks.length){")
+        ("for(var i=0,ks=Object.keys(m%s);i<ks.length;++i){", prop)
             ("w.tag(1,%d).%s(ks[i])", keyWireType, keyType);
 
             if (wireType !== undefined) gen
 
-            ("w.tag(2,%d).%s(m%s[ks[i++]])", wireType, type, prop);
+            ("w.tag(2,%d).%s(m%s[ks[i]])", wireType, type, prop);
 
             else gen
             
-            ("types[%d].encode(m%s[ks[i++]],w.tag(2,2).fork()).ldelim()", i, prop);
+            ("types[%d].encode(m%s[ks[i]],w.tag(2,2).fork()).ldelim()", i, prop);
 
             gen
         ("}")
@@ -161,30 +160,32 @@ EncoderPrototype.generate = function generate() {
             // Packed repeated
             if (field.packed && types.packed[type] !== undefined) { gen
 
-    ("if(m%s){", prop)
+    ("if(m%s&&m%s.length){", prop, prop)
         ("w.fork()")
-        ("var i=0")
-        ("while(i<m%s.length)", prop)
-            ("w.%s(m%s[i++])", type, prop)
-        ("w.len&&w.ldelim(%d)||w.reset()", field.id)
+        ("for(var i=0;i<m%s.length;++i)", prop)
+            ("w.%s(m%s[i])", type, prop)
+        ("w.ldelim(%d)", field.id)
     ("}");
 
             // Non-packed
             } else { gen
 
-    ("if(m%s){", prop)
-        ("var i=0")
-        ("while(i<m%s.length)", prop)
-            ("types[%d].encode(m%s[i++],w.tag(%d,2).fork()).ldelim()", i, prop, field.id)
-    ("}");
+    ("if(m%s)", prop)
+        ("for(var i=0;i<m%s.length;++i)", prop)
+            ("types[%d].encode(m%s[i],w.tag(%d,2).fork()).ldelim()", i, prop, field.id);
 
             }
 
         // Non-repeated
         } else {
-            if (!field.required) gen
+            if (!field.required) {
 
-    ("if(m%s!==undefined&&m%s!==%j)", prop, prop, field.defaultValue); 
+                if (field.long) gen
+    ("if(m%s!==undefined&&util.longNeq(m%s,%j))", prop, prop, field.defaultValue);
+                else gen
+    ("if(m%s!==undefined&&m%s!==%j)", prop, prop, field.defaultValue);
+
+            }
 
             if (wireType !== undefined) gen
 
@@ -205,7 +206,8 @@ EncoderPrototype.generate = function generate() {
 
     .eof(this.type.fullName + "$encode", {
         Writer : Writer,
-        types  : fields.map(function(fld) { return fld.resolvedType; })
+        types  : fields.map(function(fld) { return fld.resolvedType; }),
+        util   : util
     });
     /* eslint-enable no-unexpected-multiline */
 };

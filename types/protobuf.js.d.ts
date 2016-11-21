@@ -1,6 +1,6 @@
 /*
  * protobuf.js v6.0.0-dev TypeScript definitions
- * Generated Wed, 16 Nov 2016 12:49:35 UTC
+ * Generated Mon, 21 Nov 2016 18:21:39 UTC
  */
 declare module protobuf {
 
@@ -263,7 +263,7 @@ declare module protobuf {
       defaultValue: any;
    
       /**
-       * Whether this field's value is a long.
+       * Whether this field's value should be treated as a long.
        * @type {boolean}
        */
       long: boolean;
@@ -1267,13 +1267,27 @@ declare module protobuf {
       /**
        * Loads one or multiple .proto or preprocessed .json files into this root namespace.
        * @param {string|string[]} filename Names of one or multiple files to load
+       * @param {LoaderOptions} [options] Load options
        * @param {function(?Error, Root=)} [callback] Node-style callback function
        * @returns {Promise<Root>|undefined} A promise if `callback` has been omitted
        * @throws {TypeError} If arguments are invalid
        */
-      load(filename: (string|string[]), callback?: (() => any)): (Promise<Root>|undefined);
+      load(filename: (string|string[]), options?: LoaderOptions, callback?: (() => any)): (Promise<Root>|undefined);
    
    }
+   
+   /**
+    * Options provided to {@link Root#load}, modifying its behavior.
+    * @typedef LoaderOptions
+    * @type {Object}
+    * @property {boolean} [public=false] Whether this is a public import
+    * @property {boolean} [weak=false} Whether this is a weak import]
+    */
+   interface LoaderOptions {
+      public: boolean;
+      weak: boolean;
+   }
+   
    
    /**
     * Constructs a new service.
@@ -1542,6 +1556,16 @@ declare module protobuf {
     */
    module util {
       /**
+       * Programmatically generates a function.
+       * @memberof util
+       * @param {...string} params Function parameter names
+       * @returns {util.CodegenAppender} Printf-like appender function
+       * @property {boolean} supported Whether code generation is supported by the environment.
+       * @property {boolean} verbose=false When set to true, codegen will log generated code to console. Useful for debugging.
+       */
+      function codegen(params: string): util.CodegenAppender;
+   
+      /**
        * Appends a printf-like formatted line to the generated source. Returned when calling {@link util.codegen}.
        * @typedef CodegenAppender
        * @memberof util
@@ -1556,17 +1580,6 @@ declare module protobuf {
       type CodegenAppender = (format: string, params: any) => util.CodegenAppender;
    
       /**
-       * Ends generation and builds the function.
-       * @typedef CodegenEnder
-       * @memberof util
-       * @type {function}
-       * @param {string} [name] Function name, defaults to generate an anonymous function
-       * @param {Object|string[]} [scope] Function scope
-       * @returns {function} A function to apply the scope manually when `scope` is an array, otherwise the generated function with scope applied
-       */
-      type CodegenEnder = (name?: string, scope?: (Object|string[])) => (() => any);
-   
-      /**
        * Stringifies the so far generated function source.
        * @typedef CodegenStringer
        * @memberof util
@@ -1577,14 +1590,15 @@ declare module protobuf {
       type CodegenStringer = (name?: string) => string;
    
       /**
-       * Programmatically generates a function.
+       * Ends generation and builds the function.
+       * @typedef CodegenEnder
        * @memberof util
-       * @param {...string} params Function parameter names
-       * @returns {util.CodegenAppender} Printf-like appender function
-       * @property {boolean} supported Whether code generation is supported by the environment.
-       * @property {boolean} verbose=false When set to true, codegen will log generated code to console. Useful for debugging.
+       * @type {function}
+       * @param {string} [name] Function name, defaults to generate an anonymous function
+       * @param {Object|string[]} [scope] Function scope
+       * @returns {function} A function to apply the scope manually when `scope` is an array, otherwise the generated function with scope applied
        */
-      function codegen(params: string): util.CodegenAppender;
+      type CodegenEnder = (name?: string, scope?: (Object|string[])) => (() => any);
    
       /**
        * Constructs new long bits.
@@ -1771,7 +1785,7 @@ declare module protobuf {
        * @param {Long|number} value Value to convert
        * @returns {string} Hash
        */
-      function toHash(value: (Long|number)): string;
+      function longToHash(value: (Long|number)): string;
    
       /**
        * Converts an 8 characters long hash string to a long or number.
@@ -1779,7 +1793,15 @@ declare module protobuf {
        * @param {boolean} [unsigned=false] Whether unsigned or not
        * @returns {Long|number} Original value
        */
-      function fromHash(hash: string, unsigned?: boolean): (Long|number);
+      function longFromHash(hash: string, unsigned?: boolean): (Long|number);
+   
+      /**
+       * Tests if two possibly long values are not equal.
+       * @param {number|Long} a First value
+       * @param {number|Long} b Second value
+       * @returns {boolean} `true` if not equal
+       */
+      function longNeq(a: (number|Long), b: (number|Long)): boolean;
    
       /**
        * Merges the properties of the source object into the destination object.

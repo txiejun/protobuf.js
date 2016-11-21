@@ -3,9 +3,9 @@ module.exports = Reader;
 
 Reader.BufferReader = BufferReader;
 
-var LongBits = require("./longbits"),
-    util     = require("./util"),
+var util     = require("./util"),
     ieee754  = require("../lib/ieee754");
+var LongBits = util.LongBits;
 
 function indexOutOfRange(reader, writeLength) {
     return "index out of range: " + reader.pos + " + " + (writeLength || 1) + " > " + reader.len;

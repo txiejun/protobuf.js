@@ -1,6 +1,6 @@
 /*!
  * protobuf.js v6.0.0-dev (c) 2016 Daniel Wirtz
- * Compiled Wed, 16 Nov 2016 12:49:30 UTC
+ * Compiled Mon, 21 Nov 2016 18:21:34 UTC
  * Licensed under the Apache License, Version 2.0
  * see: https://github.com/dcodeIO/protobuf.js for details
  */
@@ -126,148 +126,12 @@ exports.write = function writeIEEE754(buffer, value, offset, isBE, mLen, nBytes)
 
 },{}],2:[function(require,module,exports){
 "use strict";
-module.exports = codegen;
-
-/**
- * Appends a printf-like formatted line to the generated source. Returned when calling {@link util.codegen}.
- * @typedef CodegenAppender
- * @memberof util
- * @type {function}
- * @param {string} format A printf-like format string
- * @param {...*} params Format replacements
- * @returns {util.CodegenAppender} Itself
- * @property {util.CodegenStringer} str
- * @property {util.CodegenEnder} eof
- * @see {@link https://nodejs.org/docs/latest/api/util.html#util_util_format_format_args}
- */
-
-/**
- * Ends generation and builds the function.
- * @typedef CodegenEnder
- * @memberof util
- * @type {function}
- * @param {string} [name] Function name, defaults to generate an anonymous function
- * @param {Object|Array.<string>} [scope] Function scope
- * @returns {function} A function to apply the scope manually when `scope` is an array, otherwise the generated function with scope applied
- */
-
-/**
- * Stringifies the so far generated function source.
- * @typedef CodegenStringer
- * @memberof util
- * @type {function}
- * @param {string} [name] Function name, defaults to generate an anonymous function
- * @returns {string} Function source using tabs for indentation
- */
-
-var blockOpenRe  = /[\{\[]$/,
-    blockCloseRe = /^[\}\]]/,
-    casingRe     = /[\:]$/,
-    branchRe     = /^\s*(?:if|else if|while|for)\b|\b(?:else)\s*$/,
-    breakRe      = /\b(?:break|continue);?$|^\s*return\b/;
-
-/**
- * Programmatically generates a function.
- * @memberof util
- * @param {...string} params Function parameter names
- * @returns {util.CodegenAppender} Printf-like appender function
- * @property {boolean} supported Whether code generation is supported by the environment.
- * @property {boolean} verbose=false When set to true, codegen will log generated code to console. Useful for debugging.
- */
-function codegen(/* varargs */) {
-    var args   = Array.prototype.slice.call(arguments),
-        src    = ['\t"use strict";'];
-
-    var indent = 1,
-        inCase = false;
-
-    // util.CodegenAppender
-    function gen(format/*, varargs */) {
-        var params = Array.prototype.slice.call(arguments, 1),
-            index  = 0;
-        var line = format.replace(/%([djs])/g, function($0, $1) {
-            var param = params[index++];
-            return $1 === "j"
-                ? JSON.stringify(param)
-                : String(param);
-        });
-        var level = indent;
-        if (src.length) {
-            var prev = src[src.length - 1];
-
-            // block open or one time branches
-            if (blockOpenRe.test(prev))
-                level = ++indent; // keep
-            else if (branchRe.test(prev))
-                ++level; // once
-            
-            // casing
-            if (casingRe.test(prev) && !casingRe.test(line)) {
-                level = ++indent;
-                inCase = true;
-            } else if (inCase && breakRe.test(prev)) {
-                level = --indent;
-                inCase = false;
-            }
-
-            // block close
-            if (blockCloseRe.test(line)) {
-                level = --indent;
-                if (inCase) {
-                    level = --indent;
-                    inCase = false;
-                }
-            }
-        }
-        for (index = 0; index < level; ++index)
-            line = "\t" + line;
-        src.push(line);
-        return gen;
-    }
-
-    // util.CodegenStringer
-    gen.str = function str(name) {
-        return "function " + (name ? name.replace(/[^\w_$]/g, "_") : "") + "(" + args.join(",") + ") {\n" + src.join("\n") + "\n}";
-    };
-
-    // util.CodegenEnder
-    gen.eof = function eof(name, scope) {
-        if (name && typeof name === 'object') {
-            scope = name;
-            name = undefined;
-        }
-        var code = gen.str(name);
-        if (codegen.verbose)
-            console.log("--- codegen ---\n" + code.replace(/^/mg, "> ").replace(/\t/g, "  ")); // eslint-disable-line no-console
-        code = "return " + code;
-        var params, values = [];
-        if (Array.isArray(scope)) {
-            params = scope.slice();
-        } else if (scope) {
-            params = Object.keys(scope);
-            values = params.map(function(key) { return scope[key]; });
-        } else
-            params = [];
-        var fn = Function.apply(null, params.concat(code)); // eslint-disable-line no-new-func
-        return values ? fn.apply(null, values) : fn();
-    };
-
-    return gen;
-}
-
-codegen.supported = false;
-try { codegen.supported = codegen("a","b")("return a-b").eof()(2,1) === 1; } catch (e) {} // eslint-disable-line no-empty
-
-codegen.verbose = false;
-
-},{}],3:[function(require,module,exports){
-"use strict";
 module.exports = Decoder;
 
-var Enum   = require(5),
-    Reader = require(16),
-    types  = require(21),
-    util   = require(22);
+var Enum   = require(4),
+    Reader = require(14),
+    types  = require(19),
+    util   = require(20);
 
 /**
  * Constructs a new decoder for the specified message type.
@@ -351,7 +215,7 @@ DecoderPrototype.decode = function decode_fallback(reader, length) { // codegen 
                             vs[vs.length] = field.resolvedType.decode(reader, reader.uint32());
                     }
                     for (var i = 0; i < ks.length; ++i)
-                        map[typeof ks[i] === 'object' ? util.toHash(ks[i]) : ks[i]] = vs[i];
+                        map[typeof ks[i] === 'object' ? util.longToHash(ks[i]) : ks[i]] = vs[i];
                 }
 
             // Repeated fields
@@ -393,7 +257,7 @@ DecoderPrototype.generate = function generate() {
     var fields = this.type.fieldsArray;    
     var gen = util.codegen("r", "l")
 
-    ("r=r instanceof Reader?r:Reader(r)")
+    ("r instanceof Reader||(r=Reader(r))")
     ("var c=l===undefined?r.len:r.pos+l,m=new this.ctor()")
     ("while(r.pos<c){")
         ("var t=r.tag()")
@@ -429,7 +293,7 @@ DecoderPrototype.generate = function generate() {
                     gen
                     ("}")
                     ("for(var i=0;i<k.length;++i)")
-                        ("o[typeof(k[i])==='object'?util.toHash(k[i]):k[i]]=v[i]")
+                        ("o[typeof(k[i])==='object'?util.longToHash(k[i]):k[i]]=v[i]")
                 ("}")
                 ("m%s=o", prop);
 
@@ -480,14 +344,14 @@ DecoderPrototype.generate = function generate() {
     /* eslint-enable no-unexpected-multiline */
 };
 
-},{"16":16,"21":21,"22":22,"5":5}],4:[function(require,module,exports){
+},{"14":14,"19":19,"20":20,"4":4}],3:[function(require,module,exports){
 "use strict";
 module.exports = Encoder;
 
-var Enum   = require(5),
+var Enum   = require(4),
     Writer = require(24),
-    types  = require(21),
-    util   = require(22);
+    types  = require(19),
+    util   = require(20);
 
 /**
  * Constructs a new encoder for the specified message type.
@@ -580,7 +444,7 @@ EncoderPrototype.encode = function encode_fallback(message, writer) { // codegen
         // Non-repeated
         } else {
             var value = message[field.name];
-            if (field.required || value !== undefined && value !== field.defaultValue) { // eslint-disable-line eqeqeq
+            if (field.required || value !== undefined && field.long ? util.longNeq(value, field.defaultValue) : value !== field.defaultValue) {
                 if (wireType !== undefined)
                     writer.tag(field.id, wireType)[type](value);
                 else {
@@ -621,17 +485,16 @@ EncoderPrototype.generate = function generate() {
 
     ("if(m%s){", prop)
         ("w.fork()")
-        ("var i=0,ks=Object.keys(m%s)", prop)
-        ("while(i<ks.length){")
+        ("for(var i=0,ks=Object.keys(m%s);i<ks.length;++i){", prop)
             ("w.tag(1,%d).%s(ks[i])", keyWireType, keyType);
 
             if (wireType !== undefined) gen
 
-            ("w.tag(2,%d).%s(m%s[ks[i++]])", wireType, type, prop);
+            ("w.tag(2,%d).%s(m%s[ks[i]])", wireType, type, prop);
 
             else gen
             
-            ("types[%d].encode(m%s[ks[i++]],w.tag(2,2).fork()).ldelim()", i, prop);
+            ("types[%d].encode(m%s[ks[i]],w.tag(2,2).fork()).ldelim()", i, prop);
 
             gen
         ("}")
@@ -644,30 +507,32 @@ EncoderPrototype.generate = function generate() {
             // Packed repeated
             if (field.packed && types.packed[type] !== undefined) { gen
 
-    ("if(m%s){", prop)
+    ("if(m%s&&m%s.length){", prop, prop)
         ("w.fork()")
-        ("var i=0")
-        ("while(i<m%s.length)", prop)
-            ("w.%s(m%s[i++])", type, prop)
-        ("w.len&&w.ldelim(%d)||w.reset()", field.id)
+        ("for(var i=0;i<m%s.length;++i)", prop)
+            ("w.%s(m%s[i])", type, prop)
+        ("w.ldelim(%d)", field.id)
     ("}");
 
             // Non-packed
             } else { gen
 
-    ("if(m%s){", prop)
-        ("var i=0")
-        ("while(i<m%s.length)", prop)
-            ("types[%d].encode(m%s[i++],w.tag(%d,2).fork()).ldelim()", i, prop, field.id)
-    ("}");
+    ("if(m%s)", prop)
+        ("for(var i=0;i<m%s.length;++i)", prop)
+            ("types[%d].encode(m%s[i],w.tag(%d,2).fork()).ldelim()", i, prop, field.id);
 
             }
 
         // Non-repeated
         } else {
-            if (!field.required) gen
+            if (!field.required) {
 
-    ("if(m%s!==undefined&&m%s!==%j)", prop, prop, field.defaultValue); 
+                if (field.long) gen
+    ("if(m%s!==undefined&&util.longNeq(m%s,%j))", prop, prop, field.defaultValue);
+                else gen
+    ("if(m%s!==undefined&&m%s!==%j)", prop, prop, field.defaultValue);
+
+            }
 
             if (wireType !== undefined) gen
 
@@ -688,20 +553,21 @@ EncoderPrototype.generate = function generate() {
 
     .eof(this.type.fullName + "$encode", {
         Writer : Writer,
-        types  : fields.map(function(fld) { return fld.resolvedType; })
+        types  : fields.map(function(fld) { return fld.resolvedType; }),
+        util   : util
     });
     /* eslint-enable no-unexpected-multiline */
 };
 
-},{"21":21,"22":22,"24":24,"5":5}],5:[function(require,module,exports){
+},{"19":19,"20":20,"24":24,"4":4}],4:[function(require,module,exports){
 "use strict";
 module.exports = Enum;
 
-var ReflectionObject = require(12);
+var ReflectionObject = require(10);
 /** @alias Enum.prototype */
 var EnumPrototype = ReflectionObject.extend(Enum);
 
-var util = require(22);
+var util = require(20);
 
 var _TypeError = util._TypeError;
 
@@ -824,19 +690,19 @@ EnumPrototype.remove = function(name) {
     return clearCache(this);
 };
 
-},{"12":12,"22":22}],6:[function(require,module,exports){
+},{"10":10,"20":20}],5:[function(require,module,exports){
 "use strict";
 module.exports = Field;
 
-var ReflectionObject = require(12);
+var ReflectionObject = require(10);
 /** @alias Field.prototype */
 var FieldPrototype = ReflectionObject.extend(Field);
 
-var Type      = require(20),
-    Enum      = require(5),
-    MapField  = require(9),
-    types     = require(21),
-    util      = require(22);
+var Type      = require(18),
+    Enum      = require(4),
+    MapField  = require(7),
+    types     = require(19),
+    util      = require(20);
 
 var _TypeError = util._TypeError;
 
@@ -937,10 +803,10 @@ function Field(name, id, type, rule, extend, options) {
     this.defaultValue = null;
 
     /**
-     * Whether this field's value is a long.
+     * Whether this field's value should be treated as a long.
      * @type {boolean}
      */
-    this.long = types.long[type] !== undefined;
+    this.long = util.Long ? types.long[type] !== undefined : false;
 
     /**
      * Resolved type if not a basic type.
@@ -1064,6 +930,9 @@ FieldPrototype.resolve = function resolve() {
         this.defaultValue = optionDefault;
     else
         this.defaultValue = typeDefault;
+
+    if (this.long)
+        this.defaultValue = util.Long.fromValue(this.defaultValue);
     
     return ReflectionObject.prototype.resolve.call(this);
 };
@@ -1079,7 +948,7 @@ FieldPrototype.jsonConvert = function(value, options) {
     if (options) {
         if (this.resolvedType instanceof Enum && options.enum === String)
             return this.resolvedType.valuesById[value];
-        else if (types.long[this.type] !== undefined && options.long)
+        else if (this.long && options.long)
             return options.long === Number
                 ? typeof value === 'number'
                 ? value
@@ -1089,13 +958,13 @@ FieldPrototype.jsonConvert = function(value, options) {
     return value;
 };
 
-},{"12":12,"20":20,"21":21,"22":22,"5":5,"9":9}],7:[function(require,module,exports){
+},{"10":10,"18":18,"19":19,"20":20,"4":4,"7":7}],6:[function(require,module,exports){
 "use strict";
 module.exports = inherits;
 
-var Prototype = require(15),
-    Type      = require(20),
-    util      = require(22);
+var Prototype = require(13),
+    Type      = require(18),
+    util      = require(20);
 
 var _TypeError = util._TypeError;
 
@@ -1283,190 +1152,19 @@ inherits.defineProperties = function defineProperties(prototype, type) {
     return prototype;
 };
 
-},{"15":15,"20":20,"22":22}],8:[function(require,module,exports){
-"use strict";
-module.exports = LongBits;
-
-/**
- * Constructs new long bits.
- * @classdesc Helper class for working with the low and high bits of a 64 bit value.
- * @memberof util
- * @constructor
- * @param {number} lo Low bits
- * @param {number} hi High bits
- */
-function LongBits(lo, hi) {
-    // make sure to always call this with unsigned 32bits for proper optimization
-
-    /**
-     * Low bits.
-     * @type {number}
-     */
-    this.lo = lo;
-
-    /**
-     * High bits.
-     * @type {number}
-     */
-    this.hi = hi;
-}
-
-/** @alias util.LongBits.prototype */
-var LongBitsPrototype = LongBits.prototype;
-
-/**
- * Zero bits.
- * @memberof util.LongBits
- * @type {util.LongBits}
- */
-var zero = new LongBits(0, 0);
-
-zero.toNumber = function() { return 0; };
-zero.zzEncode = zero.zzDecode = function() { return this; };
-zero.length = function() { return 1; };
-
-/**
- * Constructs new long bits from the specified number.
- * @param {number} value Value
- * @returns {util.LongBits} Instance
- */
-LongBits.fromNumber = function fromNumber(value) {
-    var sign  = value < 0;
-        value = Math.abs(value);
-    var lo = value >>> 0,
-        hi = (value - lo) / 4294967296 >>> 0;
-    if (sign) {
-        hi = ~hi >>> 0;
-        lo = ~lo >>> 0;
-        if (++lo > 4294967295) {
-            lo = 0;
-            if (++hi > 4294967295)
-                hi = 0;
-        }
-    }
-    return new LongBits(lo, hi);
-};
-
-/**
- * Constrcuts new long bits from a number or long.
- * @param {Long|number} value Value
- * @returns {util.LongBits} Instance
- */
-LongBits.from = function from(value) {
-    return typeof value === 'number'
-        ? LongBits.fromNumber(value)
-        : new LongBits(value.low >>> 0, value.high >>> 0);
-};
-
-/**
- * Converts this long bits to a possibly unsafe JavaScript number.
- * @param {boolean} unsigned Whether unsigned or not
- * @returns {number} Possibly unsafe number
- */
-LongBitsPrototype.toNumber = function toNumber(unsigned) {
-    if (!unsigned && this.hi >>> 31) {
-        this.lo = ~this.lo + 1 >>> 0;
-        this.hi = ~this.hi     >>> 0;
-        if (!this.lo)
-            this.hi = this.hi + 1 >>> 0;
-        return -(this.lo + this.hi * 4294967296);
-    }
-    return this.lo + this.hi * 4294967296;
-};
-
-var charCodeAt = String.prototype.charCodeAt;
-
-/**
- * Constructs new long bits from the specified 8 characters long hash.
- * @param {string} hash Hash
- * @returns {util.LongBits} Bits
- */
-LongBits.fromHash = function fromHash(hash) {
-    return new LongBits(
-        ( charCodeAt.call(hash, 0)
-        | charCodeAt.call(hash, 1) << 8
-        | charCodeAt.call(hash, 2) << 16
-        | charCodeAt.call(hash, 3) << 24) >>> 0
-    ,
-        ( charCodeAt.call(hash, 4)
-        | charCodeAt.call(hash, 5) << 8
-        | charCodeAt.call(hash, 6) << 16
-        | charCodeAt.call(hash, 7) << 24) >>> 0
-    );
-};
-
-/**
- * Converts this long bits to a 8 characters long hash.
- * @returns {string} Hash
- */
-LongBitsPrototype.toHash = function toHash() {
-    return String.fromCharCode(
-        this.lo        & 255,
-        this.lo >>> 8  & 255,
-        this.lo >>> 16 & 255,
-        this.lo >>> 24 & 255,
-        this.hi        & 255,
-        this.hi >>> 8  & 255,
-        this.hi >>> 16 & 255,
-        this.hi >>> 24 & 255
-    );
-};
-
-/**
- * Zig-zag encodes this long bits.
- * @returns {util.LongBits} `this`
- */
-LongBitsPrototype.zzEncode = function zzEncode() {
-    var mask = -(this.hi >>> 31);
-    this.hi  = ((this.hi << 1 | this.lo >>> 31) ^ mask) >>> 0;
-    this.lo  = ( this.lo << 1                   ^ mask) >>> 0;
-    return this;
-};
-
-/**
- * Zig-zag decodes this long bits.
- * @returns {util.LongBits} `this`
- */
-LongBitsPrototype.zzDecode = function zzDecode() {
-    var mask = -(this.lo & 1);
-    this.lo  = ((this.lo >>> 1 | (this.hi & 1) << 31) ^ mask) >>> 0;
-    this.hi  = ( this.hi >>> 1                        ^ mask) >>> 0;
-    return this;
-};
-
-/**
- * Calculates the length of this longbits when encoded as a varint.
- * @returns {number} Length
- */
-LongBitsPrototype.length = function length() {
-    var part0 =  this.lo,
-        part1 = (this.lo >>> 28 | this.hi << 4) >>> 0,
-        part2 =  this.hi >>> 24;
-    if (part2 === 0) {
-        if (part1 === 0)
-            return part0 < 1 << 14
-                ? part0 < 1 << 7 ? 1 : 2
-                : part0 < 1 << 21 ? 3 : 4;
-        return part1 < 1 << 14
-            ? part1 < 1 << 7 ? 5 : 6
-            : part1 < 1 << 21 ? 7 : 8;
-    }
-    return part2 < 1 << 7 ? 9 : 10;
-};
-
-},{}],9:[function(require,module,exports){
+},{"13":13,"18":18,"20":20}],7:[function(require,module,exports){
 "use strict";
 module.exports = MapField;
 
-var Field = require(6);
+var Field = require(5);
 /** @alias Field.prototype */
 var FieldPrototype = Field.prototype;
 /** @alias MapField.prototype */
 var MapFieldPrototype = Field.extend(MapField);
 
-var Enum    = require(5),
-    types   = require(21),
-    util    = require(22);
+var Enum    = require(4),
+    types   = require(19),
+    util    = require(20);
 
 /**
  * Constructs a new map field.
@@ -1552,16 +1250,16 @@ MapFieldPrototype.resolve = function resolve() {
     return FieldPrototype.resolve.call(this);
 };
 
-},{"21":21,"22":22,"5":5,"6":6}],10:[function(require,module,exports){
+},{"19":19,"20":20,"4":4,"5":5}],8:[function(require,module,exports){
 "use strict";
 module.exports = Method;
 
-var ReflectionObject = require(12);
+var ReflectionObject = require(10);
 /** @alias Method.prototype */
 var MethodPrototype = ReflectionObject.extend(Method);
 
-var Type = require(20),
-    util = require(22);
+var Type = require(18),
+    util = require(20);
 
 var _TypeError = util._TypeError;
 
@@ -1732,19 +1430,19 @@ MethodPrototype.call = function call(message, performRequest, callback) {
     return undefined;
 };
 
-},{"12":12,"20":20,"22":22}],11:[function(require,module,exports){
+},{"10":10,"18":18,"20":20}],9:[function(require,module,exports){
 "use strict";
 module.exports = Namespace;
 
-var ReflectionObject = require(12);
+var ReflectionObject = require(10);
 /** @alias Namespace.prototype */
 var NamespacePrototype = ReflectionObject.extend(Namespace);
 
-var Enum    = require(5),
-    Type    = require(20),
-    Field   = require(6),
-    Service = require(18),
-    util    = require(22);
+var Enum    = require(4),
+    Type    = require(18),
+    Field   = require(5),
+    Service = require(16),
+    util    = require(20);
 
 var _TypeError = util._TypeError;
 
@@ -2035,14 +1733,14 @@ NamespacePrototype.lookup = function lookup(path, parentAlreadyChecked) {
     return this.parent.lookup(path);
 };
 
-},{"12":12,"18":18,"20":20,"22":22,"5":5,"6":6}],12:[function(require,module,exports){
+},{"10":10,"16":16,"18":18,"20":20,"4":4,"5":5}],10:[function(require,module,exports){
 "use strict";
 module.exports = ReflectionObject;
 
 ReflectionObject.extend = extend;
 
-var Root = require(17),
-    util = require(22);
+var Root = require(15),
+    util = require(20);
 
 var _TypeError = util._TypeError;
 
@@ -2294,16 +1992,16 @@ ReflectionObjectPrototype.toString = function toString() {
     return this.constructor.name + " " + this.fullName;
 };
 
-},{"17":17,"22":22}],13:[function(require,module,exports){
+},{"15":15,"20":20}],11:[function(require,module,exports){
 "use strict";
 module.exports = OneOf;
 
-var ReflectionObject = require(12);
+var ReflectionObject = require(10);
 /** @alias OneOf.prototype */
 var OneOfPrototype = ReflectionObject.extend(OneOf);
 
-var Field = require(6),
-    util  = require(22);
+var Field = require(5),
+    util  = require(20);
 
 var _TypeError = util._TypeError;
 
@@ -2441,20 +2139,20 @@ OneOfPrototype.onRemove = function onRemove(parent) {
     ReflectionObject.prototype.onRemove.call(this, parent);
 };
 
-},{"12":12,"22":22,"6":6}],14:[function(require,module,exports){
+},{"10":10,"20":20,"5":5}],12:[function(require,module,exports){
 "use strict";
 module.exports = parse;
 
-var tokenize = require(19),
-    Root     = require(17),
-    Type     = require(20),
-    Field    = require(6),
-    MapField = require(9),
-    OneOf    = require(13),
-    Enum     = require(5),
-    Service  = require(18),
-    Method   = require(10),
-    types    = require(21);
+var tokenize = require(17),
+    Root     = require(15),
+    Type     = require(18),
+    Field    = require(5),
+    MapField = require(7),
+    OneOf    = require(11),
+    Enum     = require(4),
+    Service  = require(16),
+    Method   = require(8),
+    types    = require(19);
 
 var nameRe      = /^[a-zA-Z_][a-zA-Z_0-9]*$/,
     typeRefRe   = /^(?:\.?[a-zA-Z_][a-zA-Z_0-9]*)+$/,
@@ -3004,7 +2702,7 @@ function parse(source, root, visible) {
     };
 }
 
-},{"10":10,"13":13,"17":17,"18":18,"19":19,"20":20,"21":21,"5":5,"6":6,"9":9}],15:[function(require,module,exports){
+},{"11":11,"15":15,"16":16,"17":17,"18":18,"19":19,"4":4,"5":5,"7":7,"8":8}],13:[function(require,module,exports){
 "use strict";
 module.exports = Prototype;
 
@@ -3073,15 +2771,15 @@ Prototype.prototype.asJSON = function asJSON(options) {
     return json;
 };
 
-},{}],16:[function(require,module,exports){
+},{}],14:[function(require,module,exports){
 "use strict";
 module.exports = Reader;
 
 Reader.BufferReader = BufferReader;
 
-var LongBits = require(8),
-    util     = require(22),
+var util     = require(20),
     ieee754  = require(1);
+var LongBits = util.LongBits;
 
 function indexOutOfRange(reader, writeLength) {
     return "index out of range: " + reader.pos + " + " + (writeLength || 1) + " > " + reader.len;
@@ -3576,21 +3274,21 @@ BufferReaderPrototype.finish = function finish_buffer(buffer) {
     return remain;
 };
 
-},{"1":1,"22":22,"8":8}],17:[function(require,module,exports){
+},{"1":1,"20":20}],15:[function(require,module,exports){
 "use strict";
 module.exports = Root;
 
-var Namespace = require(11);
+var Namespace = require(9);
 /** @alias Namespace.prototype */
 var NamespacePrototype = Namespace.prototype; 
 /** @alias Root.prototype */
 var RootPrototype = Namespace.extend(Root);
 
-var Type      = require(20),
-    Field     = require(6),
+var Type      = require(18),
+    Field     = require(5),
     // OneOf     = require("./oneof"),
     // Enum      = require("./enum"),
-    util      = require(22);
+    util      = require(20);
 
 /**
  * Options provided to a {@link Root|root namespace}, modifying its behavior.
@@ -3635,9 +3333,6 @@ function Root(rootOptions, options) {
     if (!rootOptions.noGoogleTypes)
         importGoogleTypes(this, false);
 }
-
-/** @alias Root.prototype */
-var RootPrototype = Namespace.extend(Root);
 
 /**
  * Checks if a specific file has already been loaded.
@@ -3878,16 +3573,29 @@ Root.importGoogleTypes = importGoogleTypes;
 RootPrototype.resolvePath = util.resolvePath;
 
 /**
+ * Options provided to {@link Root#load}, modifying its behavior.
+ * @typedef LoaderOptions
+ * @type {Object}
+ * @property {boolean} [public=false] Whether this is a public import
+ * @property {boolean} [weak=false} Whether this is a weak import]
+ */
+
+/**
  * Loads one or multiple .proto or preprocessed .json files into this root namespace.
  * @param {string|string[]} filename Names of one or multiple files to load
+ * @param {LoaderOptions} [options] Load options
  * @param {function(?Error, Root=)} [callback] Node-style callback function
  * @returns {Promise<Root>|undefined} A promise if `callback` has been omitted
  * @throws {TypeError} If arguments are invalid
  */
-RootPrototype.load = function load(filename, callback) {
+RootPrototype.load = function load(filename, options, callback) {
+    if (typeof options === 'function') {
+        callback = options;
+        options = undefined;
+    }
     var self = this;
     if (!callback)
-        return util.asPromise(load, self, filename);
+        return util.asPromise(load, self, filename, options);
 
     // Finishes loading by calling the callback (exactly once)
     function finish(err, root) {
@@ -3905,7 +3613,7 @@ RootPrototype.load = function load(filename, callback) {
                 var json = JSON.parse(source);
                 self.setOptions(json.options).addJSON(json.nested);
             } else {
-                var parsed = require(14)(source, self, visible);
+                var parsed = require(12)(source, self, visible);
                 if (parsed.publicImports)
                     parsed.publicImports.forEach(function(file) {
                         fetch(self.resolvePath(origin, file), visible, false);
@@ -4043,18 +3751,18 @@ RootPrototype.toString = function toString() {
     return this.constructor.name;
 };
 
-},{"11":11,"14":14,"20":20,"22":22,"6":6}],18:[function(require,module,exports){
+},{"12":12,"18":18,"20":20,"5":5,"9":9}],16:[function(require,module,exports){
 "use strict";
 module.exports = Service;
 
-var Namespace = require(11);
+var Namespace = require(9);
 /** @alias Namespace.prototype */
 var NamespacePrototype = Namespace.prototype;
 /** @alias Service.prototype */
 var ServicePrototype = Namespace.extend(Service);
 
-var Method = require(10),
-    util   = require(22);
+var Method = require(8),
+    util   = require(20);
 
 /**
  * Constructs a new service.
@@ -4206,7 +3914,7 @@ ServicePrototype.remove = function remove(object) {
     return NamespacePrototype.remove.call(this, object);
 };
 
-},{"10":10,"11":11,"22":22}],19:[function(require,module,exports){
+},{"20":20,"8":8,"9":9}],17:[function(require,module,exports){
 "use strict";
 /* eslint-disable default-case, callback-return */
 module.exports = tokenize;
@@ -4398,28 +4106,28 @@ function tokenize(source) {
         skip: skip
     };
 }
-},{}],20:[function(require,module,exports){
+},{}],18:[function(require,module,exports){
 "use strict";
 module.exports = Type; 
 
-var Namespace = require(11);
+var Namespace = require(9);
 /** @alias Namespace.prototype */
 var NamespacePrototype = Namespace.prototype;
 /** @alias Type.prototype */
 var TypePrototype = Namespace.extend(Type);
 
-var Enum      = require(5),
-    OneOf     = require(13),
-    Field     = require(6),
-    Service   = require(18),
-    Prototype = require(15),
-    inherits  = require(7),
-    util      = require(22),
-    Reader    = require(16),
-    Encoder   = require(4),
-    Decoder   = require(3),
-    Verifier  = require(23),
-    codegen   = require(2);
+var Enum      = require(4),
+    OneOf     = require(11),
+    Field     = require(5),
+    Service   = require(16),
+    Prototype = require(13),
+    inherits  = require(6),
+    util      = require(20),
+    Reader    = require(14),
+    Encoder   = require(3),
+    Decoder   = require(2),
+    Verifier  = require(23);
+var codegen   = util.codegen;
 
 /**
  * Constructs a new message type.
@@ -4819,7 +4527,7 @@ TypePrototype.verify = function verify(message) {
     return this.verify(message);
 };
 
-},{"11":11,"13":13,"15":15,"16":16,"18":18,"2":2,"22":22,"23":23,"3":3,"4":4,"5":5,"6":6,"7":7}],21:[function(require,module,exports){
+},{"11":11,"13":13,"14":14,"16":16,"2":2,"20":20,"23":23,"3":3,"4":4,"5":5,"6":6,"9":9}],19:[function(require,module,exports){
 "use strict";
 
 /**
@@ -4950,7 +4658,7 @@ types.packed = bake([
     /* bool     */ 0
 ], 2);
 
-},{}],22:[function(require,module,exports){
+},{}],20:[function(require,module,exports){
 "use strict";
 
 /**
@@ -4959,8 +4667,8 @@ types.packed = bake([
  */
 var util = module.exports = {};
 
-var codegen  = require(2),
-    LongBits = require(8);
+var codegen  = require(21),
+    LongBits = require(22);
 
 util.codegen  = codegen;
 util.LongBits = LongBits;
@@ -5163,7 +4871,7 @@ util.resolvePath = function resolvePath(originPath, importPath, alreadyNormalize
  * @param {Long|number} value Value to convert
  * @returns {string} Hash
  */
-util.toHash = function toHash(value) {
+util.longToHash = function longToHash(value) {
     return value
         ? LongBits.from(value).toHash()
         : '\0\0\0\0\0\0\0\0';
@@ -5175,11 +4883,27 @@ util.toHash = function toHash(value) {
  * @param {boolean} [unsigned=false] Whether unsigned or not
  * @returns {Long|number} Original value
  */
-util.fromHash = function fromHash(hash, unsigned) {
+util.longFromHash = function longFromHash(hash, unsigned) {
     var bits = LongBits.fromHash(hash);
     if (util.Long)
         return util.Long.fromBits(bits.lo, bits.hi, unsigned);
     return bits.toNumber(Boolean(unsigned));
+};
+
+/**
+ * Tests if two possibly long values are not equal.
+ * @param {number|Long} a First value
+ * @param {number|Long} b Second value
+ * @returns {boolean} `true` if not equal
+ */
+util.longNeq = function longNeq(a, b) {
+    return typeof a === 'number'
+         ? typeof b === 'number'
+            ? a !== b
+            : (a = LongBits.fromNumber(a)).lo !== b.low || a.hi !== b.high
+         : typeof b === 'number'
+            ? (b = LongBits.fromNumber(b)).lo !== a.low || b.hi !== a.high
+            : a.low !== b.low || a.high !== b.high;
 };
 
 /**
@@ -5208,13 +4932,326 @@ util.safeProp = function safeProp(prop) {
     return /^[a-z_$][a-z0-9_$]*$/i.test(prop) ? "." + prop : "['" + prop.replace(/\\/g, "\\\\").replace(/'/g, "\\'") + "']";
 };
 
-},{"2":2,"8":8,"buffer":"buffer","long":"long","undefined":undefined}],23:[function(require,module,exports){
+},{"21":21,"22":22,"buffer":"buffer","long":"long","undefined":undefined}],21:[function(require,module,exports){
+"use strict";
+module.exports = codegen;
+
+var blockOpenRe  = /[\{\[]$/,
+    blockCloseRe = /^[\}\]]/,
+    casingRe     = /[\:]$/,
+    branchRe     = /^\s*(?:if|else if|while|for)\b|\b(?:else)\s*$/,
+    breakRe      = /\b(?:break|continue);?$|^\s*return\b/;
+
+/**
+ * Programmatically generates a function.
+ * @memberof util
+ * @param {...string} params Function parameter names
+ * @returns {util.CodegenAppender} Printf-like appender function
+ * @property {boolean} supported Whether code generation is supported by the environment.
+ * @property {boolean} verbose=false When set to true, codegen will log generated code to console. Useful for debugging.
+ */
+function codegen(/* varargs */) {
+    var args   = Array.prototype.slice.call(arguments),
+        src    = ['\t"use strict";'];
+
+    var indent = 1,
+        inCase = false;
+
+    /**
+     * Appends a printf-like formatted line to the generated source. Returned when calling {@link util.codegen}.
+     * @typedef CodegenAppender
+     * @memberof util
+     * @type {function}
+     * @param {string} format A printf-like format string
+     * @param {...*} params Format replacements
+     * @returns {util.CodegenAppender} Itself
+     * @property {util.CodegenStringer} str
+     * @property {util.CodegenEnder} eof
+     * @see {@link https://nodejs.org/docs/latest/api/util.html#util_util_format_format_args}
+     */
+    /**/
+    function gen() {
+        var fmt = [];
+        for (var i = 0; i < arguments.length; ++i)
+            fmt[i] = arguments[i];
+        var line = gen.fmt.apply(null, fmt);
+        var level = indent;
+        if (src.length) {
+            var prev = src[src.length - 1];
+
+            // block open or one time branches
+            if (blockOpenRe.test(prev))
+                level = ++indent; // keep
+            else if (branchRe.test(prev))
+                ++level; // once
+            
+            // casing
+            if (casingRe.test(prev) && !casingRe.test(line)) {
+                level = ++indent;
+                inCase = true;
+            } else if (inCase && breakRe.test(prev)) {
+                level = --indent;
+                inCase = false;
+            }
+
+            // block close
+            if (blockCloseRe.test(line)) {
+                level = --indent;
+                if (inCase) {
+                    level = --indent;
+                    inCase = false;
+                }
+            }
+        }
+        for (var index = 0; index < level; ++index)
+            line = "\t" + line;
+        src.push(line);
+        return gen;
+    }
+
+    gen.fmt = function fmt(format) {
+        var params = Array.prototype.slice.call(arguments, 1),
+            index  = 0;
+        return format.replace(/%([djs])/g, function($0, $1) {
+            var param = params[index++];
+            return $1 === "j"
+                ? JSON.stringify(param)
+                : String(param);
+        });
+    };
+
+    /**
+     * Stringifies the so far generated function source.
+     * @typedef CodegenStringer
+     * @memberof util
+     * @type {function}
+     * @param {string} [name] Function name, defaults to generate an anonymous function
+     * @returns {string} Function source using tabs for indentation
+     */
+    /**/
+    gen.str = function str(name) {
+        return "function " + (name ? name.replace(/[^\w_$]/g, "_") : "") + "(" + args.join(",") + ") {\n" + src.join("\n") + "\n}";
+    };
+
+    /**
+     * Ends generation and builds the function.
+     * @typedef CodegenEnder
+     * @memberof util
+     * @type {function}
+     * @param {string} [name] Function name, defaults to generate an anonymous function
+     * @param {Object|Array.<string>} [scope] Function scope
+     * @returns {function} A function to apply the scope manually when `scope` is an array, otherwise the generated function with scope applied
+     */
+    /**/
+    gen.eof = function eof(name, scope) {
+        if (name && typeof name === 'object') {
+            scope = name;
+            name = undefined;
+        }
+        var code = gen.str(name);
+        if (codegen.verbose)
+            console.log("--- codegen ---\n" + code.replace(/^/mg, "> ").replace(/\t/g, "  ")); // eslint-disable-line no-console
+        code = "return " + code;
+        var params, values = [];
+        if (Array.isArray(scope)) {
+            params = scope.slice();
+        } else if (scope) {
+            params = Object.keys(scope);
+            values = params.map(function(key) { return scope[key]; });
+        } else
+            params = [];
+        var fn = Function.apply(null, params.concat(code)); // eslint-disable-line no-new-func
+        return values ? fn.apply(null, values) : fn();
+    };
+
+    return gen;
+}
+
+codegen.supported = false;
+try { codegen.supported = codegen("a","b")("return a-b").eof()(2,1) === 1; } catch (e) {} // eslint-disable-line no-empty
+
+codegen.verbose = false;
+
+},{}],22:[function(require,module,exports){
+"use strict";
+module.exports = LongBits;
+
+/**
+ * Constructs new long bits.
+ * @classdesc Helper class for working with the low and high bits of a 64 bit value.
+ * @memberof util
+ * @constructor
+ * @param {number} lo Low bits
+ * @param {number} hi High bits
+ */
+function LongBits(lo, hi) {
+    // make sure to always call this with unsigned 32bits for proper optimization
+
+    /**
+     * Low bits.
+     * @type {number}
+     */
+    this.lo = lo;
+
+    /**
+     * High bits.
+     * @type {number}
+     */
+    this.hi = hi;
+}
+
+/** @alias util.LongBits.prototype */
+var LongBitsPrototype = LongBits.prototype;
+
+/**
+ * Zero bits.
+ * @memberof util.LongBits
+ * @type {util.LongBits}
+ */
+var zero = new LongBits(0, 0);
+
+zero.toNumber = function() { return 0; };
+zero.zzEncode = zero.zzDecode = function() { return this; };
+zero.length = function() { return 1; };
+
+/**
+ * Constructs new long bits from the specified number.
+ * @param {number} value Value
+ * @returns {util.LongBits} Instance
+ */
+LongBits.fromNumber = function fromNumber(value) {
+    if (value === 0)
+        return zero;
+    var sign  = value < 0;
+        value = Math.abs(value);
+    var lo = value >>> 0,
+        hi = (value - lo) / 4294967296 >>> 0;
+    if (sign) {
+        hi = ~hi >>> 0;
+        lo = ~lo >>> 0;
+        if (++lo > 4294967295) {
+            lo = 0;
+            if (++hi > 4294967295)
+                hi = 0;
+        }
+    }
+    return new LongBits(lo, hi);
+};
+
+/**
+ * Constrcuts new long bits from a number or long.
+ * @param {Long|number} value Value
+ * @returns {util.LongBits} Instance
+ */
+LongBits.from = function from(value) {
+    return typeof value === 'number'
+        ? LongBits.fromNumber(value)
+        : new LongBits(value.low >>> 0, value.high >>> 0);
+};
+
+/**
+ * Converts this long bits to a possibly unsafe JavaScript number.
+ * @param {boolean} unsigned Whether unsigned or not
+ * @returns {number} Possibly unsafe number
+ */
+LongBitsPrototype.toNumber = function toNumber(unsigned) {
+    if (!unsigned && this.hi >>> 31) {
+        this.lo = ~this.lo + 1 >>> 0;
+        this.hi = ~this.hi     >>> 0;
+        if (!this.lo)
+            this.hi = this.hi + 1 >>> 0;
+        return -(this.lo + this.hi * 4294967296);
+    }
+    return this.lo + this.hi * 4294967296;
+};
+
+var charCodeAt = String.prototype.charCodeAt;
+
+/**
+ * Constructs new long bits from the specified 8 characters long hash.
+ * @param {string} hash Hash
+ * @returns {util.LongBits} Bits
+ */
+LongBits.fromHash = function fromHash(hash) {
+    return new LongBits(
+        ( charCodeAt.call(hash, 0)
+        | charCodeAt.call(hash, 1) << 8
+        | charCodeAt.call(hash, 2) << 16
+        | charCodeAt.call(hash, 3) << 24) >>> 0
+    ,
+        ( charCodeAt.call(hash, 4)
+        | charCodeAt.call(hash, 5) << 8
+        | charCodeAt.call(hash, 6) << 16
+        | charCodeAt.call(hash, 7) << 24) >>> 0
+    );
+};
+
+/**
+ * Converts this long bits to a 8 characters long hash.
+ * @returns {string} Hash
+ */
+LongBitsPrototype.toHash = function toHash() {
+    return String.fromCharCode(
+        this.lo        & 255,
+        this.lo >>> 8  & 255,
+        this.lo >>> 16 & 255,
+        this.lo >>> 24 & 255,
+        this.hi        & 255,
+        this.hi >>> 8  & 255,
+        this.hi >>> 16 & 255,
+        this.hi >>> 24 & 255
+    );
+};
+
+/**
+ * Zig-zag encodes this long bits.
+ * @returns {util.LongBits} `this`
+ */
+LongBitsPrototype.zzEncode = function zzEncode() {
+    var mask = -(this.hi >>> 31);
+    this.hi  = ((this.hi << 1 | this.lo >>> 31) ^ mask) >>> 0;
+    this.lo  = ( this.lo << 1                   ^ mask) >>> 0;
+    return this;
+};
+
+/**
+ * Zig-zag decodes this long bits.
+ * @returns {util.LongBits} `this`
+ */
+LongBitsPrototype.zzDecode = function zzDecode() {
+    var mask = -(this.lo & 1);
+    this.lo  = ((this.lo >>> 1 | (this.hi & 1) << 31) ^ mask) >>> 0;
+    this.hi  = ( this.hi >>> 1                        ^ mask) >>> 0;
+    return this;
+};
+
+/**
+ * Calculates the length of this longbits when encoded as a varint.
+ * @returns {number} Length
+ */
+LongBitsPrototype.length = function length() {
+    var part0 =  this.lo,
+        part1 = (this.lo >>> 28 | this.hi << 4) >>> 0,
+        part2 =  this.hi >>> 24;
+    if (part2 === 0) {
+        if (part1 === 0)
+            return part0 < 1 << 14
+                ? part0 < 1 << 7 ? 1 : 2
+                : part0 < 1 << 21 ? 3 : 4;
+        return part1 < 1 << 14
+            ? part1 < 1 << 7 ? 5 : 6
+            : part1 < 1 << 21 ? 7 : 8;
+    }
+    return part2 < 1 << 7 ? 9 : 10;
+};
+
+},{}],23:[function(require,module,exports){
 "use strict";
 module.exports = Verifier;
 
-var Enum = require(5),
-    Type = require(20),
-    util = require(22);
+var Enum = require(4),
+    Type = require(18),
+    util = require(20);
 
 /**
  * Constructs a new verifier for the specified message type.
@@ -5342,15 +5379,15 @@ VerifierPrototype.generate = function generate() {
     /* eslint-enable no-unexpected-multiline */
 };
 
-},{"20":20,"22":22,"5":5}],24:[function(require,module,exports){
+},{"18":18,"20":20,"4":4}],24:[function(require,module,exports){
 "use strict";
 module.exports = Writer;
 
 Writer.BufferWriter = BufferWriter;
 
-var LongBits = require(8),
-    util     = require(22),
+var util     = require(20),
     ieee754  = require(1);
+var LongBits = util.LongBits;
 
 /**
  * Operation function.
@@ -5919,12 +5956,12 @@ BufferWriterPrototype.finish = function finish_buffer() {
     return buf;
 };
 
-},{"1":1,"22":22,"8":8}],25:[function(require,module,exports){
+},{"1":1,"20":20}],25:[function(require,module,exports){
 (function (global){
 "use strict";
 var protobuf = global.protobuf = exports;
 
-var util = require(22);
+var util = require(20);
 
 /**
  * Loads one or multiple .proto or preprocessed .json files into a common root namespace.
@@ -5946,40 +5983,40 @@ function load(filename, root, callback) {
 protobuf.load = load;
 
 // Parser
-protobuf.tokenize         = require(19);
-protobuf.parse            = require(14);
+protobuf.tokenize         = require(17);
+protobuf.parse            = require(12);
 
 // Serialization
 protobuf.Writer           = require(24);
 protobuf.BufferWriter     = protobuf.Writer.BufferWriter;
-protobuf.Reader           = require(16);
+protobuf.Reader           = require(14);
 protobuf.BufferReader     = protobuf.Reader.BufferReader;
-protobuf.Encoder          = require(4);
-protobuf.Decoder          = require(3);
+protobuf.Encoder          = require(3);
+protobuf.Decoder          = require(2);
 
 // Reflection
-protobuf.ReflectionObject = require(12);
-protobuf.Namespace        = require(11);
-protobuf.Root             = require(17);
-protobuf.Enum             = require(5);
-protobuf.Type             = require(20);
-protobuf.Field            = require(6);
-protobuf.OneOf            = require(13);
-protobuf.MapField         = require(9);
-protobuf.Service          = require(18);
-protobuf.Method           = require(10);
+protobuf.ReflectionObject = require(10);
+protobuf.Namespace        = require(9);
+protobuf.Root             = require(15);
+protobuf.Enum             = require(4);
+protobuf.Type             = require(18);
+protobuf.Field            = require(5);
+protobuf.OneOf            = require(11);
+protobuf.MapField         = require(7);
+protobuf.Service          = require(16);
+protobuf.Method           = require(8);
 
 // Runtime
-protobuf.Prototype        = require(15);
-protobuf.inherits         = require(7);
+protobuf.Prototype        = require(13);
+protobuf.inherits         = require(6);
 
 // Utility
-protobuf.types            = require(21);
+protobuf.types            = require(19);
 protobuf.util             = util;
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"10":10,"11":11,"12":12,"13":13,"14":14,"15":15,"16":16,"17":17,"18":18,"19":19,"20":20,"21":21,"22":22,"24":24,"3":3,"4":4,"5":5,"6":6,"7":7,"9":9}]},{},[25])
+},{"10":10,"11":11,"12":12,"13":13,"14":14,"15":15,"16":16,"17":17,"18":18,"19":19,"2":2,"20":20,"24":24,"3":3,"4":4,"5":5,"6":6,"7":7,"8":8,"9":9}]},{},[25])
 
 
 //# sourceMappingURL=protobuf.js.map

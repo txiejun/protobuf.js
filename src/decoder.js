@@ -88,7 +88,7 @@ DecoderPrototype.decode = function decode_fallback(reader, length) { // codegen 
                             vs[vs.length] = field.resolvedType.decode(reader, reader.uint32());
                     }
                     for (var i = 0; i < ks.length; ++i)
-                        map[typeof ks[i] === 'object' ? util.toHash(ks[i]) : ks[i]] = vs[i];
+                        map[typeof ks[i] === 'object' ? util.longToHash(ks[i]) : ks[i]] = vs[i];
                 }
 
             // Repeated fields
@@ -130,7 +130,7 @@ DecoderPrototype.generate = function generate() {
     var fields = this.type.fieldsArray;    
     var gen = util.codegen("r", "l")
 
-    ("r=r instanceof Reader?r:Reader(r)")
+    ("r instanceof Reader||(r=Reader(r))")
     ("var c=l===undefined?r.len:r.pos+l,m=new this.ctor()")
     ("while(r.pos<c){")
         ("var t=r.tag()")
@@ -166,7 +166,7 @@ DecoderPrototype.generate = function generate() {
                     gen
                     ("}")
                     ("for(var i=0;i<k.length;++i)")
-                        ("o[typeof(k[i])==='object'?util.toHash(k[i]):k[i]]=v[i]")
+                        ("o[typeof(k[i])==='object'?util.longToHash(k[i]):k[i]]=v[i]")
                 ("}")
                 ("m%s=o", prop);
 

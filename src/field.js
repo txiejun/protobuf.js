@@ -110,10 +110,10 @@ function Field(name, id, type, rule, extend, options) {
     this.defaultValue = null;
 
     /**
-     * Whether this field's value is a long.
+     * Whether this field's value should be treated as a long.
      * @type {boolean}
      */
-    this.long = types.long[type] !== undefined;
+    this.long = util.Long ? types.long[type] !== undefined : false;
 
     /**
      * Resolved type if not a basic type.
@@ -237,6 +237,9 @@ FieldPrototype.resolve = function resolve() {
         this.defaultValue = optionDefault;
     else
         this.defaultValue = typeDefault;
+
+    if (this.long)
+        this.defaultValue = util.Long.fromValue(this.defaultValue);
     
     return ReflectionObject.prototype.resolve.call(this);
 };
@@ -252,7 +255,7 @@ FieldPrototype.jsonConvert = function(value, options) {
     if (options) {
         if (this.resolvedType instanceof Enum && options.enum === String)
             return this.resolvedType.valuesById[value];
-        else if (types.long[this.type] !== undefined && options.long)
+        else if (this.long && options.long)
             return options.long === Number
                 ? typeof value === 'number'
                 ? value

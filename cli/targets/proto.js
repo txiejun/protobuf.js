@@ -76,7 +76,7 @@ function buildRoot(root) {
     } while (true);
     if (pkg.length)
         out.push("package " + pkg.join(".") + ";", "");
-    out.push('syntax = "proto3";');
+    out.push('syntax = "proto' + syntax + '";');
 
     buildOptions(ptr);
     ptr.nestedArray.forEach(build);
@@ -162,16 +162,19 @@ function buildField(field, passExtend) {
     else
         sb.push(field.type);
     sb.push(under_score(field.name), "=", field.id);
+    var opts = [];
     if (field.repeated) {
         if (syntax === 2) {
             if (field.packed)
-                sb.push("[packed=true]");
+                opts.push("packed=true");
         } else {
             if (!field.packed)
-                sb.push("[packed=false]");
+                opts.push("packed=false");
         }
         // TODO: Proper field options
     }
+    if (opts.length)
+        sb.push("[" + opts.join(', ') + "]");
     push(sb.join(" ") + ";");
 }
 

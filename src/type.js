@@ -17,8 +17,8 @@ var Enum      = require("./enum"),
     Reader    = require("./reader"),
     Encoder   = require("./encoder"),
     Decoder   = require("./decoder"),
-    Verifier  = require("./verifier"),
-    codegen   = require("./codegen");
+    Verifier  = require("./verifier");
+var codegen   = util.codegen;
 
 /**
  * Constructs a new message type.

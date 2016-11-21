@@ -45,6 +45,8 @@ zero.length = function() { return 1; };
  * @returns {util.LongBits} Instance
  */
 LongBits.fromNumber = function fromNumber(value) {
+    if (value === 0)
+        return zero;
     var sign  = value < 0;
         value = Math.abs(value);
     var lo = value >>> 0,

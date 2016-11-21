@@ -6,8 +6,8 @@
  */
 var util = module.exports = {};
 
-var codegen  = require("./codegen"),
-    LongBits = require("./longbits");
+var codegen  = require("./util/codegen"),
+    LongBits = require("./util/longbits");
 
 util.codegen  = codegen;
 util.LongBits = LongBits;
@@ -210,7 +210,7 @@ util.resolvePath = function resolvePath(originPath, importPath, alreadyNormalize
  * @param {Long|number} value Value to convert
  * @returns {string} Hash
  */
-util.toHash = function toHash(value) {
+util.longToHash = function longToHash(value) {
     return value
         ? LongBits.from(value).toHash()
         : '\0\0\0\0\0\0\0\0';
@@ -222,11 +222,27 @@ util.toHash = function toHash(value) {
  * @param {boolean} [unsigned=false] Whether unsigned or not
  * @returns {Long|number} Original value
  */
-util.fromHash = function fromHash(hash, unsigned) {
+util.longFromHash = function longFromHash(hash, unsigned) {
     var bits = LongBits.fromHash(hash);
     if (util.Long)
         return util.Long.fromBits(bits.lo, bits.hi, unsigned);
     return bits.toNumber(Boolean(unsigned));
+};
+
+/**
+ * Tests if two possibly long values are not equal.
+ * @param {number|Long} a First value
+ * @param {number|Long} b Second value
+ * @returns {boolean} `true` if not equal
+ */
+util.longNeq = function longNeq(a, b) {
+    return typeof a === 'number'
+         ? typeof b === 'number'
+            ? a !== b
+            : (a = LongBits.fromNumber(a)).lo !== b.low || a.hi !== b.high
+         : typeof b === 'number'
+            ? (b = LongBits.fromNumber(b)).lo !== a.low || b.hi !== a.high
+            : a.low !== b.low || a.high !== b.high;
 };
 
 /**

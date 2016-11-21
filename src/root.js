@@ -57,9 +57,6 @@ function Root(rootOptions, options) {
         importGoogleTypes(this, false);
 }
 
-/** @alias Root.prototype */
-var RootPrototype = Namespace.extend(Root);
-
 /**
  * Checks if a specific file has already been loaded.
  * @param {string} filename File name to test
@@ -299,16 +296,29 @@ Root.importGoogleTypes = importGoogleTypes;
 RootPrototype.resolvePath = util.resolvePath;
 
 /**
+ * Options provided to {@link Root#load}, modifying its behavior.
+ * @typedef LoaderOptions
+ * @type {Object}
+ * @property {boolean} [public=false] Whether this is a public import
+ * @property {boolean} [weak=false} Whether this is a weak import]
+ */
+
+/**
  * Loads one or multiple .proto or preprocessed .json files into this root namespace.
  * @param {string|string[]} filename Names of one or multiple files to load
+ * @param {LoaderOptions} [options] Load options
  * @param {function(?Error, Root=)} [callback] Node-style callback function
  * @returns {Promise<Root>|undefined} A promise if `callback` has been omitted
  * @throws {TypeError} If arguments are invalid
  */
-RootPrototype.load = function load(filename, callback) {
+RootPrototype.load = function load(filename, options, callback) {
+    if (typeof options === 'function') {
+        callback = options;
+        options = undefined;
+    }
     var self = this;
     if (!callback)
-        return util.asPromise(load, self, filename);
+        return util.asPromise(load, self, filename, options);
 
     // Finishes loading by calling the callback (exactly once)
     function finish(err, root) {

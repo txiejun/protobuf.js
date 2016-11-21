@@ -1,38 +1,6 @@
 "use strict";
 module.exports = codegen;
 
-/**
- * Appends a printf-like formatted line to the generated source. Returned when calling {@link util.codegen}.
- * @typedef CodegenAppender
- * @memberof util
- * @type {function}
- * @param {string} format A printf-like format string
- * @param {...*} params Format replacements
- * @returns {util.CodegenAppender} Itself
- * @property {util.CodegenStringer} str
- * @property {util.CodegenEnder} eof
- * @see {@link https://nodejs.org/docs/latest/api/util.html#util_util_format_format_args}
- */
-
-/**
- * Ends generation and builds the function.
- * @typedef CodegenEnder
- * @memberof util
- * @type {function}
- * @param {string} [name] Function name, defaults to generate an anonymous function
- * @param {Object|Array.<string>} [scope] Function scope
- * @returns {function} A function to apply the scope manually when `scope` is an array, otherwise the generated function with scope applied
- */
-
-/**
- * Stringifies the so far generated function source.
- * @typedef CodegenStringer
- * @memberof util
- * @type {function}
- * @param {string} [name] Function name, defaults to generate an anonymous function
- * @returns {string} Function source using tabs for indentation
- */
-
 var blockOpenRe  = /[\{\[]$/,
     blockCloseRe = /^[\}\]]/,
     casingRe     = /[\:]$/,
@@ -54,16 +22,24 @@ function codegen(/* varargs */) {
     var indent = 1,
         inCase = false;
 
-    // util.CodegenAppender
-    function gen(format/*, varargs */) {
-        var params = Array.prototype.slice.call(arguments, 1),
-            index  = 0;
-        var line = format.replace(/%([djs])/g, function($0, $1) {
-            var param = params[index++];
-            return $1 === "j"
-                ? JSON.stringify(param)
-                : String(param);
-        });
+    /**
+     * Appends a printf-like formatted line to the generated source. Returned when calling {@link util.codegen}.
+     * @typedef CodegenAppender
+     * @memberof util
+     * @type {function}
+     * @param {string} format A printf-like format string
+     * @param {...*} params Format replacements
+     * @returns {util.CodegenAppender} Itself
+     * @property {util.CodegenStringer} str
+     * @property {util.CodegenEnder} eof
+     * @see {@link https://nodejs.org/docs/latest/api/util.html#util_util_format_format_args}
+     */
+    /**/
+    function gen() {
+        var fmt = [];
+        for (var i = 0; i < arguments.length; ++i)
+            fmt[i] = arguments[i];
+        var line = gen.fmt.apply(null, fmt);
         var level = indent;
         if (src.length) {
             var prev = src[src.length - 1];
@@ -92,18 +68,46 @@ function codegen(/* varargs */) {
                 }
             }
         }
-        for (index = 0; index < level; ++index)
+        for (var index = 0; index < level; ++index)
             line = "\t" + line;
         src.push(line);
         return gen;
     }
 
-    // util.CodegenStringer
+    gen.fmt = function fmt(format) {
+        var params = Array.prototype.slice.call(arguments, 1),
+            index  = 0;
+        return format.replace(/%([djs])/g, function($0, $1) {
+            var param = params[index++];
+            return $1 === "j"
+                ? JSON.stringify(param)
+                : String(param);
+        });
+    };
+
+    /**
+     * Stringifies the so far generated function source.
+     * @typedef CodegenStringer
+     * @memberof util
+     * @type {function}
+     * @param {string} [name] Function name, defaults to generate an anonymous function
+     * @returns {string} Function source using tabs for indentation
+     */
+    /**/
     gen.str = function str(name) {
         return "function " + (name ? name.replace(/[^\w_$]/g, "_") : "") + "(" + args.join(",") + ") {\n" + src.join("\n") + "\n}";
     };
 
-    // util.CodegenEnder
+    /**
+     * Ends generation and builds the function.
+     * @typedef CodegenEnder
+     * @memberof util
+     * @type {function}
+     * @param {string} [name] Function name, defaults to generate an anonymous function
+     * @param {Object|Array.<string>} [scope] Function scope
+     * @returns {function} A function to apply the scope manually when `scope` is an array, otherwise the generated function with scope applied
+     */
+    /**/
     gen.eof = function eof(name, scope) {
         if (name && typeof name === 'object') {
             scope = name;
