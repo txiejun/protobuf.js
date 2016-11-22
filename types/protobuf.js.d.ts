@@ -1,6 +1,6 @@
 /*
  * protobuf.js v6.0.0-dev TypeScript definitions
- * Generated Mon, 21 Nov 2016 18:21:39 UTC
+ * Generated Tue, 22 Nov 2016 14:03:32 UTC
  */
 declare module protobuf {
 
@@ -157,6 +157,8 @@ declare module protobuf {
        * @param {string} name Value name
        * @param {number} id Value id
        * @returns {Enum} `this`
+       * @throws {TypeError} If arguments are invalid
+       * @throws {Error} If there is already a value with this name or id
        */
       add(name: string, id: number): Enum;
    
@@ -164,6 +166,8 @@ declare module protobuf {
        * Removes a value from this enum
        * @param {string} name Value name
        * @returns {Enum} `this`
+       * @throws {TypeError} If arguments are invalid
+       * @throws {Error} If `name` is not a name of this enum
        */
       remove(name: string): Enum;
    
@@ -672,6 +676,8 @@ declare module protobuf {
        * Adds a nested object to this namespace.
        * @param {ReflectionObject} object Nested object to add
        * @returns {Namespace} `this`
+       * @throws {TypeError} If arguments are invalid
+       * @throws {Error} If there is already a nested object with this name
        */
       add(object: ReflectionObject): Namespace;
    
@@ -679,6 +685,8 @@ declare module protobuf {
        * Removes a nested object from this namespace.
        * @param {ReflectionObject} object Nested object to remove
        * @returns {Namespace} `this`
+       * @throws {TypeError} If arguments are invalid
+       * @throws {Error} If `object` is not a member of this namespace
        */
       remove(object: ReflectionObject): Namespace;
    
@@ -975,7 +983,7 @@ declare module protobuf {
        * Defaults to a possibly unsafe number without, and a `Long` with a long library.
        * @param {Function} [options.enum=Number] Enum value conversion type.
        * Valid values are `String` and `Number` (the global types).
-       * Defaults to the values' numeric ids.
+       * Defaults to the numeric ids.
        * @returns {Object.<string,*>} JSON object
        */
       asJSON(options?: { [k: string]: any }): { [k: string]: any };
@@ -1232,18 +1240,20 @@ declare module protobuf {
       pendingExtensions: Field[];
    
       /**
-       * Checks if a specific file has already been loaded.
+       * Checks if a specific file has already been loaded with compatible options.
        * @param {string} filename File name to test
-       * @returns {boolean} `true` if already loaded
+       * @param {LoadedFileOptions} [options] File options
+       * @returns {boolean} `true` if already loaded with compatible options, otherwise `false` (i.e. already loaded as non-public, but this import is public)
        */
-      isLoaded(filename: string): boolean;
+      isLoaded(filename: string, options?: LoadedFileOptions): boolean;
    
       /**
        * Lets the root know of a loaded file, i.e. when added programmatically.
        * @param {string} filename File name to add
+       * @param {LoadedFileOptions} [options] File options
        * @returns {boolean} `false` if this file has already been loaded before
        */
-      addLoaded(filename: string): boolean;
+      addLoaded(filename: string, options?: LoadedFileOptions): boolean;
    
       /**
        * Imports common google types to the specified root.
@@ -1275,6 +1285,19 @@ declare module protobuf {
       load(filename: (string|string[]), options?: LoaderOptions, callback?: (() => any)): (Promise<Root>|undefined);
    
    }
+   
+   /**
+    * Loaded file options provided to {@link Root#addLoaded}.
+    * @typedef LoadedFileOptions
+    * @type {Object}
+    * @property {boolean} [weak=false] Whether this is a weak import
+    * @property {boolean} [public=false] Whether this is a public import
+    */
+   interface LoadedFileOptions {
+      weak: boolean;
+      public: boolean;
+   }
+   
    
    /**
     * Options provided to {@link Root#load}, modifying its behavior.
@@ -1463,6 +1486,24 @@ declare module protobuf {
        * @returns {Type} Created message type
        */
       static fromJSON(name: string, json: Object): Type;
+   
+      /**
+       * Adds a nested object to this type.
+       * @param {ReflectionObject} object Nested object to add
+       * @returns {Type} `this`
+       * @throws {TypeError} If arguments are invalid
+       * @throws {Error} If there is already a nested object with this name or, if a field, when there is already a field with this id
+       */
+      add(object: ReflectionObject): Type;
+   
+      /**
+       * Removes a nested object from this type.
+       * @param {ReflectionObject} object Nested object to remove
+       * @returns {Type} `this`
+       * @throws {TypeError} If arguments are invalid
+       * @throws {Error} If `object` is not a member of this type
+       */
+      remove(object: ReflectionObject): Type;
    
       /**
        * Creates a new message of this type using the specified properties.
@@ -1823,14 +1864,14 @@ declare module protobuf {
    
    /**
     * Constructs a new verifier for the specified message type.
-    * @classdesc Runtime message verifier using code generation on top of reflection
+    * @classdesc Runtime message verifier using code generation on top of reflection.
     * @constructor
     * @param {Type} type Message type
     */
    class Verifier {
       /**
        * Constructs a new verifier for the specified message type.
-       * @classdesc Runtime message verifier using code generation on top of reflection
+       * @classdesc Runtime message verifier using code generation on top of reflection.
        * @constructor
        * @param {Type} type Message type
        */

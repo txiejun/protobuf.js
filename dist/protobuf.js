@@ -1,6 +1,6 @@
 /*!
  * protobuf.js v6.0.0-dev (c) 2016 Daniel Wirtz
- * Compiled Mon, 21 Nov 2016 18:21:34 UTC
+ * Compiled Tue, 22 Nov 2016 14:03:27 UTC
  * Licensed under the Apache License, Version 2.0
  * see: https://github.com/dcodeIO/protobuf.js for details
  */
@@ -668,12 +668,18 @@ EnumPrototype.toJSON = function toJSON() {
  * @param {string} name Value name
  * @param {number} id Value id
  * @returns {Enum} `this`
+ * @throws {TypeError} If arguments are invalid
+ * @throws {Error} If there is already a value with this name or id
  */
 EnumPrototype.add = function(name, id) {
     if (!util.isString(name))
         throw _TypeError("name");
     if (!util.isInteger(id) || id < 0)
         throw _TypeError("id", "a non-negative integer");
+    if (this.values[name] !== undefined)
+        throw Error('duplicate name "' + name + '" in ' + this);
+    if (this.valuesById[id] !== undefined)
+        throw Error("duplicate id " + id + " in " + this);
     this.values[name] = id;
     return clearCache(this);
 };
@@ -682,10 +688,14 @@ EnumPrototype.add = function(name, id) {
  * Removes a value from this enum
  * @param {string} name Value name
  * @returns {Enum} `this`
+ * @throws {TypeError} If arguments are invalid
+ * @throws {Error} If `name` is not a name of this enum
  */
 EnumPrototype.remove = function(name) {
     if (!util.isString(name))
         throw _TypeError("name");
+    if (this.values[name] === undefined)
+        throw Error('"' + name + '" is not a name of ' + this);
     delete this.values[name];
     return clearCache(this);
 };
@@ -1612,6 +1622,8 @@ NamespacePrototype.get = function get(name) {
  * Adds a nested object to this namespace.
  * @param {ReflectionObject} object Nested object to add
  * @returns {Namespace} `this`
+ * @throws {TypeError} If arguments are invalid
+ * @throws {Error} If there is already a nested object with this name
  */
 NamespacePrototype.add = function add(object) {
     if (!object || nestedTypes.indexOf(object.constructor) < 0)
@@ -1642,6 +1654,8 @@ NamespacePrototype.add = function add(object) {
  * Removes a nested object from this namespace.
  * @param {ReflectionObject} object Nested object to remove
  * @returns {Namespace} `this`
+ * @throws {TypeError} If arguments are invalid
+ * @throws {Error} If `object` is not a member of this namespace
  */
 NamespacePrototype.remove = function remove(object) {
     if (!(object instanceof ReflectionObject))
@@ -2744,7 +2758,7 @@ function Prototype(properties, options) {
  * Defaults to a possibly unsafe number without, and a `Long` with a long library.
  * @param {Function} [options.enum=Number] Enum value conversion type.
  * Valid values are `String` and `Number` (the global types).
- * Defaults to the values' numeric ids.
+ * Defaults to the numeric ids.
  * @returns {Object.<string,*>} JSON object
  */
 Prototype.prototype.asJSON = function asJSON(options) {
@@ -3324,39 +3338,70 @@ function Root(rootOptions, options) {
     this.pendingExtensions = [];
 
     /**
-     * Already loaded file names.
-     * @type {string[]}
+     * Already loaded files, by name.
+     * @type {Object.<string,Object>}
      * @private
      */
-    this._loaded = []; // use addLoaded/isLoaded instead
+    this._loaded = {}; // use addLoaded/isLoaded instead
 
     if (!rootOptions.noGoogleTypes)
         importGoogleTypes(this, false);
 }
 
 /**
- * Checks if a specific file has already been loaded.
- * @param {string} filename File name to test
- * @returns {boolean} `true` if already loaded
+ * Loaded file options provided to {@link Root#addLoaded}.
+ * @typedef LoadedFileOptions
+ * @type {Object}
+ * @property {boolean} [weak=false] Whether this is a weak import
+ * @property {boolean} [public=false] Whether this is a public import
  */
-RootPrototype.isLoaded = function isLoaded(filename) {
+
+/**
+ * Checks if a specific file has already been loaded with compatible options.
+ * @param {string} filename File name to test
+ * @param {LoadedFileOptions} [options] File options
+ * @returns {boolean} `true` if already loaded with compatible options, otherwise `false` (i.e. already loaded as non-public, but this import is public)
+ */
+RootPrototype.isLoaded = function isLoaded(filename, options) {
     filename = util.normalizePath(filename);
+    if (!options)
+        options = {};
     var index = filename.indexOf("google/protobuf/");
     if (index > 0 /* not -1 */)
         filename = filename.substring(index);
-    return this._loaded.indexOf(filename) > -1;
+    var loaded = this._loaded[filename];
+    if (!loaded)
+        return false;
+    if (!loaded.public && options.public)
+        return false;
+    if (loaded.weak && !options.weak)
+        return false;
+    return true;
 };
 
 /**
  * Lets the root know of a loaded file, i.e. when added programmatically.
  * @param {string} filename File name to add
+ * @param {LoadedFileOptions} [options] File options
  * @returns {boolean} `false` if this file has already been loaded before
  */
-RootPrototype.addLoaded = function addLoaded(filename) {
-    if (this.isLoaded(filename))
-        return false;
+RootPrototype.addLoaded = function addLoaded(filename, options) {
     filename = util.normalizePath(filename);
-    this._loaded.push(filename);
+    if (!options)
+        options = {};
+    var loaded = this._loaded[filename];
+    if (loaded) {
+        if (!loaded.public && options.public) {
+            loaded.public = true;
+            return true;
+        }
+        if (loaded.weak && !options.weak) {
+            loaded.weak = false;
+            return true;
+        }
+        return false;
+    }
+    this._loaded[filename] = options;
     return true;
 };
 
@@ -3364,7 +3409,7 @@ RootPrototype.addLoaded = function addLoaded(filename) {
  * @override
  */
 RootPrototype.toJSON = function toJSON() {
-    // TODO: Export imports, but first a Root needs to know what's weak and what's public.
+    // TODO: Export imports once there is a way to know which file is imported by an import etc.
     return NamespacePrototype.toJSON.call(this);
 };
 
@@ -3637,7 +3682,7 @@ RootPrototype.load = function load(filename, options, callback) {
 
     // Fetches a single file
     function fetch(file, visible, weak) {
-        if (!self.addLoaded(file))
+        if (!self.addLoaded(file, { public: visible, weak: weak }))
             return;
         ++queued;
         util.fetch(file, function(err, source) {
@@ -4404,7 +4449,11 @@ TypePrototype.get = function get(name) {
 };
 
 /**
- * @override
+ * Adds a nested object to this type.
+ * @param {ReflectionObject} object Nested object to add
+ * @returns {Type} `this`
+ * @throws {TypeError} If arguments are invalid
+ * @throws {Error} If there is already a nested object with this name or, if a field, when there is already a field with this id
  */
 TypePrototype.add = function add(object) {
     if (this.get(object.name))
@@ -4413,6 +4462,8 @@ TypePrototype.add = function add(object) {
         // NOTE: Extension fields aren't actual fields on the declaring type, but nested objects.
         // The root object takes care of adding distinct sister-fields to the respective extended
         // type instead.
+        if (this.fieldsById[object.id])
+            throw Error("duplicate id " + object.id + " in " + this);
         if (object.parent)
             object.parent.remove(object);
         this.fields[object.name] = object;
@@ -4431,7 +4482,11 @@ TypePrototype.add = function add(object) {
 };
 
 /**
- * @override
+ * Removes a nested object from this type.
+ * @param {ReflectionObject} object Nested object to remove
+ * @returns {Type} `this`
+ * @throws {TypeError} If arguments are invalid
+ * @throws {Error} If `object` is not a member of this type
  */
 TypePrototype.remove = function remove(object) {
     if (object instanceof Field && object.extend === undefined) {
@@ -4952,7 +5007,7 @@ var blockOpenRe  = /[\{\[]$/,
  */
 function codegen(/* varargs */) {
     var args   = Array.prototype.slice.call(arguments),
-        src    = ['\t"use strict";'];
+        src    = ['\t"use strict"'];
 
     var indent = 1,
         inCase = false;
@@ -4979,7 +5034,7 @@ function codegen(/* varargs */) {
         if (src.length) {
             var prev = src[src.length - 1];
 
-            // block open or one time branches
+            // block open or one time branch
             if (blockOpenRe.test(prev))
                 level = ++indent; // keep
             else if (branchRe.test(prev))
@@ -4995,13 +5050,8 @@ function codegen(/* varargs */) {
             }
 
             // block close
-            if (blockCloseRe.test(line)) {
+            if (blockCloseRe.test(line))
                 level = --indent;
-                if (inCase) {
-                    level = --indent;
-                    inCase = false;
-                }
-            }
         }
         for (var index = 0; index < level; ++index)
             line = "\t" + line;
@@ -5255,7 +5305,7 @@ var Enum = require(4),
 
 /**
  * Constructs a new verifier for the specified message type.
- * @classdesc Runtime message verifier using code generation on top of reflection
+ * @classdesc Runtime message verifier using code generation on top of reflection.
  * @constructor
  * @param {Type} type Message type
  */

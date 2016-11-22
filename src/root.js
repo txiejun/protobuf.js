@@ -47,39 +47,70 @@ function Root(rootOptions, options) {
     this.pendingExtensions = [];
 
     /**
-     * Already loaded file names.
-     * @type {string[]}
+     * Already loaded files, by name.
+     * @type {Object.<string,Object>}
      * @private
      */
-    this._loaded = []; // use addLoaded/isLoaded instead
+    this._loaded = {}; // use addLoaded/isLoaded instead
 
     if (!rootOptions.noGoogleTypes)
         importGoogleTypes(this, false);
 }
 
 /**
- * Checks if a specific file has already been loaded.
- * @param {string} filename File name to test
- * @returns {boolean} `true` if already loaded
+ * Loaded file options provided to {@link Root#addLoaded}.
+ * @typedef LoadedFileOptions
+ * @type {Object}
+ * @property {boolean} [weak=false] Whether this is a weak import
+ * @property {boolean} [public=false] Whether this is a public import
  */
-RootPrototype.isLoaded = function isLoaded(filename) {
+
+/**
+ * Checks if a specific file has already been loaded with compatible options.
+ * @param {string} filename File name to test
+ * @param {LoadedFileOptions} [options] File options
+ * @returns {boolean} `true` if already loaded with compatible options, otherwise `false` (i.e. already loaded as non-public, but this import is public)
+ */
+RootPrototype.isLoaded = function isLoaded(filename, options) {
     filename = util.normalizePath(filename);
+    if (!options)
+        options = {};
     var index = filename.indexOf("google/protobuf/");
     if (index > 0 /* not -1 */)
         filename = filename.substring(index);
-    return this._loaded.indexOf(filename) > -1;
+    var loaded = this._loaded[filename];
+    if (!loaded)
+        return false;
+    if (!loaded.public && options.public)
+        return false;
+    if (loaded.weak && !options.weak)
+        return false;
+    return true;
 };
 
 /**
  * Lets the root know of a loaded file, i.e. when added programmatically.
  * @param {string} filename File name to add
+ * @param {LoadedFileOptions} [options] File options
  * @returns {boolean} `false` if this file has already been loaded before
  */
-RootPrototype.addLoaded = function addLoaded(filename) {
-    if (this.isLoaded(filename))
-        return false;
+RootPrototype.addLoaded = function addLoaded(filename, options) {
     filename = util.normalizePath(filename);
-    this._loaded.push(filename);
+    if (!options)
+        options = {};
+    var loaded = this._loaded[filename];
+    if (loaded) {
+        if (!loaded.public && options.public) {
+            loaded.public = true;
+            return true;
+        }
+        if (loaded.weak && !options.weak) {
+            loaded.weak = false;
+            return true;
+        }
+        return false;
+    }
+    this._loaded[filename] = options;
     return true;
 };
 
@@ -87,7 +118,7 @@ RootPrototype.addLoaded = function addLoaded(filename) {
  * @override
  */
 RootPrototype.toJSON = function toJSON() {
-    // TODO: Export imports, but first a Root needs to know what's weak and what's public.
+    // TODO: Export imports once there is a way to know which file is imported by an import etc.
     return NamespacePrototype.toJSON.call(this);
 };
 
@@ -360,7 +391,7 @@ RootPrototype.load = function load(filename, options, callback) {
 
     // Fetches a single file
     function fetch(file, visible, weak) {
-        if (!self.addLoaded(file))
+        if (!self.addLoaded(file, { public: visible, weak: weak }))
             return;
         ++queued;
         util.fetch(file, function(err, source) {

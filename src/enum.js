@@ -106,12 +106,18 @@ EnumPrototype.toJSON = function toJSON() {
  * @param {string} name Value name
  * @param {number} id Value id
  * @returns {Enum} `this`
+ * @throws {TypeError} If arguments are invalid
+ * @throws {Error} If there is already a value with this name or id
  */
 EnumPrototype.add = function(name, id) {
     if (!util.isString(name))
         throw _TypeError("name");
     if (!util.isInteger(id) || id < 0)
         throw _TypeError("id", "a non-negative integer");
+    if (this.values[name] !== undefined)
+        throw Error('duplicate name "' + name + '" in ' + this);
+    if (this.valuesById[id] !== undefined)
+        throw Error("duplicate id " + id + " in " + this);
     this.values[name] = id;
     return clearCache(this);
 };
@@ -120,10 +126,14 @@ EnumPrototype.add = function(name, id) {
  * Removes a value from this enum
  * @param {string} name Value name
  * @returns {Enum} `this`
+ * @throws {TypeError} If arguments are invalid
+ * @throws {Error} If `name` is not a name of this enum
  */
 EnumPrototype.remove = function(name) {
     if (!util.isString(name))
         throw _TypeError("name");
+    if (this.values[name] === undefined)
+        throw Error('"' + name + '" is not a name of ' + this);
     delete this.values[name];
     return clearCache(this);
 };

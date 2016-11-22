@@ -39,7 +39,7 @@ function Prototype(properties, options) {
  * Defaults to a possibly unsafe number without, and a `Long` with a long library.
  * @param {Function} [options.enum=Number] Enum value conversion type.
  * Valid values are `String` and `Number` (the global types).
- * Defaults to the values' numeric ids.
+ * Defaults to the numeric ids.
  * @returns {Object.<string,*>} JSON object
  */
 Prototype.prototype.asJSON = function asJSON(options) {

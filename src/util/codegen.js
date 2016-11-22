@@ -17,7 +17,7 @@ var blockOpenRe  = /[\{\[]$/,
  */
 function codegen(/* varargs */) {
     var args   = Array.prototype.slice.call(arguments),
-        src    = ['\t"use strict";'];
+        src    = ['\t"use strict"'];
 
     var indent = 1,
         inCase = false;
@@ -44,7 +44,7 @@ function codegen(/* varargs */) {
         if (src.length) {
             var prev = src[src.length - 1];
 
-            // block open or one time branches
+            // block open or one time branch
             if (blockOpenRe.test(prev))
                 level = ++indent; // keep
             else if (branchRe.test(prev))
@@ -60,13 +60,8 @@ function codegen(/* varargs */) {
             }
 
             // block close
-            if (blockCloseRe.test(line)) {
+            if (blockCloseRe.test(line))
                 level = --indent;
-                if (inCase) {
-                    level = --indent;
-                    inCase = false;
-                }
-            }
         }
         for (var index = 0; index < level; ++index)
             line = "\t" + line;

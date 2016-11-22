@@ -179,6 +179,8 @@ NamespacePrototype.get = function get(name) {
  * Adds a nested object to this namespace.
  * @param {ReflectionObject} object Nested object to add
  * @returns {Namespace} `this`
+ * @throws {TypeError} If arguments are invalid
+ * @throws {Error} If there is already a nested object with this name
  */
 NamespacePrototype.add = function add(object) {
     if (!object || nestedTypes.indexOf(object.constructor) < 0)
@@ -209,6 +211,8 @@ NamespacePrototype.add = function add(object) {
  * Removes a nested object from this namespace.
  * @param {ReflectionObject} object Nested object to remove
  * @returns {Namespace} `this`
+ * @throws {TypeError} If arguments are invalid
+ * @throws {Error} If `object` is not a member of this namespace
  */
 NamespacePrototype.remove = function remove(object) {
     if (!(object instanceof ReflectionObject))

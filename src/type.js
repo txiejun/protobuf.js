@@ -295,7 +295,11 @@ TypePrototype.get = function get(name) {
 };
 
 /**
- * @override
+ * Adds a nested object to this type.
+ * @param {ReflectionObject} object Nested object to add
+ * @returns {Type} `this`
+ * @throws {TypeError} If arguments are invalid
+ * @throws {Error} If there is already a nested object with this name or, if a field, when there is already a field with this id
  */
 TypePrototype.add = function add(object) {
     if (this.get(object.name))
@@ -304,6 +308,8 @@ TypePrototype.add = function add(object) {
         // NOTE: Extension fields aren't actual fields on the declaring type, but nested objects.
         // The root object takes care of adding distinct sister-fields to the respective extended
         // type instead.
+        if (this.fieldsById[object.id])
+            throw Error("duplicate id " + object.id + " in " + this);
         if (object.parent)
             object.parent.remove(object);
         this.fields[object.name] = object;
@@ -322,7 +328,11 @@ TypePrototype.add = function add(object) {
 };
 
 /**
- * @override
+ * Removes a nested object from this type.
+ * @param {ReflectionObject} object Nested object to remove
+ * @returns {Type} `this`
+ * @throws {TypeError} If arguments are invalid
+ * @throws {Error} If `object` is not a member of this type
  */
 TypePrototype.remove = function remove(object) {
     if (object instanceof Field && object.extend === undefined) {

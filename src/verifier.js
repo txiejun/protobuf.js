@@ -7,7 +7,7 @@ var Enum = require("./enum"),
 
 /**
  * Constructs a new verifier for the specified message type.
- * @classdesc Runtime message verifier using code generation on top of reflection
+ * @classdesc Runtime message verifier using code generation on top of reflection.
  * @constructor
  * @param {Type} type Message type
  */
