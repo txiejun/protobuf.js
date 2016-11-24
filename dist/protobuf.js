@@ -1,6 +1,6 @@
 /*!
  * protobuf.js v6.0.0-dev (c) 2016 Daniel Wirtz
- * Compiled Thu, 24 Nov 2016 16:10:29 UTC
+ * Compiled Thu, 24 Nov 2016 17:12:04 UTC
  * Licensed under the Apache License, Version 2.0
  * see: https://github.com/dcodeIO/protobuf.js for details
  */
@@ -3361,6 +3361,18 @@ function Root(options) {
      */
     this.files = [];
 }
+
+/**
+ * Loads a JSON definition into a root namespace.
+ * @param {*} json JSON definition
+ * @param {Root} [root] Root namespace, defaults to create a new one if omitted
+ * @returns {Root} Root namespace
+ */
+Root.fromJSON = function fromJSON(json, root) {
+    if (!root)
+        root = new protobuf.Root();
+    return root.addJSON(json);
+};
 
 /**
  * Resolves the path of an imported file, relative to the importing origin.

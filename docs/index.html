@@ -1033,6 +1033,8 @@
             
             <span class="subtitle">Methods</span>
             
+                <li data-name="Root.fromJSON"><a href="Root.html#.fromJSON">fromJSON</a></li>
+            
                 <li data-name="Root#add"><a href="Root.html#add">add</a></li>
             
                 <li data-name="Root#addJSON"><a href="Root.html#addJSON">addJSON</a></li>
@@ -1439,28 +1441,33 @@
     <section>
         <article class="readme"><h1>protobuf.js <a target="_blank" href="https://travis-ci.org/dcodeIO/protobuf.js"><img src="https://img.shields.io/travis/dcodeIO/protobuf.js.svg" alt="travis"></a> <a target="_blank" href="https://npmjs.org/package/protobufjs"><img src="https://img.shields.io/npm/v/protobufjs.svg" alt="npm"></a></h1><p><strong>Protocol Buffers</strong> are a language-neutral, platform-neutral, extensible way of serializing structured data for use in communications protocols, data storage, and more, originally designed at Google (<a target="_blank" href="https://developers.google.com/protocol-buffers/docs/overview">see</a>).</p>
 <p><strong>protobuf.js</strong> is a pure JavaScript implementation for node and the browser. It efficiently encodes plain objects and custom classes and works out of the box with .proto files.</p>
-<p><strong>This is the development branch of protobuf.js 6.</strong> Are you looking for the <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/tree/ProtoBuf5">current stable branch</a>?</p>
 <h2>Contents</h2><ul>
+<li><p><a href="#usage">Usage</a><br /><br>How to include protobuf.js in your project.</p>
+</li>
 <li><p><a href="#examples">Examples</a><br /><br>A few examples to get you started.</p>
 </li>
 <li><p><a href="#module-structure">Module Structure</a><br /><br>A brief introduction to the structure of the exported module.</p>
 </li>
 <li><p><a href="#documentation">Documentation</a><br /><br>A list of available documentation resources.</p>
 </li>
+<li><p><a href="#command-line">Command line</a><br /><br>How to use the command line utility.</p>
+</li>
 <li><p><a href="#building">Building</a><br /><br>How to build the library and its components yourself.</p>
 </li>
 <li><p><a href="#compatibility">Compatibility</a><br /><br>Notes on compatibility regarding browsers and optional libraries.</p>
 </li>
 </ul>
-<h2>Examples</h2><pre class="prettyprint source"><code>$> npm install dcodeIO/protobuf.js</code></pre><h3>Using .proto files</h3><pre class="prettyprint source lang-protobuf"><code>// awesome.proto
+<h2>Usage</h2><h3>node.js</h3><pre class="prettyprint source"><code>$> npm install protobufjs</code></pre><pre class="prettyprint source lang-js"><code>var protobuf = require(&quot;protobufjs&quot;);</code></pre><h3>Browsers</h3><p>Development:</p>
+<pre class="prettyprint source"><code>&lt;script src=&quot;//cdn.rawgit.com/dcodeIO/protobuf.js/6.0.0/dist/protobuf.js&quot;>&lt;/script></code></pre><p>Production:</p>
+<pre class="prettyprint source"><code>&lt;script src=&quot;//cdn.rawgit.com/dcodeIO/protobuf.js/6.0.0/dist/protobuf.min.js&quot;>&lt;/script></code></pre><p>The <code>protobuf</code> namespace will be available globally.</p>
+<p><strong>NOTE:</strong> Remember to replace the version tag with the exact <a target="_blank" href="https://github.com/dcodeIO/protobuf.js/releases">release</a> your project depends upon.</p>
+<h2>Examples</h2><h3>Using .proto files</h3><pre class="prettyprint source lang-protobuf"><code>// awesome.proto
 package awesomepackage;
 syntax = &quot;proto3&quot;;
 
 message AwesomeMessage {
     string awesome_field = 1; // becomes awesomeField
-}</code></pre><pre class="prettyprint source lang-js"><code>var protobuf = require(&quot;protobufjs&quot;);
-
-protobuf.load(&quot;awesome.proto&quot;, function(err, root) {
+}</code></pre><pre class="prettyprint source lang-js"><code>protobuf.load(&quot;awesome.proto&quot;, function(err, root) {
     if (err) throw err;
 
     // Obtain a message type
@@ -1489,12 +1496,12 @@ var Root  = protobuf.Root,
     Type  = protobuf.Type,
     Field = protobuf.Field;
 
-var AwesomeMessage = new Type(&quot;AwesomeMessage&quot;).add(new Field(1, &quot;awesomField&quot;, &quot;string&quot;));
+var AwesomeMessage = new Type(&quot;AwesomeMessage&quot;).add(new Field(1, &quot;awesomeField&quot;, &quot;string&quot;));
 
 var root = new Root().define(&quot;awesomepackage&quot;).add(AwesomeMessage);
 
 // Continue at &quot;Create a new message&quot; above
-...</code></pre><h3>Using your own classes (wip)</h3><pre class="prettyprint source lang-js"><code>...
+...</code></pre><h3>Using your own classes</h3><pre class="prettyprint source lang-js"><code>...
 var Prototype = protobuf.Prototype;
 
 function AwesomeMessage(properties) {
@@ -1514,7 +1521,8 @@ var buffer = AwesomeMessage.encode({ awesomeField: &quot;AwesomeString&quot; });
 
 // Decode a buffer
 var message = AwesomeMessage.decode(buffer);
-// ... do something with message</code></pre><h2>Module Structure</h2><p>The library exports a flat <code>protobuf</code> namespace with the following members, ordered by category:</p>
+// ... do something with message</code></pre><p>Custom classes are automatically populated with static <code>encode</code>, <code>encodeDelimited</code>, <code>decode</code>, <code>decodeDelimited</code> and <code>verify</code> methods and reference their reflected type via the <code>$type</code> property. Note that there are no methods (just <code>$type</code>) on instances by default as method names might conflict with field names.</p>
+<h2>Module Structure</h2><p>The library exports a flat <code>protobuf</code> namespace with the following members, ordered by category:</p>
 <h3>Parser</h3><ul>
 <li><p><strong>load(filename: <code>string|Array</code>, [root: <code>Root</code>], [callback: <code>function(err: Error, [root: Root])</code>]): <code>Promise</code></strong> [<a target="_blank" href="https://github.com/dcodeIO/protobuf.js/blob/master/src/index.js">source</a>]<br /><br>Loads one or multiple .proto files into the specified root or creates a new one when omitted.</p>
 </li>
@@ -1593,7 +1601,19 @@ var message = AwesomeMessage.decode(buffer);
 <li><p><a target="_blank" href="http://dcode.io/protobuf.js/">protobuf.js API Documentation</a></p>
 </li>
 </ul>
-<h2>Building</h2><p>To build the library or its components yourself, clone it from GitHub and install the development<br>dependencies:</p>
+<h2>Command line</h2><p>The <code>pbjs</code> command line utility can be used to bundle and translate between .proto and .json files.</p>
+<pre class="prettyprint source"><code>Consolidates imports and converts between file formats.
+
+  -t, --target    Specifies the target format. [json, proto2, proto3]
+  -o, --out       Saves to a file instead of writing to stdout.
+
+usage: pbjs [options] file1.proto file2.json ...</code></pre><p>If you haven't installed the development dependencies already, make sure that the CLI dependencies are present:</p>
+<pre class="prettyprint source"><code>$> npm install chalk@1 minimist@1</code></pre><p>In production, it is recommended to bundle all your .proto files to a single .json file, which reduces the number of network requests and parser invocations required:</p>
+<pre class="prettyprint source"><code>pbjs -t json file1.proto file2.proto > bundle.json`</code></pre><p>Now, either include this file in your final bundle:</p>
+<pre class="prettyprint source lang-js"><code>var root = protobuf.Root.fromJSON(require(&quot;./bundle.json&quot;));</code></pre><p>or load it the usual way:</p>
+<pre class="prettyprint source lang-js"><code>protobuf.load(&quot;bundle.json&quot;, function(err, root) {
+    ...
+});</code></pre><h2>Building</h2><p>To build the library or its components yourself, clone it from GitHub and install the development<br>dependencies:</p>
 <pre class="prettyprint source"><code>$> git clone https://github.com/dcodeIO/protobuf.js.git
 $> cd protobuf.js
 $> npm install --dev</code></pre><p>Building the development and production versions with their respective source maps to <code>dist/</code>:</p>

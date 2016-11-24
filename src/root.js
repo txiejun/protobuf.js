@@ -33,6 +33,18 @@ function Root(options) {
 }
 
 /**
+ * Loads a JSON definition into a root namespace.
+ * @param {*} json JSON definition
+ * @param {Root} [root] Root namespace, defaults to create a new one if omitted
+ * @returns {Root} Root namespace
+ */
+Root.fromJSON = function fromJSON(json, root) {
+    if (!root)
+        root = new protobuf.Root();
+    return root.addJSON(json);
+};
+
+/**
  * Resolves the path of an imported file, relative to the importing origin.
  * This method exists so you can override it with your own logic in case your imports are scattered over multiple directories.
  * @function

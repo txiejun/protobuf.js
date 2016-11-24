@@ -292,10 +292,10 @@ In production, it is recommended to bundle all your .proto files to a single .js
 pbjs -t json file1.proto file2.proto > bundle.json`
 ```
 
-Now, either include this file in your final bundle (i.e. through [brfs](https://github.com/substack/brfs)):
+Now, either include this file in your final bundle:
 
 ```js
-var root = new Root().addJSON(require("./bundle.json"));
+var root = protobuf.Root.fromJSON(require("./bundle.json"));
 ```
 
 or load it the usual way:

@@ -1,6 +1,6 @@
 /*
  * protobuf.js v6.0.0-dev TypeScript definitions
- * Generated Thu, 24 Nov 2016 15:25:28 UTC
+ * Generated Thu, 24 Nov 2016 17:12:09 UTC
  */
 declare module protobuf {
 
@@ -1209,6 +1209,14 @@ declare module protobuf {
        * @type {string[]}
        */
       files: string[];
+   
+      /**
+       * Loads a JSON definition into a root namespace.
+       * @param {*} json JSON definition
+       * @param {Root} [root] Root namespace, defaults to create a new one if omitted
+       * @returns {Root} Root namespace
+       */
+      static fromJSON(json: any, root?: Root): Root;
    
       /**
        * Resolves the path of an imported file, relative to the importing origin.
