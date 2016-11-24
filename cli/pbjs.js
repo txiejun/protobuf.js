@@ -1,22 +1,17 @@
 var path     = require("path"),
-    fs       = require("fs");
-var minimist,
-    chalk;
+    fs       = require("fs"),
+    pkg      = require(path.join(__dirname, "..", "package.json")),
+    util     = require("./util");
+
+var minimist = util.require("minimist", pkg.devDependencies.minimist),
+    chalk    = util.require("chalk", pkg.devDependencies.chalk),
+    glob     = util.require("glob", pkg.devDependencies.glob);
 
 var protobuf = require(".."),
-    util     = require("./util"),
     targets  = util.requireAll("./targets"),
     pkg      = require("../package.json");
 
 exports.main = function(args) {
-    try {
-        minimist = require("minimist");
-        chalk    = require("chalk");
-    } catch (e) {
-        console.log("pbjs is missing one of its dependencies. Either install the development dependencies or run:\n\n$> npm install chalk@1 minimist@1");
-        return 2;
-    }
-
     var argv = minimist(args.slice(2), {
         alias: {
             target : "t",
@@ -43,6 +38,16 @@ exports.main = function(args) {
             "usage: " + chalk.bold.green(path.basename(process.argv[1])) + " [options] file1.proto file2.json ..."
         ].join("\n"));
         return 1;
+    }
+
+    // Resolve glob expressions
+    for (var i = 0; i < files.length;) {
+        if (glob.hasMagic(files[i])) {
+            var matches = glob.sync(files[i]);
+            Array.prototype.splice.apply(files, [i, 1].concat(matches));
+            i += matches.length;
+        } else
+            ++i;
     }
 
     var root = new protobuf.Root();

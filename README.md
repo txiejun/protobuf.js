@@ -127,7 +127,7 @@ var root = new Root().define("awesomepackage").add(AwesomeMessage);
 ...
 ```
 
-### Using your own classes
+### Using custom classes
 
 ```js
 ...
@@ -280,16 +280,10 @@ Consolidates imports and converts between file formats.
 usage: pbjs [options] file1.proto file2.json ...
 ```
 
-If you haven't installed the development dependencies already, make sure that the CLI dependencies are present:
+For production environments it is recommended to bundle all your .proto files to a single .json file, which reduces the number of network requests and parser invocations required:
 
 ```
-$> npm install chalk@1 minimist@1
-```
-
-In production, it is recommended to bundle all your .proto files to a single .json file, which reduces the number of network requests and parser invocations required:
-
-```
-pbjs -t json file1.proto file2.proto > bundle.json`
+pbjs -t json file1.proto file2.proto > bundle.json
 ```
 
 Now, either include this file in your final bundle:
@@ -344,7 +338,7 @@ Compatibility
 
 * Options are supported but handled differently than by the official implementation because the internals of this package do not rely on `google/protobuf/descriptor.proto`.
 
-* If you'd like to use node's buffer API in the browser, you can use [feross/buffer](https://github.com/feross/buffer) for example and assign its constructor, or that of any compatible library, to `protobuf.util.Buffer`.
+* If you'd like to use node's buffer API in the browser, you can use [feross/buffer](https://github.com/feross/buffer) for example and assign its constructor, or that of any compatible library, to `protobuf.util.Buffer`. Might affect [performance](https://github.com/feross/buffer#performance).
 
 * If you need a proper way to work with 64 bit values (uint64, int64 etc.), you can install [long.js](https://github.com/dcodeIO/long.js) alongside this library. Just as with buffers, you can assign its constructor to `protobuf.util.Long`. All 64 bit numbers will then be returned as a `Long` instance instead of a possibly unsafe JavaScript number ([see](https://github.com/dcodeIO/long.js)).
 

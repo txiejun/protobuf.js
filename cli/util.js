@@ -1,6 +1,6 @@
-var fs   = require("fs"),
-    path = require("path"),
-    chalk = require("chalk");
+var fs            = require("fs"),
+    path          = require("path"),
+    child_process = require("child_process");
 
 var protobuf = require("..");
 
@@ -20,6 +20,7 @@ exports.requireAll = function requireAll(dirname) {
 exports.inspect = function inspect(object, indent) {
     if (!object)
         return "";
+    var chalk = require("chalk");
     var sb = [];
     if (!indent)
         indent = "";
@@ -52,4 +53,19 @@ exports.inspect = function inspect(object, indent) {
             sb.push(inspect(nested, indent + "  "));
         });
     return sb.join("\n");
+};
+
+exports.require = function(name, version) {
+    var cwd = path.join(__dirname, "..");
+    var dir = path.join(cwd, "node_modules", name);
+    try {
+        // do not feed the cache
+        require.resolve(path.join(dir, "package.json"));
+    } catch (e) {
+        console.error("installing " + name + "@" + version + " ...");
+        child_process.execSync("npm install " + name + "@" + version, {
+            cwd: cwd
+        });
+    }
+    return require(name);
 };
