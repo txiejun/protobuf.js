@@ -14,12 +14,14 @@ message Package {
 
     Repository repository = 6;
     string bugs = 7;
-    string main = 8;
-    map<string, string> bin = 9;
-    map<string, string> scripts = 10;
-    map<string, string> dependencies = 11;
-    map<string, string> optionalDependencies = 12;
-    map<string, string> devDependencies = 13;
-    map<string, bool>   browser = 14;
-    string types = 15;
+    string homepage = 8;
+    repeated string keywords = 9;
+    string main = 10;
+    map<string, string> bin = 11;
+    map<string, string> scripts = 12;
+    map<string, string> dependencies = 13;
+    map<string, string> optionalDependencies = 14;
+    map<string, string> devDependencies = 15;
+    map<string, bool>   browser = 16;
+    string types = 17;
 }

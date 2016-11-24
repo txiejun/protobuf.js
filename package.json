@@ -1,7 +1,7 @@
 {
   "name": "protobufjs",
   "version": "6.0.0-dev",
-  "description": "protocol buffers for javascript.",
+  "description": "Protocol Buffers for JavaScript.",
   "author": "Daniel Wirtz",
   "license": "Apache-2.0",
   "repository": {
@@ -9,6 +9,16 @@
     "url": "https://github.com/dcodeIO/protobuf.js.git"
   },
   "bugs": "https://github.com/dcodeIO/protobuf.js/issues",
+  "homepage": "http://dcode.io/protobuf.js",
+  "keywords": [
+    "protobuf",
+    "protocol",
+    "buffers",
+    "protocol buffers",
+    "google",
+    "serialization",
+    "encoding"
+  ],
   "main": "src/index",
   "bin": {
     "pbjs": "bin/pbjs"

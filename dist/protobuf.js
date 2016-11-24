@@ -1,6 +1,6 @@
 /*!
  * protobuf.js v6.0.0-dev (c) 2016 Daniel Wirtz
- * Compiled Thu, 24 Nov 2016 15:25:23 UTC
+ * Compiled Thu, 24 Nov 2016 16:10:29 UTC
  * Licensed under the Apache License, Version 2.0
  * see: https://github.com/dcodeIO/protobuf.js for details
  */
@@ -568,8 +568,12 @@ EncoderPrototype.encode = function encode_fallback(message, writer) { // codegen
                 // Non-packed
                 } else {
                     var i = 0;
-                    while (i < values.length)
-                        field.resolvedType.encode(values[i++], writer.tag(field.id,2).fork()).ldelim();
+                    if (wireType !== undefined)
+                        while (i < values.length)
+                            writer.tag(field.id, wireType)[type](values[i++]);
+                    else
+                        while (i < values.length)
+                            field.resolvedType.encode(values[i++], writer.tag(field.id,2).fork()).ldelim();
                 }
 
             }
@@ -651,7 +655,10 @@ EncoderPrototype.generate = function generate() {
             } else { gen
 
     ("if(m%s)", prop)
-        ("for(var i=0;i<m%s.length;++i)", prop)
+        ("for(var i=0;i<m%s.length;++i)", prop);
+                if (wireType !== undefined) gen
+            ("w.tag(%d,%d).%s(m%s[i])", field.id, wireType, type, prop);
+                else gen
             ("types[%d].encode(m%s[i],w.tag(%d,2).fork()).ldelim()", i, prop, field.id);
 
             }
