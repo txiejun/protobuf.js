@@ -5,8 +5,6 @@ protobuf.js [![travis][travis-image]][travis-url] [![npm][npm-image]][npm-url]
 
 **protobuf.js** is a pure JavaScript implementation for node and the browser. It efficiently encodes plain objects and custom classes and works out of the box with .proto files.
 
-**This is the development branch of protobuf.js 6.** Are you looking for the [current stable branch](https://github.com/dcodeIO/protobuf.js/tree/ProtoBuf5)?
-
 [travis-image]: https://img.shields.io/travis/dcodeIO/protobuf.js.svg
 [travis-url]: https://travis-ci.org/dcodeIO/protobuf.js
 [npm-image]: https://img.shields.io/npm/v/protobufjs.svg
@@ -26,6 +24,9 @@ Contents
 
 * [Documentation](#documentation)<br />
   A list of available documentation resources.
+
+* [Command line](#command-line)<br />
+  How to use the command line utility.
 
 * [Building](#building)<br />
   How to build the library and its components yourself.
@@ -264,6 +265,46 @@ Documentation
 * [Google's Developer Guide](https://developers.google.com/protocol-buffers/docs/overview)
 
 * [protobuf.js API Documentation](http://dcode.io/protobuf.js/)
+
+Command line
+------------
+
+The `pbjs` command line utility can be used to bundle and translate between .proto and .json files.
+
+```
+Consolidates imports and converts between file formats.
+
+  -t, --target    Specifies the target format. [json, proto2, proto3]
+  -o, --out       Saves to a file instead of writing to stdout.
+
+usage: pbjs [options] file1.proto file2.json ...
+```
+
+If you haven't installed the development dependencies already, make sure that the CLI dependencies are present:
+
+```
+$> npm install chalk@1 minimist@1
+```
+
+In production, it is recommended to bundle all your .proto files to a single .json file, which reduces the number of network requests and parser invocations required:
+
+```
+pbjs -t json file1.proto file2.proto > bundle.json`
+```
+
+Now, either include this file in your final bundle (i.e. through [brfs](https://github.com/substack/brfs)):
+
+```js
+var root = new Root().addJSON(require("./bundle.json"));
+```
+
+or load it the usual way:
+
+```js
+protobuf.load("bundle.json", function(err, root) {
+    ...
+});
+```
 
 Building
 --------

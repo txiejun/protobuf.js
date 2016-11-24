@@ -1,7 +1,7 @@
-var minimist = require("minimist"),
-    path     = require("path"),
-    fs       = require("fs"),
-    chalk    = require("chalk");
+var path     = require("path"),
+    fs       = require("fs");
+var minimist,
+    chalk;
 
 var protobuf = require(".."),
     util     = require("./util"),
@@ -9,6 +9,14 @@ var protobuf = require(".."),
     pkg      = require("../package.json");
 
 exports.main = function(args) {
+    try {
+        minimist = require("minimist");
+        chalk    = require("chalk");
+    } catch (e) {
+        console.log("pbjs is missing one of its dependencies. Either install the development dependencies or run:\n\n$> npm install chalk@1 minimist@1");
+        return 2;
+    }
+
     var argv = minimist(args.slice(2), {
         alias: {
             target : "t",
