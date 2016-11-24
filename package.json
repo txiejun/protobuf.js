@@ -15,7 +15,6 @@
     "protocol",
     "buffers",
     "protocol buffers",
-    "google",
     "serialization",
     "encoding"
   ],

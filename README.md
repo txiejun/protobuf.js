@@ -15,6 +15,9 @@ protobuf.js [![travis][travis-image]][travis-url] [![npm][npm-image]][npm-url]
 Contents
 --------
 
+* [Usage](#usage)<br />
+  How to include protobuf.js in your project.
+
 * [Examples](#examples)<br />
   A few examples to get you started.
 
@@ -30,12 +33,37 @@ Contents
 * [Compatibility](#compatibility)<br />
   Notes on compatibility regarding browsers and optional libraries.
 
-Examples
---------
+Usage
+---------------
+
+### node.js
 
 ```
-$> npm install dcodeIO/protobuf.js
+$> npm install protobufjs
 ```
+
+```js
+var protobuf = require("protobufjs");
+```
+
+### Browsers
+
+Development:
+```
+<script src="//cdn.rawgit.com/dcodeIO/protobuf.js/6.0.0/dist/protobuf.js"></script>
+```
+
+Production:
+```
+<script src="//cdn.rawgit.com/dcodeIO/protobuf.js/6.0.0/dist/protobuf.min.js"></script>
+```
+
+The `protobuf` namespace will be available globally.
+
+**NOTE:** Remember to replace the version tag with the exact [release](https://github.com/dcodeIO/protobuf.js/releases) your project depends upon.
+
+Examples
+--------
 
 ### Using .proto files
 
@@ -50,8 +78,6 @@ message AwesomeMessage {
 ```
 
 ```js
-var protobuf = require("protobufjs");
-
 protobuf.load("awesome.proto", function(err, root) {
     if (err) throw err;
     
