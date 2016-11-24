@@ -6,7 +6,7 @@ module.exports = common;
  * Provides common type definitions.
  * Can also be used to provide additional google types or your own custom types.
  * @param {string} name Short name as in `google/protobuf/[name].proto` or full file name
- * @param {Object} json JSON definition within `google.protobuf` if a short name, otherwise the root definition
+ * @param {Object} json JSON definition within `google.protobuf` if a short name, otherwise the file's root definition
  * @returns {undefined}
  * @property {Object} google/protobuf/any.proto Any
  * @property {Object} google/protobuf/duration.proto Duration
