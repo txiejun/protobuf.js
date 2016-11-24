@@ -92,7 +92,7 @@ var Root  = protobuf.Root,
     Type  = protobuf.Type,
     Field = protobuf.Field;
 
-var AwesomeMessage = new Type("AwesomeMessage").add(new Field(1, "awesomField", "string"));
+var AwesomeMessage = new Type("AwesomeMessage").add(new Field(1, "awesomeField", "string"));
 
 var root = new Root().define("awesomepackage").add(AwesomeMessage);
 
@@ -100,7 +100,7 @@ var root = new Root().define("awesomepackage").add(AwesomeMessage);
 ...
 ```
 
-### Using your own classes (wip)
+### Using your own classes
 
 ```js
 ...
@@ -125,6 +125,8 @@ var buffer = AwesomeMessage.encode({ awesomeField: "AwesomeString" });
 var message = AwesomeMessage.decode(buffer);
 // ... do something with message
 ```
+
+Custom classes are automatically populated with static `encode`, `encodeDelimited`, `decode`, `decodeDelimited` and `verify` methods and reference their reflected type via the `$type` property. Note that there are no methods (just `$type`) on instances by default as method names might conflict with field names.
 
 Module Structure
 ----------------
