@@ -90,7 +90,7 @@
         "no-restricted-globals": 1,
         "no-return-assign": 1,
         "no-shadow-restricted-names": 1,
-        "no-shadow": 1,
+        "no-shadow": 0,                     // this is javascript. it has forEach and all that stuff.
         "no-undef-init": 1,
         "no-undef": 1,
         "no-undefined": 0,                  // produces shorter code when testing against this

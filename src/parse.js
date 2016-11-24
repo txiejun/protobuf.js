@@ -46,7 +46,6 @@ var s_open     = "{",
  * @type {Object}
  * @property {string|undefined} package Package name, if declared
  * @property {string[]|undefined} imports Imports, if any
- * @property {string[]|undefined} publicImports Public imports, if any
  * @property {string[]|undefined} weakImports Weak imports, if any
  * @property {string|undefined} syntax Syntax, if specified (either `"proto2"` or `"proto3"`)
  * @property {Root} root Populated root instance
@@ -56,15 +55,12 @@ var s_open     = "{",
  * Parses the given .proto source and returns an object with the parsed contents.
  * @param {string} source Source contents
  * @param {Root} [root] Root to populate
- * @param {boolean} [visible=true] Whether types from this file are visible when exporting definitions
  * @returns {ParserResult} Parser result
  */
-function parse(source, root, visible) {
+function parse(source, root) {
     /* eslint-disable default-case, callback-return */
-    if (typeof root === 'boolean') {
-        visible = root;
-        root = undefined;
-    }
+    if (!root)
+        root = new Root();
 
     var tn = tokenize(source),
         next = tn.next,
@@ -75,7 +71,6 @@ function parse(source, root, visible) {
     var head = true,
         pkg,
         imports,
-        publicImports,
         weakImports,
         syntax,
         isProto3 = false;
@@ -177,7 +172,7 @@ function parse(source, root, visible) {
         pkg = next();
         if (!typeRefRe.test(pkg))
             throw illegal(pkg, s_name);
-        ptr = ptr.define(pkg, visible);
+        ptr = ptr.define(pkg);
         skip(s_semi);
     }
 
@@ -185,17 +180,17 @@ function parse(source, root, visible) {
         var token = peek();
         var whichImports;
         switch (token) {
-            case "public":
-                whichImports = publicImports || (publicImports = []);
-                next();
-                break;
             case "weak":
                 whichImports = weakImports || (weakImports = []);
                 next();
                 break;
+            case "public":
+                next();
+                // eslint-disable-line no-fallthrough
+            default:
+                whichImports = imports || (imports = []);
+                break;
         }
-        if (!whichImports)
-            whichImports = imports || (imports = []);
         token = readString();
         skip(s_semi);
         whichImports.push(token);
@@ -277,7 +272,6 @@ function parse(source, root, visible) {
             skip(s_semi, true);
         } else
             skip(s_semi);
-        type.visible = visible;
         parent.add(type);
     }
 
@@ -290,7 +284,7 @@ function parse(source, root, visible) {
             throw illegal(name, s_name);
         name = camelCase(name);
         skip("=");
-        var id = parseNumber(next());
+        var id = parseId(next());
         var field = parseInlineOptions(new Field(name, id, type, rule, extend));
         if (field.repeated)
             field.setOption("packed", isProto3, /* ifNotSet */ true);
@@ -313,7 +307,8 @@ function parse(source, root, visible) {
         name = camelCase(name);
         skip("=");
         var id = parseId(next());
-        parent.add(parseInlineOptions(new MapField(name, id, keyType, valueType)));
+        var field = parseInlineOptions(new MapField(name, id, keyType, valueType));
+        parent.add(field);
     }
 
     function parseOneOf(parent, token) {
@@ -550,10 +545,10 @@ function parse(source, root, visible) {
                 throw illegal(token);
         }
     }
+
     return {
         package       : pkg,
         imports       : imports,
-        publicImports : publicImports,
         weakImports   : weakImports,
         syntax        : syntax,
         root          : root

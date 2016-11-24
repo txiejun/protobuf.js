@@ -67,13 +67,13 @@ MapField.fromJSON = function fromJSON(name, json) {
  * @override
  */
 MapFieldPrototype.toJSON = function toJSON() {
-    return this.visible && {
+    return {
         keyType : this.keyType,
         type    : this.type,
         id      : this.id,
         extend  : this.extend,
         options : this.options
-    } || undefined;
+    };
 };
 
 /**

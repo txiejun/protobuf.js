@@ -225,6 +225,9 @@ The library exports a flat `protobuf` namespace with the following members, orde
 * **util: `Object`** [[source](https://github.com/dcodeIO/protobuf.js/blob/master/src/util.js)]<br />
   Utility functions.
 
+* **common(name: `string`, json: `Object`)** [[source](https://github.com/dcodeIO/protobuf.js/blob/master/src/common.js)]<br />
+  Provides common type definitions.
+
 * **types: `Object`** [[source](https://github.com/dcodeIO/protobuf.js/blob/master/src/types.js)]<br />
   Common type constants.
 

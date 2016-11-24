@@ -13,7 +13,7 @@ tap.test("extension fields", function(test) {
         declaringField = new Field("declaringField", 1, "string", "optional", "ExtendedType");
     root.add(ns.add(type.add(declaringField)));
 
-    test.deepEqual(root.pendingExtensions[0], declaringField, "should be pending until their extended type can be resolved");
+    test.deepEqual(root.deferred[0], declaringField, "should be deferred until their extended type can be resolved");
 
     var extendedType = new Type("ExtendedType");
     ns.add(extendedType);

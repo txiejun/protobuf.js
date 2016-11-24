@@ -243,35 +243,13 @@ Type.fromJSON = function fromJSON(name, json) {
  * @override
  */
 TypePrototype.toJSON = function toJSON() {
-    var fields = {}, anyVisible = false;
-    this.fieldsArray.forEach(function(obj) {
-        if (obj.declaringField)
-            return;
-        var json = obj.toJSON();
-        if (json) {
-            fields[obj.name] = json;
-            anyVisible = true;
-        }
-    });
-    if (!anyVisible) fields = undefined;
-
-    var oneofs = {}; anyVisible = false;
-    this.oneofsArray.forEach(function(obj) {
-        var json = obj.toJSON();
-        if (json) {
-            oneofs[obj.name] = json;
-            anyVisible = true;
-        }
-    });
-    if (!anyVisible) oneofs = undefined;
-    
     var inherited = NamespacePrototype.toJSON.call(this);
-    return (inherited || fields || oneofs) && {
+    return {
         options : inherited && inherited.options || undefined,
-        oneofs  : oneofs,
-        fields  : fields,
+        oneofs  : Namespace.arrayToJSON(this.oneofsArray),
+        fields  : Namespace.arrayToJSON(this.fieldsArray.filter(function(obj) { return !obj.declaringField; })) || {},
         nested  : inherited && inherited.nested || undefined
-    } || undefined;
+    };
 };
 
 /**

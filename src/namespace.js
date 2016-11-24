@@ -129,19 +129,28 @@ Namespace.fromJSON = function fromJSON(name, json) {
  * @override
  */
 NamespacePrototype.toJSON = function toJSON() {
-    var nested = {}, anyVisible = false;
-    this.nestedArray.forEach(function(obj) {
-        var json = obj.toJSON();
-        if (json) {
-            nested[obj.name] = json;
-            anyVisible = true;
-        }
-    });
-    return anyVisible && {
+    return {
         options : this.options,
-        nested  : nested
-    } || undefined;
+        nested  : arrayToJSON(this.nestedArray)
+    };
 };
+
+/**
+ * Converts an array of reflection objects to JSON.
+ * @memberof Namespace
+ * @param {ReflectionObject[]} array Object array
+ * @returns {Object.<string,*>|undefined} JSON object or `undefined` when array is empty
+ */
+function arrayToJSON(array) {
+    if (!(array && array.length))
+        return undefined;
+    var obj = {};
+    for (var i = 0; i < array.length; ++i)
+        obj[array[i].name] = array[i].toJSON();
+    return obj;
+}
+
+Namespace.arrayToJSON = arrayToJSON;
 
 /**
  * Adds nested elements to this namespace from JSON.
@@ -154,10 +163,8 @@ NamespacePrototype.addJSON = function addJSON(json) {
         for (var i = 0; i < keys.length; ++i) {
             var nested = json[keys[i]];
             for (var j = 0; j < nestedTypes.length; ++j)
-                if (nestedTypes[j].testJSON(nested)) {
-                    this.add(nestedTypes[j].fromJSON(keys[i], nested));
-                    break;
-                }
+                if (nestedTypes[j].testJSON(nested))
+                    return this.add(nestedTypes[j].fromJSON(keys[i], nested));
             throw _TypeError("json." + keys[i], "JSON for " + nestedError);
         }
     }
@@ -192,8 +199,8 @@ NamespacePrototype.add = function add(object) {
     else {
         var prev = this.get(object.name);
         if (prev) {
-            if (prev instanceof Namespace && !(prev instanceof Type) && object instanceof Type) {
-                // move existing nested objects to the message type and remove the previous namespace
+            if (prev instanceof Namespace && object instanceof Namespace && prev.plain) {
+                // replace plain namespace but keep existing nested elements
                 var nested = prev.nestedArray;
                 for (var i = 0; i < nested.length; ++i)
                     object.add(nested[i]);
@@ -230,23 +237,15 @@ NamespacePrototype.remove = function remove(object) {
  * Defines additial namespaces within this one if not yet existing.
  * @param {string|string[]} path Path to create
  * @param {*} [json] Nested types to create from JSON
- * @param {?boolean} [visible=null] Whether visible when exporting definitions. Defaults to inherit from parent.
  * @returns {Namespace} Pointer to the last namespace created or `this` if path is empty
  */
-NamespacePrototype.define = function define(path, json, visible) {
+NamespacePrototype.define = function define(path, json) {
     if (util.isString(path))
         path = path.split('.');
     else if (!Array.isArray(path)) {
-        visible = json;
         json = path;
         path = undefined;
     }
-    if (typeof json === 'boolean') {
-        visible = json;
-        json = undefined;
-    }
-    if (visible === undefined)
-        visible = null;
     var ptr = this;
     if (path)
         while (path.length > 0) {
@@ -255,12 +254,8 @@ NamespacePrototype.define = function define(path, json, visible) {
                 ptr = ptr.nested[part];
                 if (!(ptr instanceof Namespace))
                     throw Error("path conflicts with non-namespace objects");
-                if (visible) // make visible when new namespaces are
-                    ptr.visible = true;
-            } else {
+            } else
                 ptr.add(ptr = new Namespace(part));
-                ptr.visible = visible;
-            }
         }
     if (json)
         ptr.addJSON(json);

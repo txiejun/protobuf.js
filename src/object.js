@@ -47,13 +47,6 @@ function ReflectionObject(name, options) {
     this.resolved = false;
 
     /**
-     * Internally stores whether this object is visible.
-     * @type {?boolean}
-     * @private
-     */
-    this._visible = null;
-
-    /**
      * Cached object representation.
      * @type {Object|undefined}
      * @private
@@ -100,27 +93,6 @@ Object.defineProperties(ReflectionObjectPrototype, {
     },
 
     /**
-     * Whether this object is visible when exporting definitions. Possible values are `true` to be visible, `false` to be not and `null` (setter only) to inherit from parent.
-     * @name ReflectionObject#visible
-     * @type {?boolean}
-     */
-    visible: {
-        get: function() {
-            var ptr = this;
-            do {
-                if (ptr._visible !== null)
-                    return ptr._visible;
-            } while ((ptr = ptr.parent) !== null);
-            return true; // visible by default
-        },
-        set: function(value) {
-            if (value !== null && typeof value !== 'boolean')
-                throw _TypeError("value", "a boolean or null");
-            this._visible = value;
-        }
-    },
-
-    /**
      * Gets this object as a plain JavaScript object composed of messages, enums etc.
      * @name ReflectionObject#object
      * @type {Object|undefined}
@@ -150,7 +122,7 @@ function extend(constructor) {
 
 /**
  * Converts this reflection object to its JSON representation.
- * @returns {Object|undefined} JSON object or `undefined` if not visible
+ * @returns {Object} JSON object
  * @abstract
  */
 ReflectionObjectPrototype.toJSON = function toJSON() {
@@ -197,17 +169,6 @@ ReflectionObjectPrototype.resolve = function resolve() {
     var root = this.root;
     if (root instanceof Root)
         this.resolved = true; // only if part of a root
-    return this;
-};
-
-/**
- * Changes this object's visibility when exporting definitions.
- * @param {?boolean} visible `true` for public, `false` for private, `null` to inherit from parent
- * @returns {ReflectionObject} `this`
- * @throws {TypeError} If arguments are invalid
- */
-ReflectionObjectPrototype.visibility = function visibility(visible) {
-    this.visible = visible;
     return this;
 };
 

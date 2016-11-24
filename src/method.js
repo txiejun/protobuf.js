@@ -117,14 +117,14 @@ Method.fromJSON = function fromJSON(name, json) {
  * @override
  */
 MethodPrototype.toJSON = function toJSON() {
-    return this.visible && {
+    return {
         type           : this.type !== "rpc" && this.type || undefined,
         requestType    : this.requestType,
         requestStream  : this.requestStream,
         responseType   : this.responseType,
         responseStream : this.responseStream,
         options        : this.options
-    } || undefined;
+    };
 };
 
 /**

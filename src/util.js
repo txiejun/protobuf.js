@@ -201,7 +201,7 @@ util.resolvePath = function resolvePath(originPath, importPath, alreadyNormalize
         return importPath;
     if (!alreadyNormalized)
         originPath = normalizePath(originPath);
-    originPath = originPath.replace(/\/[^/]+$/, '');
+    originPath = originPath.replace(/(?:\/|^)[^/]+$/, '');
     return originPath.length ? normalizePath(originPath + '/' + importPath) : importPath;
 };
 

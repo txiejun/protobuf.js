@@ -1,9 +1,23 @@
 /*
  * protobuf.js v6.0.0-dev TypeScript definitions
- * Generated Tue, 22 Nov 2016 14:03:32 UTC
+ * Generated Thu, 24 Nov 2016 10:49:49 UTC
  */
 declare module protobuf {
 
+   /**
+    * Provides common type definitions.
+    * Can also be used to provide additional google types or your own custom types.
+    * @param {string} name Short name as in `google/protobuf/[name].proto` or full file name
+    * @param {Object} json JSON definition within `google.protobuf` if a short name, otherwise the root definition
+    * @returns {undefined}
+    * @property {Object} google/protobuf/any.proto Any
+    * @property {Object} google/protobuf/duration.proto Duration
+    * @property {Object} google/protobuf/empty.proto Empty
+    * @property {Object} google/protobuf/struct.proto Struct, Value, NullValue and ListValue
+    * @property {Object} google/protobuf/timestamp.proto Timestamp
+    */
+   function common(name: string, json: Object): undefined;
+   
    /**
     * Constructs a new decoder for the specified message type.
     * @classdesc Wire format decoder using code generation on top of reflection.
@@ -659,6 +673,14 @@ declare module protobuf {
       static fromJSON(name: string, json: Object): Namespace;
    
       /**
+       * Converts an array of reflection objects to JSON.
+       * @memberof Namespace
+       * @param {ReflectionObject[]} array Object array
+       * @returns {Object.<string,*>|undefined} JSON object or `undefined` when array is empty
+       */
+      static arrayToJSON(array: ReflectionObject[]): ({ [k: string]: any }|undefined);
+   
+      /**
        * Adds nested elements to this namespace from JSON.
        * @param {Object.<string,*>} json Nested JSON
        * @returns {Namespace} `this`
@@ -694,10 +716,9 @@ declare module protobuf {
        * Defines additial namespaces within this one if not yet existing.
        * @param {string|string[]} path Path to create
        * @param {*} [json] Nested types to create from JSON
-       * @param {?boolean} [visible=null] Whether visible when exporting definitions. Defaults to inherit from parent.
        * @returns {Namespace} Pointer to the last namespace created or `this` if path is empty
        */
-      define(path: (string|string[]), json?: any, visible?: boolean): Namespace;
+      define(path: (string|string[]), json?: any): Namespace;
    
       /**
        * Resolves this namespace's and all its nested objects' type references. Useful to validate a reflection tree.
@@ -765,13 +786,6 @@ declare module protobuf {
       fullName: string;
    
       /**
-       * Whether this object is visible when exporting definitions. Possible values are `true` to be visible, `false` to be not and `null` (setter only) to inherit from parent.
-       * @name ReflectionObject#visible
-       * @type {?boolean}
-       */
-      visible: boolean;
-   
-      /**
        * Gets this object as a plain JavaScript object composed of messages, enums etc.
        * @name ReflectionObject#object
        * @type {Object|undefined}
@@ -790,10 +804,10 @@ declare module protobuf {
    
       /**
        * Converts this reflection object to its JSON representation.
-       * @returns {Object|undefined} JSON object or `undefined` if not visible
+       * @returns {Object} JSON object
        * @abstract
        */
-      toJSON(): (Object|undefined);
+      toJSON(): Object;
    
       /**
        * Called when this object is added to a parent.
@@ -814,14 +828,6 @@ declare module protobuf {
        * @returns {ReflectionObject} `this`
        */
       resolve(): ReflectionObject;
-   
-      /**
-       * Changes this object's visibility when exporting definitions.
-       * @param {?boolean} visible `true` for public, `false` for private, `null` to inherit from parent
-       * @returns {ReflectionObject} `this`
-       * @throws {TypeError} If arguments are invalid
-       */
-      visibility(visible?: boolean): ReflectionObject;
    
       /**
        * Gets an option value.
@@ -919,7 +925,6 @@ declare module protobuf {
     * @type {Object}
     * @property {string|undefined} package Package name, if declared
     * @property {string[]|undefined} imports Imports, if any
-    * @property {string[]|undefined} publicImports Public imports, if any
     * @property {string[]|undefined} weakImports Weak imports, if any
     * @property {string|undefined} syntax Syntax, if specified (either `"proto2"` or `"proto3"`)
     * @property {Root} root Populated root instance
@@ -927,7 +932,6 @@ declare module protobuf {
    interface ParserResult {
       package: (string|undefined);
       imports: (string[]|undefined);
-      publicImports: (string[]|undefined);
       weakImports: (string[]|undefined);
       syntax: (string|undefined);
       root: Root;
@@ -938,10 +942,9 @@ declare module protobuf {
     * Parses the given .proto source and returns an object with the parsed contents.
     * @param {string} source Source contents
     * @param {Root} [root] Root to populate
-    * @param {boolean} [visible=true] Whether types from this file are visible when exporting definitions
     * @returns {ParserResult} Parser result
     */
-   function parse(source: string, root?: Root, visible?: boolean): ParserResult;
+   function parse(source: string, root?: Root): ParserResult;
    
    /**
     * Options passed to the {@link Prototype|prototype constructor}, modifying its behavior.
@@ -1198,23 +1201,11 @@ declare module protobuf {
    }
    
    /**
-    * Options provided to a {@link Root|root namespace}, modifying its behavior.
-    * @typedef RootOptions
-    * @type {Object}
-    * @property {boolean} [noGoogleTypes=false] Skips loading of common Google types like `google.protobuf.Any`.
-    */
-   interface RootOptions {
-      noGoogleTypes: boolean;
-   }
-   
-   
-   /**
     * Constructs a new root namespace.
     * @classdesc Root namespace wrapping all types, enums, services, sub-namespaces etc. that belong together.
     * @extends Namespace
     * @constructor
-    * @param {RootOptions} [rootOptions] Root options
-    * @param {Object} [options] Declared options
+    * @param {Object} [options] Top level options
     */
    class Root extends Namespace {
       /**
@@ -1222,47 +1213,21 @@ declare module protobuf {
        * @classdesc Root namespace wrapping all types, enums, services, sub-namespaces etc. that belong together.
        * @extends Namespace
        * @constructor
-       * @param {RootOptions} [rootOptions] Root options
-       * @param {Object} [options] Declared options
+       * @param {Object} [options] Top level options
        */
-      constructor(rootOptions?: RootOptions, options?: Object);
+      constructor(options?: Object);
    
       /**
-       * References to common google types.
-       * @type {Object.<string, Type|Enum>}
-       */
-      common: { [k: string]: (Type|Enum) };
-   
-      /**
-       * Array of yet unprocessed and thus pending extension fields.
+       * Deferred extension fields.
        * @type {Field[]}
        */
-      pendingExtensions: Field[];
+      deferred: Field[];
    
       /**
-       * Checks if a specific file has already been loaded with compatible options.
-       * @param {string} filename File name to test
-       * @param {LoadedFileOptions} [options] File options
-       * @returns {boolean} `true` if already loaded with compatible options, otherwise `false` (i.e. already loaded as non-public, but this import is public)
+       * Loaded files.
+       * @type {string[]}
        */
-      isLoaded(filename: string, options?: LoadedFileOptions): boolean;
-   
-      /**
-       * Lets the root know of a loaded file, i.e. when added programmatically.
-       * @param {string} filename File name to add
-       * @param {LoadedFileOptions} [options] File options
-       * @returns {boolean} `false` if this file has already been loaded before
-       */
-      addLoaded(filename: string, options?: LoadedFileOptions): boolean;
-   
-      /**
-       * Imports common google types to the specified root.
-       * @memberof Root
-       * @param {Root} root The root to import to
-       * @param {?boolean} [visible] Whether visible when exporting definitions. Defaults to inherit from parent.
-       * @returns {undefined}
-       */
-      static importGoogleTypes(root: Root, visible?: boolean): undefined;
+      files: string[];
    
       /**
        * Resolves the path of an imported file, relative to the importing origin.
@@ -1277,40 +1242,13 @@ declare module protobuf {
       /**
        * Loads one or multiple .proto or preprocessed .json files into this root namespace.
        * @param {string|string[]} filename Names of one or multiple files to load
-       * @param {LoaderOptions} [options] Load options
        * @param {function(?Error, Root=)} [callback] Node-style callback function
        * @returns {Promise<Root>|undefined} A promise if `callback` has been omitted
        * @throws {TypeError} If arguments are invalid
        */
-      load(filename: (string|string[]), options?: LoaderOptions, callback?: (() => any)): (Promise<Root>|undefined);
+      load(filename: (string|string[]), callback?: (() => any)): (Promise<Root>|undefined);
    
    }
-   
-   /**
-    * Loaded file options provided to {@link Root#addLoaded}.
-    * @typedef LoadedFileOptions
-    * @type {Object}
-    * @property {boolean} [weak=false] Whether this is a weak import
-    * @property {boolean} [public=false] Whether this is a public import
-    */
-   interface LoadedFileOptions {
-      weak: boolean;
-      public: boolean;
-   }
-   
-   
-   /**
-    * Options provided to {@link Root#load}, modifying its behavior.
-    * @typedef LoaderOptions
-    * @type {Object}
-    * @property {boolean} [public=false] Whether this is a public import
-    * @property {boolean} [weak=false} Whether this is a weak import]
-    */
-   interface LoaderOptions {
-      public: boolean;
-      weak: boolean;
-   }
-   
    
    /**
     * Constructs a new service.

@@ -194,13 +194,13 @@ Field.fromJSON = function fromJSON(name, json) {
  * @override
  */
 FieldPrototype.toJSON = function toJSON() {
-    return this.visible && {
+    return {
         rule    : this.rule !== "optional" && this.rule || undefined,
         type    : this.type,
         id      : this.id,
         extend  : this.extend,
         options : this.options
-    } || undefined;
+    };
 };
 
 /**

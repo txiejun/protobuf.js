@@ -66,7 +66,7 @@ function buildRoot(root) {
     var pkg = [];
     var ptr = root;
     do {
-        var nested = ptr.nestedArray.filter(isBuilt);
+        var nested = ptr.nestedArray;
         if (nested.length === 1 && nested[0] instanceof Namespace && nested[0].plain) {
             ptr = nested[0];
             if (ptr !== root)
@@ -82,15 +82,7 @@ function buildRoot(root) {
     ptr.nestedArray.forEach(build);
 }
 
-function isBuilt(object) {
-    if (!object.visible)
-        return false;
-    return true;    
-}
-
 function build(object) {
-    if (!isBuilt(object))
-        return;
     if (object instanceof Enum)
         buildEnum(object);
     else if (object instanceof Type)

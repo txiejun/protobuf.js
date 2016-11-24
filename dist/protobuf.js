@@ -1,6 +1,6 @@
 /*!
  * protobuf.js v6.0.0-dev (c) 2016 Daniel Wirtz
- * Compiled Tue, 22 Nov 2016 14:03:27 UTC
+ * Compiled Thu, 24 Nov 2016 10:49:52 UTC
  * Licensed under the Apache License, Version 2.0
  * see: https://github.com/dcodeIO/protobuf.js for details
  */
@@ -126,12 +126,145 @@ exports.write = function writeIEEE754(buffer, value, offset, isBE, mLen, nBytes)
 
 },{}],2:[function(require,module,exports){
 "use strict";
+
+module.exports = common;
+
+/**
+ * Provides common type definitions.
+ * Can also be used to provide additional google types or your own custom types.
+ * @param {string} name Short name as in `google/protobuf/[name].proto` or full file name
+ * @param {Object} json JSON definition within `google.protobuf` if a short name, otherwise the root definition
+ * @returns {undefined}
+ * @property {Object} google/protobuf/any.proto Any
+ * @property {Object} google/protobuf/duration.proto Duration
+ * @property {Object} google/protobuf/empty.proto Empty
+ * @property {Object} google/protobuf/struct.proto Struct, Value, NullValue and ListValue
+ * @property {Object} google/protobuf/timestamp.proto Timestamp
+ */
+function common(name, json) {
+    if (!/[\/\.]/.test(name)) {
+        name = "google/protobuf/" + name + ".proto";
+        json = { nested: { google: { nested: { protobuf: { nested: json } } } } };
+    }
+    common[name] = json;
+}
+
+// Not provided because of limited use (feel free to discuss or to provide yourself):
+// - google/protobuf/descriptor.proto
+// - google/protobuf/field_mask.proto
+// - google/protobuf/source_context.proto
+// - google/protobuf/type.proto
+// - google/protobuf/wrappers.proto
+
+common("any", {
+    Any: {
+        fields: {
+            type_url: {
+                type: "string",
+                id: 1
+            },
+            value: {
+                type: "bytes",
+                id: 2
+            }
+        }
+    }
+});
+
+var timeType;
+
+common("duration", {
+    Duration: timeType = {
+        fields: {
+            seconds: {
+                type: "int64",
+                id: 1
+            },
+            nanos: {
+                type: "int32",
+                id: 2
+            }
+        }
+    }
+});
+
+common("timestamp", {
+    Timestamp: timeType
+});
+
+common("empty", {
+    Empty: {
+        fields: {}
+    }
+});
+
+common("struct", {
+    Struct: {
+        fields: {
+            fields: {
+                keyType: "string",
+                type: "Value",
+                id: 1
+            }
+        }
+    },
+    Value: {
+        oneofs: {
+            kind: {
+                oneof: [ "nullValue", "numberValue", "stringValue", "boolValue", "structValue", "listValue" ]
+            }
+        },
+        fields: {
+            nullValue: {
+                type: "NullValue",
+                id: 1
+            },
+            numberValue: {
+                type: "double",
+                id: 2
+            },
+            stringValue: {
+                type: "string",
+                id: 3
+            },
+            boolValue: {
+                type: "bool",
+                id: 4
+            },
+            structValue: {
+                type: "Struct",
+                id: 5
+            },
+            listValue: {
+                type: "ListValue",
+                id: 6
+            }
+        }
+    },
+    NullValue: {
+        values: {
+            NULL_VALUE: 0
+        }
+    },
+    ListValue: {
+        fields: {
+            values: {
+                rule: "repeated",
+                type: "Value",
+                id: 1
+            }
+        }
+    }
+});
+
+},{}],3:[function(require,module,exports){
+"use strict";
 module.exports = Decoder;
 
-var Enum   = require(4),
-    Reader = require(14),
-    types  = require(19),
-    util   = require(20);
+var Enum   = require(5),
+    Reader = require(15),
+    types  = require(20),
+    util   = require(21);
 
 /**
  * Constructs a new decoder for the specified message type.
@@ -344,14 +477,14 @@ DecoderPrototype.generate = function generate() {
     /* eslint-enable no-unexpected-multiline */
 };
 
-},{"14":14,"19":19,"20":20,"4":4}],3:[function(require,module,exports){
+},{"15":15,"20":20,"21":21,"5":5}],4:[function(require,module,exports){
 "use strict";
 module.exports = Encoder;
 
-var Enum   = require(4),
-    Writer = require(24),
-    types  = require(19),
-    util   = require(20);
+var Enum   = require(5),
+    Writer = require(25),
+    types  = require(20),
+    util   = require(21);
 
 /**
  * Constructs a new encoder for the specified message type.
@@ -559,15 +692,15 @@ EncoderPrototype.generate = function generate() {
     /* eslint-enable no-unexpected-multiline */
 };
 
-},{"19":19,"20":20,"24":24,"4":4}],4:[function(require,module,exports){
+},{"20":20,"21":21,"25":25,"5":5}],5:[function(require,module,exports){
 "use strict";
 module.exports = Enum;
 
-var ReflectionObject = require(10);
+var ReflectionObject = require(11);
 /** @alias Enum.prototype */
 var EnumPrototype = ReflectionObject.extend(Enum);
 
-var util = require(20);
+var util = require(21);
 
 var _TypeError = util._TypeError;
 
@@ -657,10 +790,10 @@ Enum.fromJSON = function fromJSON(name, json) {
  * @override
  */
 EnumPrototype.toJSON = function toJSON() {
-    return this.visible && {
+    return {
         options : this.options,
         values  : this.values
-    } || undefined;
+    };
 };
 
 /**
@@ -700,19 +833,19 @@ EnumPrototype.remove = function(name) {
     return clearCache(this);
 };
 
-},{"10":10,"20":20}],5:[function(require,module,exports){
+},{"11":11,"21":21}],6:[function(require,module,exports){
 "use strict";
 module.exports = Field;
 
-var ReflectionObject = require(10);
+var ReflectionObject = require(11);
 /** @alias Field.prototype */
 var FieldPrototype = ReflectionObject.extend(Field);
 
-var Type      = require(18),
-    Enum      = require(4),
-    MapField  = require(7),
-    types     = require(19),
-    util      = require(20);
+var Type      = require(19),
+    Enum      = require(5),
+    MapField  = require(8),
+    types     = require(20),
+    util      = require(21);
 
 var _TypeError = util._TypeError;
 
@@ -897,13 +1030,13 @@ Field.fromJSON = function fromJSON(name, json) {
  * @override
  */
 FieldPrototype.toJSON = function toJSON() {
-    return this.visible && {
+    return {
         rule    : this.rule !== "optional" && this.rule || undefined,
         type    : this.type,
         id      : this.id,
         extend  : this.extend,
         options : this.options
-    } || undefined;
+    };
 };
 
 /**
@@ -968,13 +1101,13 @@ FieldPrototype.jsonConvert = function(value, options) {
     return value;
 };
 
-},{"10":10,"18":18,"19":19,"20":20,"4":4,"7":7}],6:[function(require,module,exports){
+},{"11":11,"19":19,"20":20,"21":21,"5":5,"8":8}],7:[function(require,module,exports){
 "use strict";
 module.exports = inherits;
 
-var Prototype = require(13),
-    Type      = require(18),
-    util      = require(20);
+var Prototype = require(14),
+    Type      = require(19),
+    util      = require(21);
 
 var _TypeError = util._TypeError;
 
@@ -1162,19 +1295,19 @@ inherits.defineProperties = function defineProperties(prototype, type) {
     return prototype;
 };
 
-},{"13":13,"18":18,"20":20}],7:[function(require,module,exports){
+},{"14":14,"19":19,"21":21}],8:[function(require,module,exports){
 "use strict";
 module.exports = MapField;
 
-var Field = require(5);
+var Field = require(6);
 /** @alias Field.prototype */
 var FieldPrototype = Field.prototype;
 /** @alias MapField.prototype */
 var MapFieldPrototype = Field.extend(MapField);
 
-var Enum    = require(4),
-    types   = require(19),
-    util    = require(20);
+var Enum    = require(5),
+    types   = require(20),
+    util    = require(21);
 
 /**
  * Constructs a new map field.
@@ -1232,13 +1365,13 @@ MapField.fromJSON = function fromJSON(name, json) {
  * @override
  */
 MapFieldPrototype.toJSON = function toJSON() {
-    return this.visible && {
+    return {
         keyType : this.keyType,
         type    : this.type,
         id      : this.id,
         extend  : this.extend,
         options : this.options
-    } || undefined;
+    };
 };
 
 /**
@@ -1260,16 +1393,16 @@ MapFieldPrototype.resolve = function resolve() {
     return FieldPrototype.resolve.call(this);
 };
 
-},{"19":19,"20":20,"4":4,"5":5}],8:[function(require,module,exports){
+},{"20":20,"21":21,"5":5,"6":6}],9:[function(require,module,exports){
 "use strict";
 module.exports = Method;
 
-var ReflectionObject = require(10);
+var ReflectionObject = require(11);
 /** @alias Method.prototype */
 var MethodPrototype = ReflectionObject.extend(Method);
 
-var Type = require(18),
-    util = require(20);
+var Type = require(19),
+    util = require(21);
 
 var _TypeError = util._TypeError;
 
@@ -1380,14 +1513,14 @@ Method.fromJSON = function fromJSON(name, json) {
  * @override
  */
 MethodPrototype.toJSON = function toJSON() {
-    return this.visible && {
+    return {
         type           : this.type !== "rpc" && this.type || undefined,
         requestType    : this.requestType,
         requestStream  : this.requestStream,
         responseType   : this.responseType,
         responseStream : this.responseStream,
         options        : this.options
-    } || undefined;
+    };
 };
 
 /**
@@ -1440,19 +1573,19 @@ MethodPrototype.call = function call(message, performRequest, callback) {
     return undefined;
 };
 
-},{"10":10,"18":18,"20":20}],9:[function(require,module,exports){
+},{"11":11,"19":19,"21":21}],10:[function(require,module,exports){
 "use strict";
 module.exports = Namespace;
 
-var ReflectionObject = require(10);
+var ReflectionObject = require(11);
 /** @alias Namespace.prototype */
 var NamespacePrototype = ReflectionObject.extend(Namespace);
 
-var Enum    = require(4),
-    Type    = require(18),
-    Field   = require(5),
-    Service = require(16),
-    util    = require(20);
+var Enum    = require(5),
+    Type    = require(19),
+    Field   = require(6),
+    Service = require(17),
+    util    = require(21);
 
 var _TypeError = util._TypeError;
 
@@ -1572,19 +1705,28 @@ Namespace.fromJSON = function fromJSON(name, json) {
  * @override
  */
 NamespacePrototype.toJSON = function toJSON() {
-    var nested = {}, anyVisible = false;
-    this.nestedArray.forEach(function(obj) {
-        var json = obj.toJSON();
-        if (json) {
-            nested[obj.name] = json;
-            anyVisible = true;
-        }
-    });
-    return anyVisible && {
+    return {
         options : this.options,
-        nested  : nested
-    } || undefined;
+        nested  : arrayToJSON(this.nestedArray)
+    };
 };
+
+/**
+ * Converts an array of reflection objects to JSON.
+ * @memberof Namespace
+ * @param {ReflectionObject[]} array Object array
+ * @returns {Object.<string,*>|undefined} JSON object or `undefined` when array is empty
+ */
+function arrayToJSON(array) {
+    if (!(array && array.length))
+        return undefined;
+    var obj = {};
+    for (var i = 0; i < array.length; ++i)
+        obj[array[i].name] = array[i].toJSON();
+    return obj;
+}
+
+Namespace.arrayToJSON = arrayToJSON;
 
 /**
  * Adds nested elements to this namespace from JSON.
@@ -1597,10 +1739,8 @@ NamespacePrototype.addJSON = function addJSON(json) {
         for (var i = 0; i < keys.length; ++i) {
             var nested = json[keys[i]];
             for (var j = 0; j < nestedTypes.length; ++j)
-                if (nestedTypes[j].testJSON(nested)) {
-                    this.add(nestedTypes[j].fromJSON(keys[i], nested));
-                    break;
-                }
+                if (nestedTypes[j].testJSON(nested))
+                    return this.add(nestedTypes[j].fromJSON(keys[i], nested));
             throw _TypeError("json." + keys[i], "JSON for " + nestedError);
         }
     }
@@ -1635,8 +1775,8 @@ NamespacePrototype.add = function add(object) {
     else {
         var prev = this.get(object.name);
         if (prev) {
-            if (prev instanceof Namespace && !(prev instanceof Type) && object instanceof Type) {
-                // move existing nested objects to the message type and remove the previous namespace
+            if (prev instanceof Namespace && object instanceof Namespace && prev.plain) {
+                // replace plain namespace but keep existing nested elements
                 var nested = prev.nestedArray;
                 for (var i = 0; i < nested.length; ++i)
                     object.add(nested[i]);
@@ -1673,23 +1813,15 @@ NamespacePrototype.remove = function remove(object) {
  * Defines additial namespaces within this one if not yet existing.
  * @param {string|string[]} path Path to create
  * @param {*} [json] Nested types to create from JSON
- * @param {?boolean} [visible=null] Whether visible when exporting definitions. Defaults to inherit from parent.
  * @returns {Namespace} Pointer to the last namespace created or `this` if path is empty
  */
-NamespacePrototype.define = function define(path, json, visible) {
+NamespacePrototype.define = function define(path, json) {
     if (util.isString(path))
         path = path.split('.');
     else if (!Array.isArray(path)) {
-        visible = json;
         json = path;
         path = undefined;
     }
-    if (typeof json === 'boolean') {
-        visible = json;
-        json = undefined;
-    }
-    if (visible === undefined)
-        visible = null;
     var ptr = this;
     if (path)
         while (path.length > 0) {
@@ -1698,12 +1830,8 @@ NamespacePrototype.define = function define(path, json, visible) {
                 ptr = ptr.nested[part];
                 if (!(ptr instanceof Namespace))
                     throw Error("path conflicts with non-namespace objects");
-                if (visible) // make visible when new namespaces are
-                    ptr.visible = true;
-            } else {
+            } else
                 ptr.add(ptr = new Namespace(part));
-                ptr.visible = visible;
-            }
         }
     if (json)
         ptr.addJSON(json);
@@ -1747,14 +1875,14 @@ NamespacePrototype.lookup = function lookup(path, parentAlreadyChecked) {
     return this.parent.lookup(path);
 };
 
-},{"10":10,"16":16,"18":18,"20":20,"4":4,"5":5}],10:[function(require,module,exports){
+},{"11":11,"17":17,"19":19,"21":21,"5":5,"6":6}],11:[function(require,module,exports){
 "use strict";
 module.exports = ReflectionObject;
 
 ReflectionObject.extend = extend;
 
-var Root = require(15),
-    util = require(20);
+var Root = require(16),
+    util = require(21);
 
 var _TypeError = util._TypeError;
 
@@ -1795,13 +1923,6 @@ function ReflectionObject(name, options) {
      * @type {boolean}
      */
     this.resolved = false;
-
-    /**
-     * Internally stores whether this object is visible.
-     * @type {?boolean}
-     * @private
-     */
-    this._visible = null;
 
     /**
      * Cached object representation.
@@ -1850,27 +1971,6 @@ Object.defineProperties(ReflectionObjectPrototype, {
     },
 
     /**
-     * Whether this object is visible when exporting definitions. Possible values are `true` to be visible, `false` to be not and `null` (setter only) to inherit from parent.
-     * @name ReflectionObject#visible
-     * @type {?boolean}
-     */
-    visible: {
-        get: function() {
-            var ptr = this;
-            do {
-                if (ptr._visible !== null)
-                    return ptr._visible;
-            } while ((ptr = ptr.parent) !== null);
-            return true; // visible by default
-        },
-        set: function(value) {
-            if (value !== null && typeof value !== 'boolean')
-                throw _TypeError("value", "a boolean or null");
-            this._visible = value;
-        }
-    },
-
-    /**
      * Gets this object as a plain JavaScript object composed of messages, enums etc.
      * @name ReflectionObject#object
      * @type {Object|undefined}
@@ -1900,7 +2000,7 @@ function extend(constructor) {
 
 /**
  * Converts this reflection object to its JSON representation.
- * @returns {Object|undefined} JSON object or `undefined` if not visible
+ * @returns {Object} JSON object
  * @abstract
  */
 ReflectionObjectPrototype.toJSON = function toJSON() {
@@ -1951,17 +2051,6 @@ ReflectionObjectPrototype.resolve = function resolve() {
 };
 
 /**
- * Changes this object's visibility when exporting definitions.
- * @param {?boolean} visible `true` for public, `false` for private, `null` to inherit from parent
- * @returns {ReflectionObject} `this`
- * @throws {TypeError} If arguments are invalid
- */
-ReflectionObjectPrototype.visibility = function visibility(visible) {
-    this.visible = visible;
-    return this;
-};
-
-/**
  * Gets an option value.
  * @param {string} name Option name
  * @returns {*} Option value or `undefined` if not set
@@ -2006,16 +2095,16 @@ ReflectionObjectPrototype.toString = function toString() {
     return this.constructor.name + " " + this.fullName;
 };
 
-},{"15":15,"20":20}],11:[function(require,module,exports){
+},{"16":16,"21":21}],12:[function(require,module,exports){
 "use strict";
 module.exports = OneOf;
 
-var ReflectionObject = require(10);
+var ReflectionObject = require(11);
 /** @alias OneOf.prototype */
 var OneOfPrototype = ReflectionObject.extend(OneOf);
 
-var Field = require(5),
-    util  = require(20);
+var Field = require(6),
+    util  = require(21);
 
 var _TypeError = util._TypeError;
 
@@ -2075,10 +2164,10 @@ OneOf.fromJSON = function fromJSON(name, json) {
  * @override
  */
 OneOfPrototype.toJSON = function toJSON() {
-    return this.visible && {
+    return {
         oneof   : this.oneof,
         options : this.options
-    } || undefined;
+    };
 };
 
 /**
@@ -2153,20 +2242,20 @@ OneOfPrototype.onRemove = function onRemove(parent) {
     ReflectionObject.prototype.onRemove.call(this, parent);
 };
 
-},{"10":10,"20":20,"5":5}],12:[function(require,module,exports){
+},{"11":11,"21":21,"6":6}],13:[function(require,module,exports){
 "use strict";
 module.exports = parse;
 
-var tokenize = require(17),
-    Root     = require(15),
-    Type     = require(18),
-    Field    = require(5),
-    MapField = require(7),
-    OneOf    = require(11),
-    Enum     = require(4),
-    Service  = require(16),
-    Method   = require(8),
-    types    = require(19);
+var tokenize = require(18),
+    Root     = require(16),
+    Type     = require(19),
+    Field    = require(6),
+    MapField = require(8),
+    OneOf    = require(12),
+    Enum     = require(5),
+    Service  = require(17),
+    Method   = require(9),
+    types    = require(20);
 
 var nameRe      = /^[a-zA-Z_][a-zA-Z_0-9]*$/,
     typeRefRe   = /^(?:\.?[a-zA-Z_][a-zA-Z_0-9]*)+$/,
@@ -2202,7 +2291,6 @@ var s_open     = "{",
  * @type {Object}
  * @property {string|undefined} package Package name, if declared
  * @property {string[]|undefined} imports Imports, if any
- * @property {string[]|undefined} publicImports Public imports, if any
  * @property {string[]|undefined} weakImports Weak imports, if any
  * @property {string|undefined} syntax Syntax, if specified (either `"proto2"` or `"proto3"`)
  * @property {Root} root Populated root instance
@@ -2212,15 +2300,12 @@ var s_open     = "{",
  * Parses the given .proto source and returns an object with the parsed contents.
  * @param {string} source Source contents
  * @param {Root} [root] Root to populate
- * @param {boolean} [visible=true] Whether types from this file are visible when exporting definitions
  * @returns {ParserResult} Parser result
  */
-function parse(source, root, visible) {
+function parse(source, root) {
     /* eslint-disable default-case, callback-return */
-    if (typeof root === 'boolean') {
-        visible = root;
-        root = undefined;
-    }
+    if (!root)
+        root = new Root();
 
     var tn = tokenize(source),
         next = tn.next,
@@ -2231,7 +2316,6 @@ function parse(source, root, visible) {
     var head = true,
         pkg,
         imports,
-        publicImports,
         weakImports,
         syntax,
         isProto3 = false;
@@ -2333,7 +2417,7 @@ function parse(source, root, visible) {
         pkg = next();
         if (!typeRefRe.test(pkg))
             throw illegal(pkg, s_name);
-        ptr = ptr.define(pkg, visible);
+        ptr = ptr.define(pkg);
         skip(s_semi);
     }
 
@@ -2341,17 +2425,17 @@ function parse(source, root, visible) {
         var token = peek();
         var whichImports;
         switch (token) {
-            case "public":
-                whichImports = publicImports || (publicImports = []);
-                next();
-                break;
             case "weak":
                 whichImports = weakImports || (weakImports = []);
                 next();
                 break;
+            case "public":
+                next();
+                // eslint-disable-line no-fallthrough
+            default:
+                whichImports = imports || (imports = []);
+                break;
         }
-        if (!whichImports)
-            whichImports = imports || (imports = []);
         token = readString();
         skip(s_semi);
         whichImports.push(token);
@@ -2433,7 +2517,6 @@ function parse(source, root, visible) {
             skip(s_semi, true);
         } else
             skip(s_semi);
-        type.visible = visible;
         parent.add(type);
     }
 
@@ -2446,7 +2529,7 @@ function parse(source, root, visible) {
             throw illegal(name, s_name);
         name = camelCase(name);
         skip("=");
-        var id = parseNumber(next());
+        var id = parseId(next());
         var field = parseInlineOptions(new Field(name, id, type, rule, extend));
         if (field.repeated)
             field.setOption("packed", isProto3, /* ifNotSet */ true);
@@ -2469,7 +2552,8 @@ function parse(source, root, visible) {
         name = camelCase(name);
         skip("=");
         var id = parseId(next());
-        parent.add(parseInlineOptions(new MapField(name, id, keyType, valueType)));
+        var field = parseInlineOptions(new MapField(name, id, keyType, valueType));
+        parent.add(field);
     }
 
     function parseOneOf(parent, token) {
@@ -2706,17 +2790,17 @@ function parse(source, root, visible) {
                 throw illegal(token);
         }
     }
+
     return {
         package       : pkg,
         imports       : imports,
-        publicImports : publicImports,
         weakImports   : weakImports,
         syntax        : syntax,
         root          : root
     };
 }
 
-},{"11":11,"15":15,"16":16,"17":17,"18":18,"19":19,"4":4,"5":5,"7":7,"8":8}],13:[function(require,module,exports){
+},{"12":12,"16":16,"17":17,"18":18,"19":19,"20":20,"5":5,"6":6,"8":8,"9":9}],14:[function(require,module,exports){
 "use strict";
 module.exports = Prototype;
 
@@ -2785,13 +2869,13 @@ Prototype.prototype.asJSON = function asJSON(options) {
     return json;
 };
 
-},{}],14:[function(require,module,exports){
+},{}],15:[function(require,module,exports){
 "use strict";
 module.exports = Reader;
 
 Reader.BufferReader = BufferReader;
 
-var util     = require(20),
+var util     = require(21),
     ieee754  = require(1);
 var LongBits = util.LongBits;
 
@@ -3288,324 +3372,40 @@ BufferReaderPrototype.finish = function finish_buffer(buffer) {
     return remain;
 };
 
-},{"1":1,"20":20}],15:[function(require,module,exports){
+},{"1":1,"21":21}],16:[function(require,module,exports){
 "use strict";
 module.exports = Root;
 
-var Namespace = require(9);
-/** @alias Namespace.prototype */
-var NamespacePrototype = Namespace.prototype; 
+var Namespace = require(10);
 /** @alias Root.prototype */
 var RootPrototype = Namespace.extend(Root);
 
-var Type      = require(18),
-    Field     = require(5),
-    // OneOf     = require("./oneof"),
-    // Enum      = require("./enum"),
-    util      = require(20);
-
-/**
- * Options provided to a {@link Root|root namespace}, modifying its behavior.
- * @typedef RootOptions
- * @type {Object}
- * @property {boolean} [noGoogleTypes=false] Skips loading of common Google types like `google.protobuf.Any`.
- */
+var Field  = require(6),
+    util   = require(21),
+    common = require(2);
 
 /**
  * Constructs a new root namespace.
  * @classdesc Root namespace wrapping all types, enums, services, sub-namespaces etc. that belong together.
  * @extends Namespace
  * @constructor
- * @param {RootOptions} [rootOptions] Root options
- * @param {Object} [options] Declared options
+ * @param {Object} [options] Top level options
  */
-function Root(rootOptions, options) {
+function Root(options) {
     Namespace.call(this, "", options);
 
-    if (!rootOptions)
-        rootOptions = {};
-
     /**
-     * References to common google types.
-     * @type {Object.<string, Type|Enum>}
-     */
-    this.common = {};
-
-    /**
-     * Array of yet unprocessed and thus pending extension fields.
+     * Deferred extension fields.
      * @type {Field[]}
      */
-    this.pendingExtensions = [];
+    this.deferred = [];
 
     /**
-     * Already loaded files, by name.
-     * @type {Object.<string,Object>}
-     * @private
+     * Loaded files.
+     * @type {string[]}
      */
-    this._loaded = {}; // use addLoaded/isLoaded instead
-
-    if (!rootOptions.noGoogleTypes)
-        importGoogleTypes(this, false);
+    this.files = [];
 }
-
-/**
- * Loaded file options provided to {@link Root#addLoaded}.
- * @typedef LoadedFileOptions
- * @type {Object}
- * @property {boolean} [weak=false] Whether this is a weak import
- * @property {boolean} [public=false] Whether this is a public import
- */
-
-/**
- * Checks if a specific file has already been loaded with compatible options.
- * @param {string} filename File name to test
- * @param {LoadedFileOptions} [options] File options
- * @returns {boolean} `true` if already loaded with compatible options, otherwise `false` (i.e. already loaded as non-public, but this import is public)
- */
-RootPrototype.isLoaded = function isLoaded(filename, options) {
-    filename = util.normalizePath(filename);
-    if (!options)
-        options = {};
-    var index = filename.indexOf("google/protobuf/");
-    if (index > 0 /* not -1 */)
-        filename = filename.substring(index);
-    var loaded = this._loaded[filename];
-    if (!loaded)
-        return false;
-    if (!loaded.public && options.public)
-        return false;
-    if (loaded.weak && !options.weak)
-        return false;
-    return true;
-};
-
-/**
- * Lets the root know of a loaded file, i.e. when added programmatically.
- * @param {string} filename File name to add
- * @param {LoadedFileOptions} [options] File options
- * @returns {boolean} `false` if this file has already been loaded before
- */
-RootPrototype.addLoaded = function addLoaded(filename, options) {
-    filename = util.normalizePath(filename);
-    if (!options)
-        options = {};
-    var loaded = this._loaded[filename];
-    if (loaded) {
-        if (!loaded.public && options.public) {
-            loaded.public = true;
-            return true;
-        }
-        if (loaded.weak && !options.weak) {
-            loaded.weak = false;
-            return true;
-        }
-        return false;
-    }
-    this._loaded[filename] = options;
-    return true;
-};
-
-/**
- * @override
- */
-RootPrototype.toJSON = function toJSON() {
-    // TODO: Export imports once there is a way to know which file is imported by an import etc.
-    return NamespacePrototype.toJSON.call(this);
-};
-
-/**
- * Imports common google types to the specified root.
- * @memberof Root
- * @param {Root} root The root to import to
- * @param {?boolean} [visible] Whether visible when exporting definitions. Defaults to inherit from parent.
- * @returns {undefined}
- */
-function importGoogleTypes(root, visible) {
-    if (visible === undefined)
-        visible = null;
-    else if (visible !== null && typeof visible !== 'boolean')
-        throw util._TypeError("visible", "a boolean or null");
-
-    var // bool     = "bool",
-        int32    = "int32",
-        // uint32   = "uint32",
-        int64    = "int64",
-        // uint64   = "uint64",
-        // float    = "float",
-        // double   = "double",
-        string   = "string",
-        bytes    = "bytes",
-        // repeated = "repeated",
-        value    = "value",
-        // name     = "name",
-        // number   = "number",
-        // options  = "options",
-        seconds  = "seconds",
-        nanos    = "nanos";
-
-    // NOTE: It is important to create new instances for each root
-    var types = {
-
-        "empty": [
-
-            new Type("Empty")
-        ],
-        "any": [
-
-            new Type("Any")
-            .add(new Field("type_url", 1, string))
-            .add(new Field( value    , 2, bytes))
-        ],
-        "timestamp": [
-
-            new Type("Timestamp")
-            .add(new Field(seconds, 1, int64))
-            .add(new Field(nanos  , 2, int32))
-        ],
-        "duration": [
-
-            new Type("Duration")
-            .add(new Field(seconds, 1, int64))
-            .add(new Field(nanos  , 2, int32))
-        ],
-        /* "wrappers": [
-
-            new Type("DoubleValue")
-            .add(new Field(value, 1, double)),
-
-            new Type("FloatValue")
-            .add(new Field(value, 1, float)),
-
-            new Type("Int64Value")
-            .add(new Field(value, 1, int64)),
-
-            new Type("UInt64Value")
-            .add(new Field(value, 1, uint64)),
-
-            new Type("Int32Value")
-            .add(new Field(value, 1, int32)),
-
-            new Type("UInt32Value")
-            .add(new Field(value, 1, uint32)),
-
-            new Type("BoolValue")
-            .add(new Field(value, 1, bool)),
-
-            new Type("StringValue")
-            .add(new Field(value, 1, string)),
-
-            new Type("BytesValue")
-            .add(new Field(value, 1, bytes))
-        ],
-        "struct": [
-
-            new Type("Value")
-            .add(new OneOf("kind")
-                .add(new Field("null_"       + value, 1, "NullValue"))
-                .add(new Field( number + "_" + value, 2,  double))
-                .add(new Field( string + "_" + value, 3,  string))
-                .add(new Field( bool   + "_" + value, 4,  bool))
-                .add(new Field("struct_"     + value, 5, "Struct"))
-                .add(new Field("list_"       + value, 6, "ListValue"))
-            ),
-            new Enum("NullValue", { NULL_VALUE: 0 }),
-
-            new Type("ListValue")
-            .add(new Field("values", 1, "Value", repeated))
-        ],
-        "source_context": [
-
-            new Type("SourceContext")
-            .add(new Field("file_name", 1, string))
-        ],
-        "type": [
-
-            new Type("Type")
-            .add(new Field( name           , 1, string))
-            .add(new Field("fields"        , 2, "Field", repeated))
-            .add(new Field("oneofs"        , 3, string, repeated))
-            .add(new Field( options        , 4, "Option", repeated))
-            .add(new Field("source_context", 5, "SourceContext"))
-            .add(new Field("syntax"        , 6, "Syntax")),
-
-            new Type("Field")
-            .add(new Enum("Kind", {
-                TYPE_UNKNOWN  : 0,
-                TYPE_DOUBLE   : 1,
-                TYPE_FLOAT    : 2,
-                TYPE_INT64    : 3,
-                TYPE_UINT64   : 4,
-                TYPE_INT32    : 5,
-                TYPE_FIXED64  : 6,
-                TYPE_FIXED32  : 7,
-                TYPE_BOOL     : 8,
-                TYPE_STRING   : 9,
-                TYPE_GROUP    : 10,
-                TYPE_MESSAGE  : 11,
-                TYPE_BYTES    : 12,
-                TYPE_UINT32   : 13,
-                TYPE_ENUM     : 14,
-                TYPE_SFIXED32 : 15,
-                TYPE_SFIXED64 : 16,
-                TYPE_SINT32   : 17,
-                TYPE_SINT64   : 18
-            }))
-            .add(new Enum("Cardinality", {
-                CARDINALITY_UNKNOWN  : 0,
-                CARDINALITY_OPTIONAL : 1,
-                CARDINALITY_REQUIRED : 2,
-                CARDINALITY_REPEATED : 3
-            }))
-            .add(new Field("kind"         , 1 , "Kind"))
-            .add(new Field("cardinality"  , 2 , "Cardinality"))
-            .add(new Field( number        , 3 ,  int32))
-            .add(new Field( name          , 4 ,  string))
-            .add(new Field("type_url"     , 6 ,  string))
-            .add(new Field("oneof_index"  , 7 ,  int32))
-            .add(new Field("packed"       , 8 ,  bool))
-            .add(new Field( options       , 9 , "Option"))
-            .add(new Field("json_name"    , 10,  string))
-            .add(new Field("default_value", 11,  string)),
-
-            new Type("Enum")
-            .add(new Field( name           , 1,  string))
-            .add(new Field("enum" + value  , 2, "EnumValue", repeated))
-            .add(new Field( options        , 3, "Option", repeated))
-            .add(new Field("source_context", 4, "SourceContext"))
-            .add(new Field("syntax"        , 5, "Syntax")),
-
-            new Type("EnumValue")
-            .add(new Field( name    , 1,  string))
-            .add(new Field( number  , 2,  int32))
-            .add(new Field( options , 3, "Option", repeated )),
-
-            new Type("Option")
-            .add(new Field(name , 1,  string ))
-            .add(new Field(value, 2, "Any"   )),
-
-            new Enum("Syntax", { SYNTAX_PROTO2 : 0, SYNTAX_PROTO3 : 1 })
-        ],
-        "field_mask": [
-
-            new Type("FieldMask")
-            .add(new Field("paths", 1, string, repeated))
-        ] */
-    };
-
-    var gp = "google/protobuf";
-    var ns = root.define(gp.split('/'), visible);
-    Object.keys(types).forEach(function(protoName) {
-        if (!root.addLoaded(gp + "/" + protoName + ".proto"))
-            return;
-        types[protoName].forEach(function(type) {
-            type.visible = visible;
-            ns.add(type);
-            root.common[type.name] = type;
-        });
-    });
-}
-
-Root.importGoogleTypes = importGoogleTypes;
 
 /**
  * Resolves the path of an imported file, relative to the importing origin.
@@ -3618,29 +3418,16 @@ Root.importGoogleTypes = importGoogleTypes;
 RootPrototype.resolvePath = util.resolvePath;
 
 /**
- * Options provided to {@link Root#load}, modifying its behavior.
- * @typedef LoaderOptions
- * @type {Object}
- * @property {boolean} [public=false] Whether this is a public import
- * @property {boolean} [weak=false} Whether this is a weak import]
- */
-
-/**
  * Loads one or multiple .proto or preprocessed .json files into this root namespace.
  * @param {string|string[]} filename Names of one or multiple files to load
- * @param {LoaderOptions} [options] Load options
  * @param {function(?Error, Root=)} [callback] Node-style callback function
  * @returns {Promise<Root>|undefined} A promise if `callback` has been omitted
  * @throws {TypeError} If arguments are invalid
  */
-RootPrototype.load = function load(filename, options, callback) {
-    if (typeof options === 'function') {
-        callback = options;
-        options = undefined;
-    }
+RootPrototype.load = function load(filename, callback) {
     var self = this;
     if (!callback)
-        return util.asPromise(load, self, filename, options);
+        return util.asPromise(load, self, filename);
 
     // Finishes loading by calling the callback (exactly once)
     function finish(err, root) {
@@ -3652,24 +3439,23 @@ RootPrototype.load = function load(filename, options, callback) {
     }
 
     // Processes a single file
-    function process(origin, source, visible) {
+    function process(filename, source) {
         try {
-            if (source.charAt(0) === "{") {
-                var json = JSON.parse(source);
-                self.setOptions(json.options).addJSON(json.nested);
+            if (util.isString(source) && source.charAt(0) === "{")
+                source = JSON.parse(source);
+            if (!util.isString(source)) {
+                self.setOptions(source.options).addJSON(source.nested);
+                self.files.push(filename);
             } else {
-                var parsed = require(12)(source, self, visible);
-                if (parsed.publicImports)
-                    parsed.publicImports.forEach(function(file) {
-                        fetch(self.resolvePath(origin, file), visible, false);
-                    });
+                var parsed = require(13)(source, self);
+                self.files.push(filename);
                 if (parsed.imports)
-                    parsed.imports.forEach(function(file) {
-                        fetch(self.resolvePath(origin, file), false, false);
+                    parsed.imports.forEach(function(name) {
+                        fetch(self.resolvePath(filename, name));
                     });
                 if (parsed.weakImports)
-                    parsed.weakImports.forEach(function(file) {
-                        fetch(self.resolvePath(origin, file), false, true);
+                    parsed.weakImports.forEach(function(name) {
+                        fetch(self.resolvePath(filename, name), true);
                     });
             }
         } catch (err) {
@@ -3681,20 +3467,42 @@ RootPrototype.load = function load(filename, options, callback) {
     }
 
     // Fetches a single file
-    function fetch(file, visible, weak) {
-        if (!self.addLoaded(file, { public: visible, weak: weak }))
+    function fetch(filename, weak) {
+
+        // Check if this file references a bundled definition
+        var idx = filename.indexOf("google/protobuf/");
+        if (idx > -1) {
+            var altname = filename.substring(idx);
+            if (altname in common)
+                filename = altname;
+        }
+
+        // Skip if already loaded
+        if (self.files.indexOf(filename) > -1)
             return;
+
+        // Shortcut bundled definitions
+        if (filename in common) {
+            ++queued;
+            setTimeout(function() {
+                --queued;
+                process(filename, common[filename]);
+            });
+            return;
+        }
+
+        // Otherwise fetch from disk or network
         ++queued;
-        util.fetch(file, function(err, source) {
+        util.fetch(filename, function(err, source) {
             --queued;
             if (!callback)
-                return;
-            if (!err) {
-                process(file, source, visible);
+                return; // terminated meanwhile
+            if (err) {
+                if (!weak)
+                    finish(err);
                 return;
             }
-            if (!weak)
-                finish(err);
+            process(filename, source);
         });
     }
     var queued = 0;
@@ -3702,11 +3510,11 @@ RootPrototype.load = function load(filename, options, callback) {
     // Assembling the root namespace doesn't require working type
     // references anymore, so we can load everything in parallel
     if (Array.isArray(filename))
-        filename.forEach(function(file) {
-            fetch(file, true, false);
+        filename.forEach(function(filename) {
+            fetch(filename);
         });
     else if (util.isString(filename))
-        fetch(filename, true, false);
+        fetch(filename);
     else
         throw util._TypeError("filename", "a string or array");
 
@@ -3716,8 +3524,7 @@ RootPrototype.load = function load(filename, options, callback) {
 };
 
 /**
- * Handles a (pending) declaring extension field by creating a sister field to represent it
- * within its extended type.
+ * Handles a deferred declaring extension field by creating a sister field to represent it within its extended type.
  * @param {Field} field Declaring extension field witin the declaring type
  * @returns {boolean} `true` if successfully added to the extended type, `false` otherwise
  * @inner
@@ -3728,7 +3535,6 @@ function handleExtension(field) {
     if (extendedType) {
         var sisterField = new Field(field.fullName, field.id, field.type, field.rule, undefined, field.options);
         sisterField.declaringField = field;
-        sisterField.visible = false;
         field.extensionField = sisterField;
         extendedType.add(sisterField);
         return true;
@@ -3743,19 +3549,19 @@ function handleExtension(field) {
  * @private
  */
 RootPrototype._handleAdd = function handleAdd(object) {
-    // Try to handle any pending extensions
-    var newPendingExtensions = this.pendingExtensions.slice();
-    this.pendingExtensions = []; // because the loop calls handleAdd
+    // Try to handle any deferred extensions
+    var newDeferred = this.deferred.slice();
+    this.deferred = []; // because the loop calls handleAdd
     var i = 0;
-    while (i < newPendingExtensions.length)
-        if (handleExtension(newPendingExtensions[i]))
-            newPendingExtensions.splice(i, 1);
+    while (i < newDeferred.length)
+        if (handleExtension(newDeferred[i]))
+            newDeferred.splice(i, 1);
         else
             ++i;
-    this.pendingExtensions = newPendingExtensions;
+    this.deferred = newDeferred;
     // Handle new declaring extension fields without a sister field yet
-    if (object instanceof Field && object.extend !== undefined && !object.extensionField && !handleExtension(object) && this.pendingExtensions.indexOf(object) < 0)
-        this.pendingExtensions.push(object);
+    if (object instanceof Field && object.extend !== undefined && !object.extensionField && !handleExtension(object) && this.deferred.indexOf(object) < 0)
+        this.deferred.push(object);
     else if (object instanceof Namespace) {
         var nested = object.nestedArray;
         for (i = 0; i < nested.length; ++i) // recurse into the namespace
@@ -3771,11 +3577,11 @@ RootPrototype._handleAdd = function handleAdd(object) {
  */
 RootPrototype._handleRemove = function handleRemove(object) {
     if (object instanceof Field) {
-        // If a pending declaring extension field, cancel the extension
+        // If a deferred declaring extension field, cancel the extension
         if (object.extend !== undefined && !object.extensionField) {
-            var index = this.pendingExtensions.indexOf(object);
+            var index = this.deferred.indexOf(object);
             if (index > -1)
-                this.pendingExtensions.splice(index, 1);
+                this.deferred.splice(index, 1);
         }
         // If a declaring extension field with a sister field, remove its sister field
         if (object.extensionField) {
@@ -3796,18 +3602,18 @@ RootPrototype.toString = function toString() {
     return this.constructor.name;
 };
 
-},{"12":12,"18":18,"20":20,"5":5,"9":9}],16:[function(require,module,exports){
+},{"10":10,"13":13,"2":2,"21":21,"6":6}],17:[function(require,module,exports){
 "use strict";
 module.exports = Service;
 
-var Namespace = require(9);
+var Namespace = require(10);
 /** @alias Namespace.prototype */
 var NamespacePrototype = Namespace.prototype;
 /** @alias Service.prototype */
 var ServicePrototype = Namespace.extend(Service);
 
-var Method = require(8),
-    util   = require(20);
+var Method = require(9),
+    util   = require(21);
 
 /**
  * Constructs a new service.
@@ -3896,20 +3702,11 @@ Service.fromJSON = function fromJSON(name, json) {
  * @override
  */
 ServicePrototype.toJSON = function toJSON() {
-    var methods = {}, anyVisible = false;
-    this.methodsArray.forEach(function(obj) {
-        var json = obj.toJSON();
-        if (json) {
-            methods[obj.name] = json;
-            anyVisible = true;
-        }
-    });
-    if (!anyVisible) methods = undefined;
-    
+    var methods = Namespace.arrayToJSON(this.methodsArray);  
     var inherited = NamespacePrototype.toJSON.call(this);
-    return (inherited || methods) && {
+    return (methods || inherited) && {
         options : inherited && inherited.options || undefined,
-        methods : methods,
+        methods : methods || {},
         nested  : inherited && inherited.nested || undefined
     } || undefined;
 };
@@ -3959,7 +3756,7 @@ ServicePrototype.remove = function remove(object) {
     return NamespacePrototype.remove.call(this, object);
 };
 
-},{"20":20,"8":8,"9":9}],17:[function(require,module,exports){
+},{"10":10,"21":21,"9":9}],18:[function(require,module,exports){
 "use strict";
 /* eslint-disable default-case, callback-return */
 module.exports = tokenize;
@@ -4151,27 +3948,27 @@ function tokenize(source) {
         skip: skip
     };
 }
-},{}],18:[function(require,module,exports){
+},{}],19:[function(require,module,exports){
 "use strict";
 module.exports = Type; 
 
-var Namespace = require(9);
+var Namespace = require(10);
 /** @alias Namespace.prototype */
 var NamespacePrototype = Namespace.prototype;
 /** @alias Type.prototype */
 var TypePrototype = Namespace.extend(Type);
 
-var Enum      = require(4),
-    OneOf     = require(11),
-    Field     = require(5),
-    Service   = require(16),
-    Prototype = require(13),
-    inherits  = require(6),
-    util      = require(20),
-    Reader    = require(14),
-    Encoder   = require(3),
-    Decoder   = require(2),
-    Verifier  = require(23);
+var Enum      = require(5),
+    OneOf     = require(12),
+    Field     = require(6),
+    Service   = require(17),
+    Prototype = require(14),
+    inherits  = require(7),
+    util      = require(21),
+    Reader    = require(15),
+    Encoder   = require(4),
+    Decoder   = require(3),
+    Verifier  = require(24);
 var codegen   = util.codegen;
 
 /**
@@ -4397,35 +4194,13 @@ Type.fromJSON = function fromJSON(name, json) {
  * @override
  */
 TypePrototype.toJSON = function toJSON() {
-    var fields = {}, anyVisible = false;
-    this.fieldsArray.forEach(function(obj) {
-        if (obj.declaringField)
-            return;
-        var json = obj.toJSON();
-        if (json) {
-            fields[obj.name] = json;
-            anyVisible = true;
-        }
-    });
-    if (!anyVisible) fields = undefined;
-
-    var oneofs = {}; anyVisible = false;
-    this.oneofsArray.forEach(function(obj) {
-        var json = obj.toJSON();
-        if (json) {
-            oneofs[obj.name] = json;
-            anyVisible = true;
-        }
-    });
-    if (!anyVisible) oneofs = undefined;
-    
     var inherited = NamespacePrototype.toJSON.call(this);
-    return (inherited || fields || oneofs) && {
+    return {
         options : inherited && inherited.options || undefined,
-        oneofs  : oneofs,
-        fields  : fields,
+        oneofs  : Namespace.arrayToJSON(this.oneofsArray),
+        fields  : Namespace.arrayToJSON(this.fieldsArray.filter(function(obj) { return !obj.declaringField; })) || {},
         nested  : inherited && inherited.nested || undefined
-    } || undefined;
+    };
 };
 
 /**
@@ -4582,7 +4357,7 @@ TypePrototype.verify = function verify(message) {
     return this.verify(message);
 };
 
-},{"11":11,"13":13,"14":14,"16":16,"2":2,"20":20,"23":23,"3":3,"4":4,"5":5,"6":6,"9":9}],19:[function(require,module,exports){
+},{"10":10,"12":12,"14":14,"15":15,"17":17,"21":21,"24":24,"3":3,"4":4,"5":5,"6":6,"7":7}],20:[function(require,module,exports){
 "use strict";
 
 /**
@@ -4713,7 +4488,7 @@ types.packed = bake([
     /* bool     */ 0
 ], 2);
 
-},{}],20:[function(require,module,exports){
+},{}],21:[function(require,module,exports){
 "use strict";
 
 /**
@@ -4722,8 +4497,8 @@ types.packed = bake([
  */
 var util = module.exports = {};
 
-var codegen  = require(21),
-    LongBits = require(22);
+var codegen  = require(22),
+    LongBits = require(23);
 
 util.codegen  = codegen;
 util.LongBits = LongBits;
@@ -4917,7 +4692,7 @@ util.resolvePath = function resolvePath(originPath, importPath, alreadyNormalize
         return importPath;
     if (!alreadyNormalized)
         originPath = normalizePath(originPath);
-    originPath = originPath.replace(/\/[^/]+$/, '');
+    originPath = originPath.replace(/(?:\/|^)[^/]+$/, '');
     return originPath.length ? normalizePath(originPath + '/' + importPath) : importPath;
 };
 
@@ -4987,7 +4762,7 @@ util.safeProp = function safeProp(prop) {
     return /^[a-z_$][a-z0-9_$]*$/i.test(prop) ? "." + prop : "['" + prop.replace(/\\/g, "\\\\").replace(/'/g, "\\'") + "']";
 };
 
-},{"21":21,"22":22,"buffer":"buffer","long":"long","undefined":undefined}],21:[function(require,module,exports){
+},{"22":22,"23":23,"buffer":"buffer","long":"long","undefined":undefined}],22:[function(require,module,exports){
 "use strict";
 module.exports = codegen;
 
@@ -5122,7 +4897,7 @@ try { codegen.supported = codegen("a","b")("return a-b").eof()(2,1) === 1; } cat
 
 codegen.verbose = false;
 
-},{}],22:[function(require,module,exports){
+},{}],23:[function(require,module,exports){
 "use strict";
 module.exports = LongBits;
 
@@ -5295,13 +5070,13 @@ LongBitsPrototype.length = function length() {
     return part2 < 1 << 7 ? 9 : 10;
 };
 
-},{}],23:[function(require,module,exports){
+},{}],24:[function(require,module,exports){
 "use strict";
 module.exports = Verifier;
 
-var Enum = require(4),
-    Type = require(18),
-    util = require(20);
+var Enum = require(5),
+    Type = require(19),
+    util = require(21);
 
 /**
  * Constructs a new verifier for the specified message type.
@@ -5429,13 +5204,13 @@ VerifierPrototype.generate = function generate() {
     /* eslint-enable no-unexpected-multiline */
 };
 
-},{"18":18,"20":20,"4":4}],24:[function(require,module,exports){
+},{"19":19,"21":21,"5":5}],25:[function(require,module,exports){
 "use strict";
 module.exports = Writer;
 
 Writer.BufferWriter = BufferWriter;
 
-var util     = require(20),
+var util     = require(21),
     ieee754  = require(1);
 var LongBits = util.LongBits;
 
@@ -6006,12 +5781,12 @@ BufferWriterPrototype.finish = function finish_buffer() {
     return buf;
 };
 
-},{"1":1,"20":20}],25:[function(require,module,exports){
+},{"1":1,"21":21}],26:[function(require,module,exports){
 (function (global){
 "use strict";
 var protobuf = global.protobuf = exports;
 
-var util = require(20);
+var util = require(21);
 
 /**
  * Loads one or multiple .proto or preprocessed .json files into a common root namespace.
@@ -6033,40 +5808,41 @@ function load(filename, root, callback) {
 protobuf.load = load;
 
 // Parser
-protobuf.tokenize         = require(17);
-protobuf.parse            = require(12);
+protobuf.tokenize         = require(18);
+protobuf.parse            = require(13);
 
 // Serialization
-protobuf.Writer           = require(24);
+protobuf.Writer           = require(25);
 protobuf.BufferWriter     = protobuf.Writer.BufferWriter;
-protobuf.Reader           = require(14);
+protobuf.Reader           = require(15);
 protobuf.BufferReader     = protobuf.Reader.BufferReader;
-protobuf.Encoder          = require(3);
-protobuf.Decoder          = require(2);
+protobuf.Encoder          = require(4);
+protobuf.Decoder          = require(3);
 
 // Reflection
-protobuf.ReflectionObject = require(10);
-protobuf.Namespace        = require(9);
-protobuf.Root             = require(15);
-protobuf.Enum             = require(4);
-protobuf.Type             = require(18);
-protobuf.Field            = require(5);
-protobuf.OneOf            = require(11);
-protobuf.MapField         = require(7);
-protobuf.Service          = require(16);
-protobuf.Method           = require(8);
+protobuf.ReflectionObject = require(11);
+protobuf.Namespace        = require(10);
+protobuf.Root             = require(16);
+protobuf.Enum             = require(5);
+protobuf.Type             = require(19);
+protobuf.Field            = require(6);
+protobuf.OneOf            = require(12);
+protobuf.MapField         = require(8);
+protobuf.Service          = require(17);
+protobuf.Method           = require(9);
 
 // Runtime
-protobuf.Prototype        = require(13);
-protobuf.inherits         = require(6);
+protobuf.Prototype        = require(14);
+protobuf.inherits         = require(7);
 
 // Utility
-protobuf.types            = require(19);
+protobuf.types            = require(20);
+protobuf.common           = require(2);
 protobuf.util             = util;
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"10":10,"11":11,"12":12,"13":13,"14":14,"15":15,"16":16,"17":17,"18":18,"19":19,"2":2,"20":20,"24":24,"3":3,"4":4,"5":5,"6":6,"7":7,"8":8,"9":9}]},{},[25])
+},{"10":10,"11":11,"12":12,"13":13,"14":14,"15":15,"16":16,"17":17,"18":18,"19":19,"2":2,"20":20,"21":21,"25":25,"3":3,"4":4,"5":5,"6":6,"7":7,"8":8,"9":9}]},{},[26])
 
 
 //# sourceMappingURL=protobuf.js.map

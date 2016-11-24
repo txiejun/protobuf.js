@@ -97,20 +97,11 @@ Service.fromJSON = function fromJSON(name, json) {
  * @override
  */
 ServicePrototype.toJSON = function toJSON() {
-    var methods = {}, anyVisible = false;
-    this.methodsArray.forEach(function(obj) {
-        var json = obj.toJSON();
-        if (json) {
-            methods[obj.name] = json;
-            anyVisible = true;
-        }
-    });
-    if (!anyVisible) methods = undefined;
-    
+    var methods = Namespace.arrayToJSON(this.methodsArray);  
     var inherited = NamespacePrototype.toJSON.call(this);
-    return (inherited || methods) && {
+    return (methods || inherited) && {
         options : inherited && inherited.options || undefined,
-        methods : methods,
+        methods : methods || {},
         nested  : inherited && inherited.nested || undefined
     } || undefined;
 };

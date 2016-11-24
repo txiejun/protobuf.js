@@ -66,10 +66,10 @@ OneOf.fromJSON = function fromJSON(name, json) {
  * @override
  */
 OneOfPrototype.toJSON = function toJSON() {
-    return this.visible && {
+    return {
         oneof   : this.oneof,
         options : this.options
-    } || undefined;
+    };
 };
 
 /**

@@ -28,7 +28,7 @@ exports.main = function(args) {
         console.log([
             "protobuf.js v" + pkg.version + " cli",
             "",
-            "Converts between file formats.",
+            "Consolidates imports and converts between file formats.",
             "",
             "  -t, --target    Specifies the target format. [" + Object.keys(targets).filter(function(key) { return !targets[key].private; }).join(', ') + "]",
             "  -o, --out       Saves to a file instead of writing to stdout.",

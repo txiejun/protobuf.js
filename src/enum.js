@@ -95,10 +95,10 @@ Enum.fromJSON = function fromJSON(name, json) {
  * @override
  */
 EnumPrototype.toJSON = function toJSON() {
-    return this.visible && {
+    return {
         options : this.options,
         values  : this.values
-    } || undefined;
+    };
 };
 
 /**
