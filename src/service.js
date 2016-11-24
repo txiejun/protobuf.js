@@ -48,22 +48,6 @@ Object.defineProperties(ServicePrototype, {
         get: function() {
             return this._methodsArray || (this._methodsArray = util.toArray(this.methods));
         }
-    },
-
-    // override
-    object: {
-        get: function() {
-            if (this._object)
-                return this._object;
-            this._object = Object.create(this);
-            var nested = this.methodsArray, i = 0, obj;
-            while (i < nested.length)
-                this._object[(obj = nested[i++]).name] = obj.object;
-            nested = this.nestedArray; i = 0;
-            while (i < nested.length)
-                this._object[(obj = nested[i++]).name] = obj.object;
-            return this._object;
-        }
     }
 
 });
@@ -97,13 +81,12 @@ Service.fromJSON = function fromJSON(name, json) {
  * @override
  */
 ServicePrototype.toJSON = function toJSON() {
-    var methods = Namespace.arrayToJSON(this.methodsArray);  
     var inherited = NamespacePrototype.toJSON.call(this);
-    return (methods || inherited) && {
+    return {
         options : inherited && inherited.options || undefined,
-        methods : methods || {},
+        methods : Namespace.arrayToJSON(this.methodsArray) || {},
         nested  : inherited && inherited.nested || undefined
-    } || undefined;
+    };
 };
 
 /**

@@ -1,6 +1,6 @@
 /*
  * protobuf.js v6.0.0-dev TypeScript definitions
- * Generated Thu, 24 Nov 2016 10:49:49 UTC
+ * Generated Thu, 24 Nov 2016 15:25:28 UTC
  */
 declare module protobuf {
 
@@ -8,7 +8,7 @@ declare module protobuf {
     * Provides common type definitions.
     * Can also be used to provide additional google types or your own custom types.
     * @param {string} name Short name as in `google/protobuf/[name].proto` or full file name
-    * @param {Object} json JSON definition within `google.protobuf` if a short name, otherwise the root definition
+    * @param {Object} json JSON definition within `google.protobuf` if a short name, otherwise the file's root definition
     * @returns {undefined}
     * @property {Object} google/protobuf/any.proto Any
     * @property {Object} google/protobuf/duration.proto Duration
@@ -633,28 +633,12 @@ declare module protobuf {
       nested: ({ [k: string]: ReflectionObject }|undefined);
    
       /**
-       * Determines whether this namespace is empty.
-       * @name Namespace#empty
-       * @type {boolean}
-       * @readonly
-       */
-      empty: boolean;
-   
-      /**
        * Nested objects of this namespace as an array for iteration.
        * @name Namespace#nestedArray
        * @type {ReflectionObject[]}
        * @readonly
        */
       nestedArray: ReflectionObject[];
-   
-      /**
-       * Determines whether this is a plain namespace and not a type or service.
-       * @name Namespace#plain
-       * @type {boolean}
-       * @readonly
-       */
-      plain: boolean;
    
       /**
        * Tests if the specified JSON object describes not another reflection object.
@@ -786,14 +770,6 @@ declare module protobuf {
       fullName: string;
    
       /**
-       * Gets this object as a plain JavaScript object composed of messages, enums etc.
-       * @name ReflectionObject#object
-       * @type {Object|undefined}
-       * @readonly
-       */
-      object: (Object|undefined);
-   
-      /**
        * Lets the specified constructor extend this class.
        * @memberof ReflectionObject
        * @param {Function} constructor Extending constructor
@@ -848,9 +824,10 @@ declare module protobuf {
       /**
        * Sets multiple options.
        * @param {Object.<string,*>} options Options to set
+       * @param {boolean} [ifNotSet] Sets an option only if it isn't currently set
        * @returns {ReflectionObject} `this`
        */
-      setOptions(options: { [k: string]: any }): ReflectionObject;
+      setOptions(options: { [k: string]: any }, ifNotSet?: boolean): ReflectionObject;
    
       /**
        * Converts this instance to its string representation.
@@ -1054,18 +1031,21 @@ declare module protobuf {
    
       /**
        * Reads a varint as a signed 64 bit value.
+       * @function
        * @returns {Long|number} Value read
        */
       int64(): (Long|number);
    
       /**
        * Reads a varint as an unsigned 64 bit value.
+       * @function
        * @returns {Long|number} Value read
        */
       uint64(): (Long|number);
    
       /**
        * Reads a zig-zag encoded varint as a signed 64 bit value.
+       * @function
        * @returns {Long|number} Value read
        */
       sint64(): (Long|number);
@@ -1089,16 +1069,17 @@ declare module protobuf {
       sfixed32(): number;
    
       /**
-       * Reads fixed 64 bits as a Long.
+       * Reads fixed 64 bits.
+       * @function
        * @returns {Long|number} Value read
        */
       fixed64(): (Long|number);
    
       /**
-       * Reads zig-zag encoded fixed 64 bits as a Long.
+       * Reads zig-zag encoded fixed 64 bits.
        * @returns {Long|number} Value read
        */
-      sfixed64(): (Long|number);
+      sfixed64: any;
    
       /**
        * Reads a float (32 bit) as a number.
@@ -1633,10 +1614,17 @@ declare module protobuf {
    
           /**
            * Converts this long bits to a possibly unsafe JavaScript number.
-           * @param {boolean} unsigned Whether unsigned or not
+           * @param {boolean} [unsigned=false] Whether unsigned or not
            * @returns {number} Possibly unsafe number
            */
-          toNumber(unsigned: boolean): number;
+          toNumber(unsigned?: boolean): number;
+   
+          /**
+           * Converts this long bits to a long.
+           * @param {boolean} [unsigned=false] Whether unsigned or not
+           * @returns {Long} Long
+           */
+          toLong(unsigned?: boolean): Long;
    
           /**
            * Constructs new long bits from the specified 8 characters long hash.
@@ -1895,7 +1883,7 @@ declare module protobuf {
    
       /**
        * Pushes a new operation to the queue.
-       * @param {function} fn Function to call
+       * @param {function(number[], number, *)} fn Function to call
        * @param {number} len Value byte length
        * @param {number} val Value to write
        * @returns {Writer} `this`
@@ -2020,16 +2008,14 @@ declare module protobuf {
       string(value: string): Writer;
    
       /**
-       * Forks this writer's state by pushing it to a stack and reusing the remaining buffer
-       * for a new set of write operations. A call to {@link Writer#reset} or {@link Writer#finish}
-       * resets the writer to the previous state.
+       * Forks this writer's state by pushing it to a stack.
+       * Calling {@link Writer#ldelim}, {@link Writer#reset} or {@link Writer#finish} resets the writer to the previous state.
        * @returns {Writer} `this`
        */
       fork(): Writer;
    
       /**
-       * Resets this instance to the last state. If there is no last state, all references
-       * to previous buffers will be cleared.
+       * Resets this instance to the last state.
        * @returns {Writer} `this`
        */
       reset(): Writer;

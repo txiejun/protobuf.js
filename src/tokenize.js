@@ -2,7 +2,7 @@
 /* eslint-disable default-case, callback-return */
 module.exports = tokenize;
 
-var delimRe        = /[\s{}=;:\[\],'"\(\)<>]/g,
+var delimRe        = /[\s{}=;:[\],'"()<>]/g,
     stringDoubleRe = /(?:"([^"\\]*(?:\\.[^"\\]*)*)")/g,
     stringSingleRe = /(?:'([^'\\]*(?:\\.[^'\\]*)*)')/g;
 

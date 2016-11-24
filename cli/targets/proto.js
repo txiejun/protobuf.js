@@ -67,7 +67,7 @@ function buildRoot(root) {
     var ptr = root;
     do {
         var nested = ptr.nestedArray;
-        if (nested.length === 1 && nested[0] instanceof Namespace && nested[0].plain) {
+        if (nested.length === 1 && nested[0] instanceof Namespace && !(nested[0] instanceof Type || nested[0] instanceof Service)) {
             ptr = nested[0];
             if (ptr !== root)
                 pkg.push(ptr.name);

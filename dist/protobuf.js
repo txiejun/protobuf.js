@@ -1,6 +1,6 @@
 /*!
  * protobuf.js v6.0.0-dev (c) 2016 Daniel Wirtz
- * Compiled Thu, 24 Nov 2016 10:49:52 UTC
+ * Compiled Thu, 24 Nov 2016 15:25:23 UTC
  * Licensed under the Apache License, Version 2.0
  * see: https://github.com/dcodeIO/protobuf.js for details
  */
@@ -133,7 +133,7 @@ module.exports = common;
  * Provides common type definitions.
  * Can also be used to provide additional google types or your own custom types.
  * @param {string} name Short name as in `google/protobuf/[name].proto` or full file name
- * @param {Object} json JSON definition within `google.protobuf` if a short name, otherwise the root definition
+ * @param {Object} json JSON definition within `google.protobuf` if a short name, otherwise the file's root definition
  * @returns {undefined}
  * @property {Object} google/protobuf/any.proto Any
  * @property {Object} google/protobuf/duration.proto Duration
@@ -142,7 +142,7 @@ module.exports = common;
  * @property {Object} google/protobuf/timestamp.proto Timestamp
  */
 function common(name, json) {
-    if (!/[\/\.]/.test(name)) {
+    if (!/\/|\./.test(name)) {
         name = "google/protobuf/" + name + ".proto";
         json = { nested: { google: { nested: { protobuf: { nested: json } } } } };
     }
@@ -750,13 +750,6 @@ Object.defineProperties(EnumPrototype, {
                 }, this);
             }
             return this._valuesById;
-        }
-    },
-
-    // override
-    object: {
-        get: function() {
-            return this._object || (this._object = util.merge({}, this.values));
         }
     }
 });
@@ -1479,16 +1472,6 @@ function Method(name, type, requestType, responseType, requestStream, responseSt
     this.resolvedResponseType = null;
 }
 
-Object.defineProperties(MethodPrototype, {
-
-    // override
-    object: {
-        get: function() {
-            return this._object || (this._object = MethodPrototype.call.bind(this));
-        }
-    }
-});
-
 /**
  * Tests if the specified JSON object describes a service method.
  * @param {Object} json JSON object
@@ -1625,18 +1608,6 @@ function clearCache(namespace) {
 Object.defineProperties(NamespacePrototype, {
 
     /**
-     * Determines whether this namespace is empty.
-     * @name Namespace#empty
-     * @type {boolean}
-     * @readonly
-     */
-    empty: {
-        get: function() {
-            return Boolean(this.nested && Object.keys(this.nested).length);
-        }
-    },
-
-    /**
      * Nested objects of this namespace as an array for iteration.
      * @name Namespace#nestedArray
      * @type {ReflectionObject[]}
@@ -1646,32 +1617,8 @@ Object.defineProperties(NamespacePrototype, {
         get: function() {
             return this._nestedArray || (this._nestedArray = util.toArray(this.nested));
         }
-    },
-
-    // override
-    object: {
-        get: function() {
-            if (this._object)
-                return this._object;
-            this._object = Object.create(this);
-            var nested = this.nestedArray;
-            for (var i = 0; i < nested.length; ++i)
-                this._object[nested[i].name] = nested[i].object;
-            return this._object;
-        }
-    },
-
-    /**
-     * Determines whether this is a plain namespace and not a type or service.
-     * @name Namespace#plain
-     * @type {boolean}
-     * @readonly
-     */
-    plain: {
-        get: function() {
-            return !(this instanceof Type || this instanceof Service);
-        }
     }
+
 });
 
 /**
@@ -1775,12 +1722,15 @@ NamespacePrototype.add = function add(object) {
     else {
         var prev = this.get(object.name);
         if (prev) {
-            if (prev instanceof Namespace && object instanceof Namespace && prev.plain) {
-                // replace plain namespace but keep existing nested elements
+            if (prev instanceof Namespace && object instanceof Namespace && !(prev instanceof Type || prev instanceof Service)) {
+                // replace plain namespace but keep existing nested elements and options
                 var nested = prev.nestedArray;
                 for (var i = 0; i < nested.length; ++i)
                     object.add(nested[i]);
                 this.remove(prev);
+                if (!this.nested)
+                    this.nested = {};
+                object.setOptions(prev.options, true);
             } else
                 throw Error("duplicate name '" + object.name + "' in " + this);
         }
@@ -1800,10 +1750,10 @@ NamespacePrototype.add = function add(object) {
 NamespacePrototype.remove = function remove(object) {
     if (!(object instanceof ReflectionObject))
         throw _TypeError("object", "a ReflectionObject");
-    if (object.parent !== this)
+    if (object.parent !== this || !this.nested)
         throw Error(object + " is not a member of " + this);
     delete this.nested[object.name];
-    if (this.empty)
+    if (!Object.keys(this.nested).length)
         this.nested = undefined;
     object.onRemove(this);
     return clearCache(this);
@@ -1923,13 +1873,6 @@ function ReflectionObject(name, options) {
      * @type {boolean}
      */
     this.resolved = false;
-
-    /**
-     * Cached object representation.
-     * @type {Object|undefined}
-     * @private
-     */
-    this._object = undefined;
 }
 
 /** @alias ReflectionObject.prototype */
@@ -1968,20 +1911,7 @@ Object.defineProperties(ReflectionObjectPrototype, {
             }
             return path.join('.');
         }
-    },
-
-    /**
-     * Gets this object as a plain JavaScript object composed of messages, enums etc.
-     * @name ReflectionObject#object
-     * @type {Object|undefined}
-     * @readonly
-     */
-    object: {
-        get: function() {
-            return this._object;
-        }
     }
-
 });
 
 /**
@@ -2004,7 +1934,7 @@ function extend(constructor) {
  * @abstract
  */
 ReflectionObjectPrototype.toJSON = function toJSON() {
-    throw Error("not implemented");
+    throw Error(); // not implemented, shouldn't happen
 };
 
 /**
@@ -2016,7 +1946,6 @@ ReflectionObjectPrototype.onAdd = function onAdd(parent) {
     if (this.parent && this.parent !== parent)
         this.parent.remove(this);
     this.parent = parent;
-    parent._object = undefined;
     this.resolved = false;
     var root = parent.root;
     if (root instanceof Root)
@@ -2033,7 +1962,6 @@ ReflectionObjectPrototype.onRemove = function onRemove(parent) {
     if (root instanceof Root)
         root._handleRemove(this);
     this.parent = null;
-    parent._object = undefined;
     this.resolved = false;
 };
 
@@ -2077,12 +2005,13 @@ ReflectionObjectPrototype.setOption = function setOption(name, value, ifNotSet) 
 /**
  * Sets multiple options.
  * @param {Object.<string,*>} options Options to set
+ * @param {boolean} [ifNotSet] Sets an option only if it isn't currently set
  * @returns {ReflectionObject} `this`
  */
-ReflectionObjectPrototype.setOptions = function setOptions(options) {
+ReflectionObjectPrototype.setOptions = function setOptions(options, ifNotSet) {
     if (options)
         Object.keys(options).forEach(function(name) {
-            this.setOption(name, options[name]);
+            this.setOption(name, options[name], ifNotSet);
         }, this);
     return this;
 };
@@ -2877,7 +2806,8 @@ Reader.BufferReader = BufferReader;
 
 var util     = require(21),
     ieee754  = require(1);
-var LongBits = util.LongBits;
+var LongBits = util.LongBits,
+    Long     = util.Long;
 
 function indexOutOfRange(reader, writeLength) {
     return "index out of range: " + reader.pos + " + " + (writeLength || 1) + " > " + reader.len;
@@ -2942,8 +2872,7 @@ function Tag(id, wireType) {
 ReaderPrototype.tag = function read_tag() {
     if (this.pos >= this.len)
         throw RangeError(indexOutOfRange(this));
-    var octet = this.buf[this.pos++];
-    return new Tag(octet >>> 3, octet & 7);
+    return new Tag(this.buf[this.pos] >>> 3, this.buf[this.pos++] & 7);
 };
 
 /**
@@ -3038,38 +2967,50 @@ function readLongVarint() {
     throw Error("invalid varint encoding");
 }
 
+function read_int64_long() {
+    return readLongVarint.call(this).toLong(); // eslint-disable-line no-invalid-this
+}
+
+function read_int64_number() {
+    return readLongVarint.call(this).toNumber(); // eslint-disable-line no-invalid-this
+}
+
 /**
  * Reads a varint as a signed 64 bit value.
+ * @function
  * @returns {Long|number} Value read
  */
-ReaderPrototype.int64 = function read_int64() {
-    var bits = readLongVarint.call(this);
-    if (util.Long)
-        return util.Long.fromBits(bits.lo, bits.hi, false);
-    return bits.toNumber(false);
-};
+ReaderPrototype.int64 = Long && read_int64_long || read_int64_number;
+
+function read_uint64_long() {
+    return readLongVarint.call(this).toLong(true); // eslint-disable-line no-invalid-this
+}
+
+function read_uint64_number() {
+    return readLongVarint.call(this).toNumber(true); // eslint-disable-line no-invalid-this
+}
 
 /**
  * Reads a varint as an unsigned 64 bit value.
+ * @function
  * @returns {Long|number} Value read
  */
-ReaderPrototype.uint64 = function read_uint64() {
-    var bits = readLongVarint.call(this);
-    if (util.Long)
-        return util.Long.fromBits(bits.lo, bits.hi, true);
-    return bits.toNumber(true);
-};
+ReaderPrototype.uint64 = Long && read_uint64_long || read_uint64_number;
+
+function read_sint64_long() {
+    return readLongVarint.call(this).zzDecode().toLong(); // eslint-disable-line no-invalid-this
+}
+
+function read_sint64_number() {
+    return readLongVarint.call(this).zzDecode().toNumber(); // eslint-disable-line no-invalid-this
+}
 
 /**
  * Reads a zig-zag encoded varint as a signed 64 bit value.
+ * @function
  * @returns {Long|number} Value read
  */
-ReaderPrototype.sint64 = function read_sint64() {
-    var bits = readLongVarint.call(this).zzDecode();
-    if (util.Long)
-        return util.Long.fromBits(bits.lo, bits.hi, false);
-    return bits.toNumber(false);
-};
+ReaderPrototype.sint64 = Long && read_sint64_long || read_sint64_number;
 
 /**
  * Reads a varint as a boolean.
@@ -3125,27 +3066,34 @@ function readLongFixed() {
     );
 }
 
-/**
- * Reads fixed 64 bits as a Long.
- * @returns {Long|number} Value read
- */
-ReaderPrototype.fixed64 = function read_fixed64() {
-    var bits = readLongFixed.call(this);
-    if (util.Long)
-        return util.Long.fromBits(bits.lo, bits.hi, true);
-    return bits.toNumber(true);
-};
+function read_fixed64_long() {
+    return readLongFixed.call(this).toLong(true); // eslint-disable-line no-invalid-this
+}
+
+function read_fixed64_number() {
+    return readLongFixed.call(this).toNumber(true); // eslint-disable-line no-invalid-this
+}
 
 /**
- * Reads zig-zag encoded fixed 64 bits as a Long.
+ * Reads fixed 64 bits.
+ * @function
  * @returns {Long|number} Value read
  */
-ReaderPrototype.sfixed64 = function read_sfixed64() {
-    var bits = readLongFixed.call(this).zzDecode();
-    if (util.Long)
-        return util.Long.fromBits(bits.lo, bits.hi, false);
-    return bits.toNumber(false);
-};
+ReaderPrototype.fixed64 = Long && read_fixed64_long || read_fixed64_number;
+
+function read_sfixed64_long() {
+    return readLongFixed.call(this).zzDecode().toLong(); // eslint-disable-line no-invalid-this
+}
+
+function read_sfixed64_number() {
+    return readLongFixed.call(this).zzDecode().toNumber(); // eslint-disable-line no-invalid-this
+}
+
+/**
+ * Reads zig-zag encoded fixed 64 bits.
+ * @returns {Long|number} Value read
+ */
+ReaderPrototype.sfixed64 = Long && read_sfixed64_long || read_sfixed64_number;
 
 /**
  * Reads a float (32 bit) as a number.
@@ -3509,14 +3457,11 @@ RootPrototype.load = function load(filename, callback) {
 
     // Assembling the root namespace doesn't require working type
     // references anymore, so we can load everything in parallel
-    if (Array.isArray(filename))
-        filename.forEach(function(filename) {
-            fetch(filename);
-        });
-    else if (util.isString(filename))
+    if (util.isString(filename))
+        filename = [ filename ];
+    filename.forEach(function(filename) {
         fetch(filename);
-    else
-        throw util._TypeError("filename", "a string or array");
+    });
 
     if (!queued)
         finish(null);
@@ -3653,22 +3598,6 @@ Object.defineProperties(ServicePrototype, {
         get: function() {
             return this._methodsArray || (this._methodsArray = util.toArray(this.methods));
         }
-    },
-
-    // override
-    object: {
-        get: function() {
-            if (this._object)
-                return this._object;
-            this._object = Object.create(this);
-            var nested = this.methodsArray, i = 0, obj;
-            while (i < nested.length)
-                this._object[(obj = nested[i++]).name] = obj.object;
-            nested = this.nestedArray; i = 0;
-            while (i < nested.length)
-                this._object[(obj = nested[i++]).name] = obj.object;
-            return this._object;
-        }
     }
 
 });
@@ -3702,13 +3631,12 @@ Service.fromJSON = function fromJSON(name, json) {
  * @override
  */
 ServicePrototype.toJSON = function toJSON() {
-    var methods = Namespace.arrayToJSON(this.methodsArray);  
     var inherited = NamespacePrototype.toJSON.call(this);
-    return (methods || inherited) && {
+    return {
         options : inherited && inherited.options || undefined,
-        methods : methods || {},
+        methods : Namespace.arrayToJSON(this.methodsArray) || {},
         nested  : inherited && inherited.nested || undefined
-    } || undefined;
+    };
 };
 
 /**
@@ -3761,7 +3689,7 @@ ServicePrototype.remove = function remove(object) {
 /* eslint-disable default-case, callback-return */
 module.exports = tokenize;
 
-var delimRe        = /[\s{}=;:\[\],'"\(\)<>]/g,
+var delimRe        = /[\s{}=;:[\],'"()<>]/g,
     stringDoubleRe = /(?:"([^"\\]*(?:\\.[^"\\]*)*)")/g,
     stringSingleRe = /(?:'([^'\\]*(?:\\.[^'\\]*)*)')/g;
 
@@ -4497,11 +4425,9 @@ types.packed = bake([
  */
 var util = module.exports = {};
 
-var codegen  = require(22),
-    LongBits = require(23);
-
-util.codegen  = codegen;
-util.LongBits = LongBits;
+var LongBits =
+util.LongBits = require(23);
+util.codegen  = require(22);
 
 /**
  * Optional buffer class to use.
@@ -4766,9 +4692,9 @@ util.safeProp = function safeProp(prop) {
 "use strict";
 module.exports = codegen;
 
-var blockOpenRe  = /[\{\[]$/,
-    blockCloseRe = /^[\}\]]/,
-    casingRe     = /[\:]$/,
+var blockOpenRe  = /[{[]$/,
+    blockCloseRe = /^[}\]]/,
+    casingRe     = /:$/,
     branchRe     = /^\s*(?:if|else if|while|for)\b|\b(?:else)\s*$/,
     breakRe      = /\b(?:break|continue);?$|^\s*return\b/;
 
@@ -4899,7 +4825,10 @@ codegen.verbose = false;
 
 },{}],23:[function(require,module,exports){
 "use strict";
+
 module.exports = LongBits;
+
+var util = require(21);
 
 /**
  * Constructs new long bits.
@@ -4909,8 +4838,7 @@ module.exports = LongBits;
  * @param {number} lo Low bits
  * @param {number} hi High bits
  */
-function LongBits(lo, hi) {
-    // make sure to always call this with unsigned 32bits for proper optimization
+function LongBits(lo, hi) { // make sure to always call this with unsigned 32bits for proper optimization
 
     /**
      * Low bits.
@@ -4976,7 +4904,7 @@ LongBits.from = function from(value) {
 
 /**
  * Converts this long bits to a possibly unsafe JavaScript number.
- * @param {boolean} unsigned Whether unsigned or not
+ * @param {boolean} [unsigned=false] Whether unsigned or not
  * @returns {number} Possibly unsafe number
  */
 LongBitsPrototype.toNumber = function toNumber(unsigned) {
@@ -4988,6 +4916,15 @@ LongBitsPrototype.toNumber = function toNumber(unsigned) {
         return -(this.lo + this.hi * 4294967296);
     }
     return this.lo + this.hi * 4294967296;
+};
+
+/**
+ * Converts this long bits to a long.
+ * @param {boolean} [unsigned=false] Whether unsigned or not
+ * @returns {Long} Long
+ */
+LongBitsPrototype.toLong = function toLong(unsigned) {
+    return new util.Long(this.lo, this.hi, unsigned);
 };
 
 var charCodeAt = String.prototype.charCodeAt;
@@ -5070,7 +5007,7 @@ LongBitsPrototype.length = function length() {
     return part2 < 1 << 7 ? 9 : 10;
 };
 
-},{}],24:[function(require,module,exports){
+},{"21":21}],24:[function(require,module,exports){
 "use strict";
 module.exports = Verifier;
 
@@ -5215,22 +5152,11 @@ var util     = require(21),
 var LongBits = util.LongBits;
 
 /**
- * Operation function.
- * @typedef Fn
- * @memberof Writer.Op
- * @function
- * @param {number[]} buf Buffer to write to
- * @param {number} pos Position to write at
- * @param {*} val Value to write
- * @returns {undefined}
- */
-
-/**
  * Constructs a new writer operation.
  * @classdesc Scheduled writer operation.
  * @memberof Writer
  * @constructor
- * @param {Writer.Op.Fn} fn Function to call
+ * @param {function(number[], number, *)} fn Function to call
  * @param {*} val Value to write
  * @param {number} len Value byte length
  * @private
@@ -5240,7 +5166,7 @@ function Op(fn, val, len) {
 
     /**
      * Function to call.
-     * @type {Writer.Op.Fn}
+     * @type {function(number[], number, *)}
      */
     this.fn = fn;
 
@@ -5350,7 +5276,7 @@ var WriterPrototype = Writer.prototype;
 
 /**
  * Pushes a new operation to the queue.
- * @param {function} fn Function to call
+ * @param {function(number[], number, *)} fn Function to call
  * @param {number} len Value byte length
  * @param {number} val Value to write
  * @returns {Writer} `this`
@@ -5437,8 +5363,10 @@ WriterPrototype.uint64 = function write_uint64(value) {
     var bits;
     if (typeof value === 'number')
         bits = value ? LongBits.fromNumber(value) : LongBits.zero;
-    else
+    else if (value.low || value.high)
         bits = new LongBits(value.low >>> 0, value.high >>> 0);
+    else
+        bits = LongBits.zero;
     return this.push(writeVarint64, bits.length(), bits);
 };
 
@@ -5552,8 +5480,8 @@ WriterPrototype.double = function write_double(value) {
 };
 
 var writeBytes = ArrayImpl.prototype.set
-    ? function writeBytesSet(buf, pos, val) { buf.set(val, pos); }
-    : function writeBytesFor(buf, pos, val) { for (var i = 0; i < val.length; ++i) buf[pos + i] = val[i]; };
+    ? function writeBytes_set(buf, pos, val) { buf.set(val, pos); }
+    : function writeBytes_for(buf, pos, val) { for (var i = 0; i < val.length; ++i) buf[pos + i] = val[i]; };
 
 /**
  * Writes a sequence of bytes.
@@ -5624,9 +5552,8 @@ WriterPrototype.string = function write_string(value) {
 };
 
 /**
- * Forks this writer's state by pushing it to a stack and reusing the remaining buffer
- * for a new set of write operations. A call to {@link Writer#reset} or {@link Writer#finish}
- * resets the writer to the previous state.
+ * Forks this writer's state by pushing it to a stack.
+ * Calling {@link Writer#ldelim}, {@link Writer#reset} or {@link Writer#finish} resets the writer to the previous state.
  * @returns {Writer} `this`
  */
 WriterPrototype.fork = function fork() {
@@ -5637,8 +5564,7 @@ WriterPrototype.fork = function fork() {
 };
 
 /**
- * Resets this instance to the last state. If there is no last state, all references
- * to previous buffers will be cleared.
+ * Resets this instance to the last state.
  * @returns {Writer} `this`
  */
 WriterPrototype.reset = function reset() {

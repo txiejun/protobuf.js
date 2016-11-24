@@ -83,16 +83,6 @@ function Method(name, type, requestType, responseType, requestStream, responseSt
     this.resolvedResponseType = null;
 }
 
-Object.defineProperties(MethodPrototype, {
-
-    // override
-    object: {
-        get: function() {
-            return this._object || (this._object = MethodPrototype.call.bind(this));
-        }
-    }
-});
-
 /**
  * Tests if the specified JSON object describes a service method.
  * @param {Object} json JSON object

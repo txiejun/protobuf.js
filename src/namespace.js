@@ -49,18 +49,6 @@ function clearCache(namespace) {
 Object.defineProperties(NamespacePrototype, {
 
     /**
-     * Determines whether this namespace is empty.
-     * @name Namespace#empty
-     * @type {boolean}
-     * @readonly
-     */
-    empty: {
-        get: function() {
-            return Boolean(this.nested && Object.keys(this.nested).length);
-        }
-    },
-
-    /**
      * Nested objects of this namespace as an array for iteration.
      * @name Namespace#nestedArray
      * @type {ReflectionObject[]}
@@ -70,32 +58,8 @@ Object.defineProperties(NamespacePrototype, {
         get: function() {
             return this._nestedArray || (this._nestedArray = util.toArray(this.nested));
         }
-    },
-
-    // override
-    object: {
-        get: function() {
-            if (this._object)
-                return this._object;
-            this._object = Object.create(this);
-            var nested = this.nestedArray;
-            for (var i = 0; i < nested.length; ++i)
-                this._object[nested[i].name] = nested[i].object;
-            return this._object;
-        }
-    },
-
-    /**
-     * Determines whether this is a plain namespace and not a type or service.
-     * @name Namespace#plain
-     * @type {boolean}
-     * @readonly
-     */
-    plain: {
-        get: function() {
-            return !(this instanceof Type || this instanceof Service);
-        }
     }
+
 });
 
 /**
@@ -199,12 +163,15 @@ NamespacePrototype.add = function add(object) {
     else {
         var prev = this.get(object.name);
         if (prev) {
-            if (prev instanceof Namespace && object instanceof Namespace && prev.plain) {
-                // replace plain namespace but keep existing nested elements
+            if (prev instanceof Namespace && object instanceof Namespace && !(prev instanceof Type || prev instanceof Service)) {
+                // replace plain namespace but keep existing nested elements and options
                 var nested = prev.nestedArray;
                 for (var i = 0; i < nested.length; ++i)
                     object.add(nested[i]);
                 this.remove(prev);
+                if (!this.nested)
+                    this.nested = {};
+                object.setOptions(prev.options, true);
             } else
                 throw Error("duplicate name '" + object.name + "' in " + this);
         }
@@ -224,10 +191,10 @@ NamespacePrototype.add = function add(object) {
 NamespacePrototype.remove = function remove(object) {
     if (!(object instanceof ReflectionObject))
         throw _TypeError("object", "a ReflectionObject");
-    if (object.parent !== this)
+    if (object.parent !== this || !this.nested)
         throw Error(object + " is not a member of " + this);
     delete this.nested[object.name];
-    if (this.empty)
+    if (!Object.keys(this.nested).length)
         this.nested = undefined;
     object.onRemove(this);
     return clearCache(this);

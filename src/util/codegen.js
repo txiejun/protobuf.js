@@ -1,9 +1,9 @@
 "use strict";
 module.exports = codegen;
 
-var blockOpenRe  = /[\{\[]$/,
-    blockCloseRe = /^[\}\]]/,
-    casingRe     = /[\:]$/,
+var blockOpenRe  = /[{[]$/,
+    blockCloseRe = /^[}\]]/,
+    casingRe     = /:$/,
     branchRe     = /^\s*(?:if|else if|while|for)\b|\b(?:else)\s*$/,
     breakRe      = /\b(?:break|continue);?$|^\s*return\b/;
 

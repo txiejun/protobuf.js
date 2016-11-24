@@ -6,11 +6,9 @@
  */
 var util = module.exports = {};
 
-var codegen  = require("./util/codegen"),
-    LongBits = require("./util/longbits");
-
-util.codegen  = codegen;
-util.LongBits = LongBits;
+var LongBits =
+util.LongBits = require("./util/longbits");
+util.codegen  = require("./util/codegen");
 
 /**
  * Optional buffer class to use.

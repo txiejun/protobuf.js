@@ -15,7 +15,7 @@ module.exports = common;
  * @property {Object} google/protobuf/timestamp.proto Timestamp
  */
 function common(name, json) {
-    if (!/[\/\.]/.test(name)) {
+    if (!/\/|\./.test(name)) {
         name = "google/protobuf/" + name + ".proto";
         json = { nested: { google: { nested: { protobuf: { nested: json } } } } };
     }

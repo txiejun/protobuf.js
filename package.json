@@ -16,8 +16,8 @@
   "types": "types/protobuf.js.d.ts",
   "scripts": {
     "build": "gulp",
-    "docs": "jsdoc -c scripts/jsdoc.conf.json -R README.md",
-    "types": "jsdoc -c scripts/jsdoc.types.conf.json && node scripts/types-postprocess.js",
+    "docs": "jsdoc -c jsdoc.docs.json -R README.md",
+    "types": "jsdoc -c jsdoc.types.json && node scripts/types.js",
     "lint": "eslint src",
     "test": "tap tests/*.js",
     "bench": "node bench",

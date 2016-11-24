@@ -1,5 +1,8 @@
 "use strict";
+
 module.exports = LongBits;
+
+var util = require("../util");
 
 /**
  * Constructs new long bits.
@@ -9,8 +12,7 @@ module.exports = LongBits;
  * @param {number} lo Low bits
  * @param {number} hi High bits
  */
-function LongBits(lo, hi) {
-    // make sure to always call this with unsigned 32bits for proper optimization
+function LongBits(lo, hi) { // make sure to always call this with unsigned 32bits for proper optimization
 
     /**
      * Low bits.
@@ -76,7 +78,7 @@ LongBits.from = function from(value) {
 
 /**
  * Converts this long bits to a possibly unsafe JavaScript number.
- * @param {boolean} unsigned Whether unsigned or not
+ * @param {boolean} [unsigned=false] Whether unsigned or not
  * @returns {number} Possibly unsafe number
  */
 LongBitsPrototype.toNumber = function toNumber(unsigned) {
@@ -88,6 +90,15 @@ LongBitsPrototype.toNumber = function toNumber(unsigned) {
         return -(this.lo + this.hi * 4294967296);
     }
     return this.lo + this.hi * 4294967296;
+};
+
+/**
+ * Converts this long bits to a long.
+ * @param {boolean} [unsigned=false] Whether unsigned or not
+ * @returns {Long} Long
+ */
+LongBitsPrototype.toLong = function toLong(unsigned) {
+    return new util.Long(this.lo, this.hi, unsigned);
 };
 
 var charCodeAt = String.prototype.charCodeAt;

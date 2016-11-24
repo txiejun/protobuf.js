@@ -45,13 +45,6 @@ function ReflectionObject(name, options) {
      * @type {boolean}
      */
     this.resolved = false;
-
-    /**
-     * Cached object representation.
-     * @type {Object|undefined}
-     * @private
-     */
-    this._object = undefined;
 }
 
 /** @alias ReflectionObject.prototype */
@@ -90,20 +83,7 @@ Object.defineProperties(ReflectionObjectPrototype, {
             }
             return path.join('.');
         }
-    },
-
-    /**
-     * Gets this object as a plain JavaScript object composed of messages, enums etc.
-     * @name ReflectionObject#object
-     * @type {Object|undefined}
-     * @readonly
-     */
-    object: {
-        get: function() {
-            return this._object;
-        }
     }
-
 });
 
 /**
@@ -126,7 +106,7 @@ function extend(constructor) {
  * @abstract
  */
 ReflectionObjectPrototype.toJSON = function toJSON() {
-    throw Error("not implemented");
+    throw Error(); // not implemented, shouldn't happen
 };
 
 /**
@@ -138,7 +118,6 @@ ReflectionObjectPrototype.onAdd = function onAdd(parent) {
     if (this.parent && this.parent !== parent)
         this.parent.remove(this);
     this.parent = parent;
-    parent._object = undefined;
     this.resolved = false;
     var root = parent.root;
     if (root instanceof Root)
@@ -155,7 +134,6 @@ ReflectionObjectPrototype.onRemove = function onRemove(parent) {
     if (root instanceof Root)
         root._handleRemove(this);
     this.parent = null;
-    parent._object = undefined;
     this.resolved = false;
 };
 
@@ -199,12 +177,13 @@ ReflectionObjectPrototype.setOption = function setOption(name, value, ifNotSet) 
 /**
  * Sets multiple options.
  * @param {Object.<string,*>} options Options to set
+ * @param {boolean} [ifNotSet] Sets an option only if it isn't currently set
  * @returns {ReflectionObject} `this`
  */
-ReflectionObjectPrototype.setOptions = function setOptions(options) {
+ReflectionObjectPrototype.setOptions = function setOptions(options, ifNotSet) {
     if (options)
         Object.keys(options).forEach(function(name) {
-            this.setOption(name, options[name]);
+            this.setOption(name, options[name], ifNotSet);
         }, this);
     return this;
 };

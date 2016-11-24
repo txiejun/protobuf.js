@@ -1,7 +1,6 @@
 var minimist = require("minimist"),
     path     = require("path"),
     fs       = require("fs"),
-    resolve  = require("resolve-from"),
     chalk    = require("chalk");
 
 var protobuf = require(".."),

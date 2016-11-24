@@ -5,7 +5,8 @@ Reader.BufferReader = BufferReader;
 
 var util     = require("./util"),
     ieee754  = require("../lib/ieee754");
-var LongBits = util.LongBits;
+var LongBits = util.LongBits,
+    Long     = util.Long;
 
 function indexOutOfRange(reader, writeLength) {
     return "index out of range: " + reader.pos + " + " + (writeLength || 1) + " > " + reader.len;
@@ -70,8 +71,7 @@ function Tag(id, wireType) {
 ReaderPrototype.tag = function read_tag() {
     if (this.pos >= this.len)
         throw RangeError(indexOutOfRange(this));
-    var octet = this.buf[this.pos++];
-    return new Tag(octet >>> 3, octet & 7);
+    return new Tag(this.buf[this.pos] >>> 3, this.buf[this.pos++] & 7);
 };
 
 /**
@@ -166,38 +166,50 @@ function readLongVarint() {
     throw Error("invalid varint encoding");
 }
 
+function read_int64_long() {
+    return readLongVarint.call(this).toLong(); // eslint-disable-line no-invalid-this
+}
+
+function read_int64_number() {
+    return readLongVarint.call(this).toNumber(); // eslint-disable-line no-invalid-this
+}
+
 /**
  * Reads a varint as a signed 64 bit value.
+ * @function
  * @returns {Long|number} Value read
  */
-ReaderPrototype.int64 = function read_int64() {
-    var bits = readLongVarint.call(this);
-    if (util.Long)
-        return util.Long.fromBits(bits.lo, bits.hi, false);
-    return bits.toNumber(false);
-};
+ReaderPrototype.int64 = Long && read_int64_long || read_int64_number;
+
+function read_uint64_long() {
+    return readLongVarint.call(this).toLong(true); // eslint-disable-line no-invalid-this
+}
+
+function read_uint64_number() {
+    return readLongVarint.call(this).toNumber(true); // eslint-disable-line no-invalid-this
+}
 
 /**
  * Reads a varint as an unsigned 64 bit value.
+ * @function
  * @returns {Long|number} Value read
  */
-ReaderPrototype.uint64 = function read_uint64() {
-    var bits = readLongVarint.call(this);
-    if (util.Long)
-        return util.Long.fromBits(bits.lo, bits.hi, true);
-    return bits.toNumber(true);
-};
+ReaderPrototype.uint64 = Long && read_uint64_long || read_uint64_number;
+
+function read_sint64_long() {
+    return readLongVarint.call(this).zzDecode().toLong(); // eslint-disable-line no-invalid-this
+}
+
+function read_sint64_number() {
+    return readLongVarint.call(this).zzDecode().toNumber(); // eslint-disable-line no-invalid-this
+}
 
 /**
  * Reads a zig-zag encoded varint as a signed 64 bit value.
+ * @function
  * @returns {Long|number} Value read
  */
-ReaderPrototype.sint64 = function read_sint64() {
-    var bits = readLongVarint.call(this).zzDecode();
-    if (util.Long)
-        return util.Long.fromBits(bits.lo, bits.hi, false);
-    return bits.toNumber(false);
-};
+ReaderPrototype.sint64 = Long && read_sint64_long || read_sint64_number;
 
 /**
  * Reads a varint as a boolean.
@@ -253,27 +265,34 @@ function readLongFixed() {
     );
 }
 
-/**
- * Reads fixed 64 bits as a Long.
- * @returns {Long|number} Value read
- */
-ReaderPrototype.fixed64 = function read_fixed64() {
-    var bits = readLongFixed.call(this);
-    if (util.Long)
-        return util.Long.fromBits(bits.lo, bits.hi, true);
-    return bits.toNumber(true);
-};
+function read_fixed64_long() {
+    return readLongFixed.call(this).toLong(true); // eslint-disable-line no-invalid-this
+}
+
+function read_fixed64_number() {
+    return readLongFixed.call(this).toNumber(true); // eslint-disable-line no-invalid-this
+}
 
 /**
- * Reads zig-zag encoded fixed 64 bits as a Long.
+ * Reads fixed 64 bits.
+ * @function
  * @returns {Long|number} Value read
  */
-ReaderPrototype.sfixed64 = function read_sfixed64() {
-    var bits = readLongFixed.call(this).zzDecode();
-    if (util.Long)
-        return util.Long.fromBits(bits.lo, bits.hi, false);
-    return bits.toNumber(false);
-};
+ReaderPrototype.fixed64 = Long && read_fixed64_long || read_fixed64_number;
+
+function read_sfixed64_long() {
+    return readLongFixed.call(this).zzDecode().toLong(); // eslint-disable-line no-invalid-this
+}
+
+function read_sfixed64_number() {
+    return readLongFixed.call(this).zzDecode().toNumber(); // eslint-disable-line no-invalid-this
+}
+
+/**
+ * Reads zig-zag encoded fixed 64 bits.
+ * @returns {Long|number} Value read
+ */
+ReaderPrototype.sfixed64 = Long && read_sfixed64_long || read_sfixed64_number;
 
 /**
  * Reads a float (32 bit) as a number.

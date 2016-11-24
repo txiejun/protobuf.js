@@ -8,22 +8,11 @@ var util     = require("./util"),
 var LongBits = util.LongBits;
 
 /**
- * Operation function.
- * @typedef Fn
- * @memberof Writer.Op
- * @function
- * @param {number[]} buf Buffer to write to
- * @param {number} pos Position to write at
- * @param {*} val Value to write
- * @returns {undefined}
- */
-
-/**
  * Constructs a new writer operation.
  * @classdesc Scheduled writer operation.
  * @memberof Writer
  * @constructor
- * @param {Writer.Op.Fn} fn Function to call
+ * @param {function(number[], number, *)} fn Function to call
  * @param {*} val Value to write
  * @param {number} len Value byte length
  * @private
@@ -33,7 +22,7 @@ function Op(fn, val, len) {
 
     /**
      * Function to call.
-     * @type {Writer.Op.Fn}
+     * @type {function(number[], number, *)}
      */
     this.fn = fn;
 
@@ -143,7 +132,7 @@ var WriterPrototype = Writer.prototype;
 
 /**
  * Pushes a new operation to the queue.
- * @param {function} fn Function to call
+ * @param {function(number[], number, *)} fn Function to call
  * @param {number} len Value byte length
  * @param {number} val Value to write
  * @returns {Writer} `this`
@@ -230,8 +219,10 @@ WriterPrototype.uint64 = function write_uint64(value) {
     var bits;
     if (typeof value === 'number')
         bits = value ? LongBits.fromNumber(value) : LongBits.zero;
-    else
+    else if (value.low || value.high)
         bits = new LongBits(value.low >>> 0, value.high >>> 0);
+    else
+        bits = LongBits.zero;
     return this.push(writeVarint64, bits.length(), bits);
 };
 
@@ -345,8 +336,8 @@ WriterPrototype.double = function write_double(value) {
 };
 
 var writeBytes = ArrayImpl.prototype.set
-    ? function writeBytesSet(buf, pos, val) { buf.set(val, pos); }
-    : function writeBytesFor(buf, pos, val) { for (var i = 0; i < val.length; ++i) buf[pos + i] = val[i]; };
+    ? function writeBytes_set(buf, pos, val) { buf.set(val, pos); }
+    : function writeBytes_for(buf, pos, val) { for (var i = 0; i < val.length; ++i) buf[pos + i] = val[i]; };
 
 /**
  * Writes a sequence of bytes.
@@ -417,9 +408,8 @@ WriterPrototype.string = function write_string(value) {
 };
 
 /**
- * Forks this writer's state by pushing it to a stack and reusing the remaining buffer
- * for a new set of write operations. A call to {@link Writer#reset} or {@link Writer#finish}
- * resets the writer to the previous state.
+ * Forks this writer's state by pushing it to a stack.
+ * Calling {@link Writer#ldelim}, {@link Writer#reset} or {@link Writer#finish} resets the writer to the previous state.
  * @returns {Writer} `this`
  */
 WriterPrototype.fork = function fork() {
@@ -430,8 +420,7 @@ WriterPrototype.fork = function fork() {
 };
 
 /**
- * Resets this instance to the last state. If there is no last state, all references
- * to previous buffers will be cleared.
+ * Resets this instance to the last state.
  * @returns {Writer} `this`
  */
 WriterPrototype.reset = function reset() {

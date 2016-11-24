@@ -57,7 +57,6 @@ protobuf.load("awesome.proto", function(err, root) {
     
     // Obtain a message type
     var AwesomeMessage = root.lookup("awesomepackage.AwesomeMessage");
-    // or, if you prefer: root.object.awesomepackage.AwesomeMessage
 
     // Create a new message
     var message = AwesomeMessage.create({ awesomeField: "AwesomeString" });

@@ -134,14 +134,11 @@ RootPrototype.load = function load(filename, callback) {
 
     // Assembling the root namespace doesn't require working type
     // references anymore, so we can load everything in parallel
-    if (Array.isArray(filename))
-        filename.forEach(function(filename) {
-            fetch(filename);
-        });
-    else if (util.isString(filename))
+    if (util.isString(filename))
+        filename = [ filename ];
+    filename.forEach(function(filename) {
         fetch(filename);
-    else
-        throw util._TypeError("filename", "a string or array");
+    });
 
     if (!queued)
         finish(null);
